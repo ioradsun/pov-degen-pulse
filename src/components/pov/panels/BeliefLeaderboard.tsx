@@ -32,9 +32,16 @@ export function BeliefLeaderboard({ beliefs }: { beliefs: BeliefRow[] }) {
             </thead>
             <tbody>
               {beliefs.map((b) => (
-                <tr key={b.tokenAddress}>
+                <tr key={b.id}>
                   <Td>
-                    <AddrLink value={b.tokenAddress} short={5} />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[var(--ink)]">
+                        #{b.id.length > 12 ? `${b.id.slice(0, 6)}…` : b.id}
+                      </span>
+                      {b.yesToken && (
+                        <AddrLink value={b.yesToken} short={4} />
+                      )}
+                    </div>
                   </Td>
                   <Td>
                     <Pill

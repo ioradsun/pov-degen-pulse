@@ -21,35 +21,35 @@ export interface BeliefRow {
   lastEventAt?: number;
 }
 
+type Internal = BeliefRow & { _addrs: Set<string> };
+
 /**
  * Derives per-belief rows from decoded events.
- * Groups by `beliefId` when present, otherwise by tx hash for created events.
- * Curve is best-effort inferred from which curve contract emitted matching activity.
+ * Groups by `beliefId` (marketId when present).
  */
 export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
   return useMemo(() => {
-    const rows = new Map<string, BeliefRow & { _addrs: Set<string> }>();
+    const rows = new Map<string, Internal>();
     const linear = POV_CONTRACTS.linearCurve.toLowerCase();
     const cp = POV_CONTRACTS.cpCurve.toLowerCase();
 
-    function ensure(id: string, block: number, ts?: number) {
-      let r = rows.get(id);
-      if (!r) {
-        r = {
-          tokenAddress: id,
-          curve: "unknown",
-          createdBlock: block,
-          createdAt: ts,
-          totalBuys: 0,
-          totalSells: 0,
-          volumeWei: 0n,
-          boostCount: 0,
-          participants: 0,
-          _addrs: new Set(),
-        };
-        rows.set(id, r);
-      }
-      return r;
+    function ensure(id: string, block: number, ts?: number): Internal {
+      const existing = rows.get(id);
+      if (existing) return existing;
+      const created: Internal = {
+        id,
+        curve: "unknown",
+        createdBlock: block,
+        createdAt: ts,
+        totalBuys: 0,
+        totalSells: 0,
+        volumeWei: 0n,
+        boostCount: 0,
+        participants: 0,
+        _addrs: new Set<string>(),
+      };
+      rows.set(id, created);
+      return created;
     }
 
     for (const e of events) {
@@ -59,6 +59,7 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
       if (e.kind === "created") {
         r.createdBlock = e.block;
         r.createdAt = e.timestamp;
+        if (e.yesToken) r.yesToken = e.yesToken;
       }
       if (e.kind === "buy") r.totalBuys++;
       if (e.kind === "sell") r.totalSells++;
@@ -69,7 +70,6 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
       if (e.valueWei) r.volumeWei += e.valueWei;
       if (e.from) r._addrs.add(e.from);
       if (e.to) r._addrs.add(e.to);
-      // Curve inference: MarketCreated carries `curve` as an event arg.
       const curveArg = e.curveAddress;
       if (r.curve === "unknown") {
         if (curveArg === linear || e.address === linear) r.curve = "linear";
