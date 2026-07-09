@@ -1,9 +1,8 @@
 import { Panel } from "../primitives/Panel";
-import { Metric } from "../primitives/Metric";
-import type { CorrelationSummary } from "@/lib/pov/correlations";
+import type { CorrelationSummary as Summary } from "@/lib/pov/correlations";
 
 interface Props {
-  summary: CorrelationSummary;
+  summary: Summary;
 }
 
 function rColor(r: number): string {
@@ -20,42 +19,64 @@ function rLabel(r: number): string {
   return "very strong";
 }
 
+function Cell({
+  label,
+  value,
+  sub,
+  color,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  color?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1 p-4 border-r border-[var(--line-dim)] last:border-r-0">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+        {label}
+      </div>
+      <div
+        className="text-[24px] leading-none tabular-nums"
+        style={{ color: color ?? "var(--ink)" }}
+      >
+        {value}
+      </div>
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-dim)]">
+        {sub}
+      </div>
+    </div>
+  );
+}
+
 export function CorrelationSummary({ summary }: Props) {
   const { pearsonEventsVolume, pearsonEventsReturn, pearsonBuysReturn, bestLag, n } =
     summary;
 
   return (
-    <Panel
-      title="Correlation summary"
-      meta={n ? `n=${n} hourly obs` : "—"}
-    >
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Metric
+    <Panel title="Correlation summary" meta={n ? `n=${n} hourly obs` : "—"} bodyClassName="p-0">
+      <div className="grid grid-cols-2 md:grid-cols-4">
+        <Cell
           label="Events × DEGEN vol"
           value={pearsonEventsVolume.toFixed(3)}
-          hint={rLabel(pearsonEventsVolume)}
-          valueColor={rColor(pearsonEventsVolume)}
+          sub={rLabel(pearsonEventsVolume)}
+          color={rColor(pearsonEventsVolume)}
         />
-        <Metric
+        <Cell
           label="Events × DEGEN return"
           value={pearsonEventsReturn.toFixed(3)}
-          hint={rLabel(pearsonEventsReturn)}
-          valueColor={rColor(pearsonEventsReturn)}
+          sub={rLabel(pearsonEventsReturn)}
+          color={rColor(pearsonEventsReturn)}
         />
-        <Metric
+        <Cell
           label="Buys × DEGEN return"
           value={pearsonBuysReturn.toFixed(3)}
-          hint={rLabel(pearsonBuysReturn)}
-          valueColor={rColor(pearsonBuysReturn)}
+          sub={rLabel(pearsonBuysReturn)}
+          color={rColor(pearsonBuysReturn)}
         />
-        <Metric
+        <Cell
           label="Best lead/lag"
-          value={
-            bestLag
-              ? `${bestLag.lag >= 0 ? "+" : ""}${bestLag.lag}h`
-              : "—"
-          }
-          hint={
+          value={bestLag ? `${bestLag.lag >= 0 ? "+" : ""}${bestLag.lag}h` : "—"}
+          sub={
             bestLag
               ? `r ${bestLag.r.toFixed(3)} · ${
                   bestLag.lag > 0
@@ -66,10 +87,10 @@ export function CorrelationSummary({ summary }: Props) {
                 }`
               : "insufficient overlap"
           }
-          valueColor={bestLag ? rColor(bestLag.r) : undefined}
+          color={bestLag ? rColor(bestLag.r) : undefined}
         />
       </div>
-      <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+      <p className="px-4 pb-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
         Pearson r on hourly series · lag &gt; 0 → POV activity precedes DEGEN move
       </p>
     </Panel>
