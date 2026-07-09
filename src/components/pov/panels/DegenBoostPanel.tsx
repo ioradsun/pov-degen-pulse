@@ -29,12 +29,12 @@ export function DegenBoostPanel({ events }: { events: DecodedEvent[] }) {
 
     for (const b of boostEvents) {
       const t = b.timestamp!;
-      const belief = b.beliefToken;
+      const belief = b.beliefId;
       const acts = events.filter(
         (e) =>
           (e.kind === "buy" || e.kind === "sell") &&
           e.timestamp &&
-          (!belief || e.beliefToken === belief),
+          (!belief || e.beliefId === belief),
       );
       pre += acts.filter((e) => e.timestamp! >= t - WINDOW_S && e.timestamp! < t)
         .length;

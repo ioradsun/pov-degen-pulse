@@ -20,7 +20,7 @@ export interface BeliefRow {
 
 /**
  * Derives per-belief rows from decoded events.
- * Groups by `beliefToken` when present, otherwise by tx hash for created events.
+ * Groups by `beliefId` when present, otherwise by tx hash for created events.
  * Curve is best-effort inferred from which curve contract emitted matching activity.
  */
 export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
@@ -50,7 +50,7 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
     }
 
     for (const e of events) {
-      const id = e.beliefToken;
+      const id = e.beliefId;
       if (!id) continue;
       const r = ensure(id, e.block, e.timestamp);
       if (e.kind === "created") {
