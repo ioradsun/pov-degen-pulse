@@ -12,6 +12,10 @@ import { RpcHealth } from "@/components/pov/panels/RpcHealth";
 import { BeliefLeaderboard } from "@/components/pov/panels/BeliefLeaderboard";
 import { DegenBoostPanel } from "@/components/pov/panels/DegenBoostPanel";
 import { AbiStatus } from "@/components/pov/panels/AbiStatus";
+import { DegenOhlcChart } from "@/components/pov/charts/DegenOhlcChart";
+import { LaggedXcorrChart } from "@/components/pov/charts/LaggedXcorrChart";
+import { RollingRegressionPanel } from "@/components/pov/panels/RollingRegressionPanel";
+import { CorrelationSummary } from "@/components/pov/panels/CorrelationSummary";
 import { useRealtime } from "@/hooks/pov/useRealtime";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useBalances } from "@/hooks/pov/useBalances";
@@ -19,15 +23,17 @@ import { useRpcHealth } from "@/hooks/pov/useRpcHealth";
 import { useTabs, type TabId } from "@/hooks/pov/useTabs";
 import { useAbis } from "@/hooks/pov/useAbis";
 import { useBeliefs } from "@/hooks/pov/useBeliefs";
+import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildAbiIndex } from "@/lib/pov/events";
 import { buildHourlyBuckets } from "@/lib/pov/buckets";
+import { joinPovDegen, summarize, xcorrSeries } from "@/lib/pov/correlations";
 import { Panel } from "@/components/pov/primitives/Panel";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const ENABLED_TABS: readonly TabId[] = ["overview", "pov", "registry"];
+const ENABLED_TABS: readonly TabId[] = ["overview", "pov", "correlations", "registry"];
 
 function Dashboard() {
   const { tab, setTab, tabs } = useTabs();
@@ -38,11 +44,16 @@ function Dashboard() {
   const balances = useBalances();
   const health = useRpcHealth();
   const beliefs = useBeliefs(events);
+  const { bars: ohlc, loading: ohlcLoading } = useDegenOhlc(168);
 
   const buckets = useMemo(
     () => buildHourlyBuckets(events, history, 24),
     [events, history],
   );
+
+  const joined = useMemo(() => joinPovDegen(events, ohlc), [events, ohlc]);
+  const corrSummary = useMemo(() => summarize(joined), [joined]);
+  const xcorr = useMemo(() => xcorrSeries(joined, 12), [joined]);
 
   const effectiveTab: TabId = ENABLED_TABS.includes(tab) ? tab : "overview";
 
@@ -91,6 +102,21 @@ function Dashboard() {
           </div>
         )}
 
+        {effectiveTab === "correlations" && (
+          <div className="flex flex-col gap-4">
+            <CorrelationSummary summary={corrSummary} />
+            <DegenOhlcChart bars={ohlc} loading={ohlcLoading} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              <div className="lg:col-span-6">
+                <LaggedXcorrChart data={xcorr} />
+              </div>
+              <div className="lg:col-span-6">
+                <RollingRegressionPanel rows={joined} windowHours={24} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {effectiveTab === "registry" && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-7 flex flex-col gap-4">
@@ -107,7 +133,7 @@ function Dashboard() {
         <Panel bodyClassName="p-0">
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
             <span>
-              v2 · Overview + POV live · Correlations, DEGEN deep-dive next
+              v3 · Overview + POV + Correlations live · DEGEN deep-dive next
             </span>
             <span>Read-only · Base · chainId 8453</span>
           </div>
