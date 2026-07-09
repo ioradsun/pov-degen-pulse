@@ -26,8 +26,8 @@ export interface DecodedEvent extends RawLog {
   from?: string;
   to?: string;
   valueWei?: bigint;
+  beliefToken?: string;
   _newUntil?: number;
-}
 
 export interface DegenSnapshot {
   ts: number;
