@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 
-type AbiItem = Record<string, unknown>;
+// Loose ABI item shape — viem re-parses it on the client anyway.
+// Kept JSON-serializable so it can cross the server-fn RPC boundary.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AbiItem = Record<string, any>;
 
 export interface AbiFetchResult {
   address: string; // lowercase
