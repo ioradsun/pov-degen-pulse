@@ -176,14 +176,16 @@ export function decodeLog(
               ? args.recipient.toLowerCase()
               : undefined;
 
+        // Prefer ethSpent/proceeds for POV events; fall back to generic names.
         let valueWei: bigint | undefined;
         for (const k of [
-          "value",
-          "amount",
-          "cost",
+          "ethSpent",
           "proceeds",
+          "value",
+          "cost",
           "ethAmount",
           "wei",
+          "amount",
           "tokens",
         ]) {
           const v = args[k];
@@ -201,15 +203,32 @@ export function decodeLog(
           }
         }
 
-        // token / belief id if present (for grouping later)
-        const beliefToken =
-          typeof args.token === "string"
-            ? args.token.toLowerCase()
-            : typeof args.beliefToken === "string"
-              ? args.beliefToken.toLowerCase()
-              : typeof args.belief === "string"
-                ? args.belief.toLowerCase()
-                : undefined;
+        // Group key: POV markets use marketId (uint256). Fall back to per-belief
+        // token address or a generic belief field for other contracts.
+        const marketIdRaw = args.marketId ?? args.boostId ?? args.id;
+        const beliefId =
+          typeof marketIdRaw === "bigint"
+            ? marketIdRaw.toString()
+            : typeof marketIdRaw === "string" && marketIdRaw
+              ? marketIdRaw
+              : typeof args.token === "string"
+                ? args.token.toLowerCase()
+                : typeof args.beliefToken === "string"
+                  ? args.beliefToken.toLowerCase()
+                  : typeof args.belief === "string"
+                    ? args.belief.toLowerCase()
+                    : undefined;
+
+        const yesToken =
+          typeof args.yesToken === "string"
+            ? args.yesToken.toLowerCase()
+            : undefined;
+        const curveAddress =
+          typeof args.curve === "string" ? args.curve.toLowerCase() : undefined;
+        const yes =
+          typeof args.yes === "boolean" ? args.yes : undefined;
+        const questionId =
+          typeof args.questionId === "string" ? args.questionId : undefined;
 
         return {
           ...raw,
@@ -219,7 +238,11 @@ export function decodeLog(
           from,
           to,
           valueWei,
-          beliefToken,
+          beliefId,
+          yesToken,
+          curveAddress,
+          yes,
+          questionId,
         };
       } catch {
         /* fall through to heuristic */
