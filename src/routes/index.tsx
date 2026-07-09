@@ -12,6 +12,10 @@ import { RpcHealth } from "@/components/pov/panels/RpcHealth";
 import { BeliefLeaderboard } from "@/components/pov/panels/BeliefLeaderboard";
 import { DegenBoostPanel } from "@/components/pov/panels/DegenBoostPanel";
 import { AbiStatus } from "@/components/pov/panels/AbiStatus";
+import { DegenOhlcChart } from "@/components/pov/charts/DegenOhlcChart";
+import { LaggedXcorrChart } from "@/components/pov/charts/LaggedXcorrChart";
+import { RollingRegressionPanel } from "@/components/pov/panels/RollingRegressionPanel";
+import { CorrelationSummary } from "@/components/pov/panels/CorrelationSummary";
 import { useRealtime } from "@/hooks/pov/useRealtime";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useBalances } from "@/hooks/pov/useBalances";
@@ -19,15 +23,17 @@ import { useRpcHealth } from "@/hooks/pov/useRpcHealth";
 import { useTabs, type TabId } from "@/hooks/pov/useTabs";
 import { useAbis } from "@/hooks/pov/useAbis";
 import { useBeliefs } from "@/hooks/pov/useBeliefs";
+import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildAbiIndex } from "@/lib/pov/events";
 import { buildHourlyBuckets } from "@/lib/pov/buckets";
+import { joinPovDegen, summarize, xcorrSeries } from "@/lib/pov/correlations";
 import { Panel } from "@/components/pov/primitives/Panel";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const ENABLED_TABS: readonly TabId[] = ["overview", "pov", "registry"];
+const ENABLED_TABS: readonly TabId[] = ["overview", "pov", "correlations", "registry"];
 
 function Dashboard() {
   const { tab, setTab, tabs } = useTabs();
