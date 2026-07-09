@@ -5,7 +5,10 @@ import type { DecodedEvent } from "@/lib/pov/types";
 export type Curve = "linear" | "cp" | "unknown";
 
 export interface BeliefRow {
-  tokenAddress: string; // per-belief id (best-effort from event args)
+  /** Market group id (marketId as string). */
+  id: string;
+  /** Yes-token contract address, when known (from MarketCreated). */
+  yesToken?: string;
   curve: Curve;
   createdBlock: number;
   createdAt?: number;
