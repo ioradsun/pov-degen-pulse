@@ -26,9 +26,19 @@ export interface DecodedEvent extends RawLog {
   from?: string;
   to?: string;
   valueWei?: bigint;
-  beliefToken?: string;
+  /** Belief/market group id (marketId as string, or per-belief token address). */
+  beliefId?: string;
+  /** The market's yes-token address, when the event carries it (MarketCreated). */
+  yesToken?: string;
+  /** The bonding curve address for this market, when known (MarketCreated). */
+  curveAddress?: string;
+  /** Y/N side flag from TokensBought/TokensSold. */
+  yes?: boolean;
+  /** Human-readable question id, when the event carries it. */
+  questionId?: string;
   _newUntil?: number;
 }
+
 
 
 export interface DegenSnapshot {
