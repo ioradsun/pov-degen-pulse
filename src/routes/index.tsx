@@ -102,6 +102,21 @@ function Dashboard() {
           </div>
         )}
 
+        {effectiveTab === "correlations" && (
+          <div className="flex flex-col gap-4">
+            <CorrelationSummary summary={corrSummary} />
+            <DegenOhlcChart bars={ohlc} loading={ohlcLoading} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              <div className="lg:col-span-6">
+                <LaggedXcorrChart data={xcorr} />
+              </div>
+              <div className="lg:col-span-6">
+                <RollingRegressionPanel rows={joined} windowHours={24} />
+              </div>
+            </div>
+          </div>
+        )}
+
         {effectiveTab === "registry" && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="lg:col-span-7 flex flex-col gap-4">
@@ -118,7 +133,7 @@ function Dashboard() {
         <Panel bodyClassName="p-0">
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
             <span>
-              v2 · Overview + POV live · Correlations, DEGEN deep-dive next
+              v3 · Overview + POV + Correlations live · DEGEN deep-dive next
             </span>
             <span>Read-only · Base · chainId 8453</span>
           </div>
