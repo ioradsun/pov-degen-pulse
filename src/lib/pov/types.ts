@@ -28,6 +28,8 @@ export interface DecodedEvent extends RawLog {
   valueWei?: bigint;
   beliefToken?: string;
   _newUntil?: number;
+}
+
 
 export interface DegenSnapshot {
   ts: number;
