@@ -44,11 +44,16 @@ function Dashboard() {
   const balances = useBalances();
   const health = useRpcHealth();
   const beliefs = useBeliefs(events);
+  const { bars: ohlc, loading: ohlcLoading } = useDegenOhlc(168);
 
   const buckets = useMemo(
     () => buildHourlyBuckets(events, history, 24),
     [events, history],
   );
+
+  const joined = useMemo(() => joinPovDegen(events, ohlc), [events, ohlc]);
+  const corrSummary = useMemo(() => summarize(joined), [joined]);
+  const xcorr = useMemo(() => xcorrSeries(joined, 12), [joined]);
 
   const effectiveTab: TabId = ENABLED_TABS.includes(tab) ? tab : "overview";
 
