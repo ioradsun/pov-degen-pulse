@@ -66,8 +66,12 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
       if (e.valueWei) r.volumeWei += e.valueWei;
       if (e.from) r._addrs.add(e.from);
       if (e.to) r._addrs.add(e.to);
-      if (e.address === linear && r.curve === "unknown") r.curve = "linear";
-      if (e.address === cp && r.curve === "unknown") r.curve = "cp";
+      // Curve inference: MarketCreated carries `curve` as an event arg.
+      const curveArg = e.curveAddress;
+      if (r.curve === "unknown") {
+        if (curveArg === linear || e.address === linear) r.curve = "linear";
+        else if (curveArg === cp || e.address === cp) r.curve = "cp";
+      }
       if (!r.lastEventAt || (e.timestamp && e.timestamp > r.lastEventAt)) {
         r.lastEventAt = e.timestamp;
       }
