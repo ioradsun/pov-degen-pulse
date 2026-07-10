@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
+import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
+import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
+import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
+import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHeadlineRoute = ApiPublicHeadlineRouteImport.update({
+  id: '/api/public/headline',
+  path: '/api/public/headline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGridRoute = ApiPublicGridRouteImport.update({
+  id: '/api/public/grid',
+  path: '/api/public/grid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
+  id: '/api/public/feed',
+  path: '/api/public/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBeliefIdRoute = ApiPublicBeliefIdRouteImport.update({
+  id: '/api/public/belief/$id',
+  path: '/api/public/belief/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/feed': typeof ApiPublicFeedRoute
+  '/api/public/grid': typeof ApiPublicGridRoute
+  '/api/public/headline': typeof ApiPublicHeadlineRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/feed': typeof ApiPublicFeedRoute
+  '/api/public/grid': typeof ApiPublicGridRoute
+  '/api/public/headline': typeof ApiPublicHeadlineRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/feed': typeof ApiPublicFeedRoute
+  '/api/public/grid': typeof ApiPublicGridRoute
+  '/api/public/headline': typeof ApiPublicHeadlineRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/public/feed'
+    | '/api/public/grid'
+    | '/api/public/headline'
+    | '/api/public/health'
+    | '/api/public/belief/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/public/feed'
+    | '/api/public/grid'
+    | '/api/public/headline'
+    | '/api/public/health'
+    | '/api/public/belief/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/feed'
+    | '/api/public/grid'
+    | '/api/public/headline'
+    | '/api/public/health'
+    | '/api/public/belief/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicFeedRoute: typeof ApiPublicFeedRoute
+  ApiPublicGridRoute: typeof ApiPublicGridRoute
+  ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/headline': {
+      id: '/api/public/headline'
+      path: '/api/public/headline'
+      fullPath: '/api/public/headline'
+      preLoaderRoute: typeof ApiPublicHeadlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/grid': {
+      id: '/api/public/grid'
+      path: '/api/public/grid'
+      fullPath: '/api/public/grid'
+      preLoaderRoute: typeof ApiPublicGridRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/feed': {
+      id: '/api/public/feed'
+      path: '/api/public/feed'
+      fullPath: '/api/public/feed'
+      preLoaderRoute: typeof ApiPublicFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/belief/$id': {
+      id: '/api/public/belief/$id'
+      path: '/api/public/belief/$id'
+      fullPath: '/api/public/belief/$id'
+      preLoaderRoute: typeof ApiPublicBeliefIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicFeedRoute: ApiPublicFeedRoute,
+  ApiPublicGridRoute: ApiPublicGridRoute,
+  ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
