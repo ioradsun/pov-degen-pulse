@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PulseBar } from "@/components/pulse/PulseBar";
 import { StatGrid, computeStats } from "@/components/pulse/StatGrid";
+import { StatGridApi } from "@/components/pulse/StatGridApi";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
-import { BeliefBoard } from "@/components/pulse/BeliefBoard";
-import { LiveFeed } from "@/components/pulse/LiveFeed";
+import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
+import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { DecodeBanner } from "@/components/pulse/DecodeBanner";
 import { useActivity } from "@/hooks/pov/useActivity";
@@ -16,12 +17,14 @@ import { useAbis } from "@/hooks/pov/useAbis";
 import { buildAbiIndex } from "@/lib/pov/events";
 import { buildPulse } from "@/lib/pov/pulse";
 import { formatEth, type Currency } from "@/lib/pov/format";
+import { usePulseRealtime } from "@/hooks/pov/useApiPulse";
 
 export const Route = createFileRoute("/")({
   component: Pulse,
 });
 
 function Pulse() {
+  usePulseRealtime();
   const abis = useAbis();
   const abiIndex = useMemo(() => buildAbiIndex(abis.results), [abis.results]);
   const { events, latestBlock, backfill, live } = useActivity(abiIndex);
@@ -86,28 +89,16 @@ function Pulse() {
       />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         <DecodeBanner events={events} abis={abis} live={live} />
+        <StatGridApi />
         <StatGrid events={events} currency={currency} ethUsd={ethUsd} />
         <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
-            <LiveFeed
-              events={events}
-              beliefs={beliefs}
-              beliefTexts={beliefTexts}
-              ethUsd={ethUsd}
-              live={live}
-              backfill={backfill}
-              currency={currency}
-            />
+            <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
             <InsightPanel snapshot={insightSnapshot} ready={live} />
-            <BeliefBoard
-              beliefs={beliefs}
-              beliefTexts={beliefTexts}
-              currency={currency}
-              ethUsd={ethUsd}
-            />
+            <BeliefBoardApi />
           </div>
         </div>
       </main>
