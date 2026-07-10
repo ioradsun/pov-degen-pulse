@@ -37,7 +37,7 @@ export function BeliefBoard({ beliefs, names }: BeliefBoardProps) {
       ) : (
         <ul className="divide-y divide-[var(--line-dim)]">
           {rows.map((b, i) => {
-            const name = names.get(b.id);
+            const name = b.text ?? names.get(b.id);
             return (
               <li
                 key={b.id}

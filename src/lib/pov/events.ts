@@ -211,6 +211,38 @@ export function decodeLog(raw: RawLog, index?: EventAbiIndex): DecodedEvent {
         const yes = typeof args.yes === "boolean" ? args.yes : undefined;
         const questionId = typeof args.questionId === "string" ? args.questionId : undefined;
 
+        // Capture belief text if the event carries it as a string arg
+        // (named field first, then any plausibly-human string).
+        let beliefText: string | undefined;
+        for (const k of [
+          "question",
+          "statement",
+          "belief",
+          "text",
+          "description",
+          "title",
+          "name",
+        ]) {
+          const v = args[k];
+          if (typeof v === "string" && v.length > 3 && !v.startsWith("0x")) {
+            beliefText = v;
+            break;
+          }
+        }
+        if (!beliefText) {
+          for (const v of Object.values(args)) {
+            if (
+              typeof v === "string" &&
+              v.length >= 8 &&
+              !v.startsWith("0x") &&
+              /[a-zA-Z] /.test(v)
+            ) {
+              beliefText = v;
+              break;
+            }
+          }
+        }
+
         return {
           ...raw,
           contractLabel: label,
@@ -224,6 +256,7 @@ export function decodeLog(raw: RawLog, index?: EventAbiIndex): DecodedEvent {
           curveAddress,
           yes,
           questionId,
+          beliefText,
         };
       } catch {
         /* fall through to heuristic */

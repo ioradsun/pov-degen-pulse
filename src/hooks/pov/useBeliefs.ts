@@ -16,6 +16,8 @@ export interface BeliefRow {
   totalSells: number;
   volumeWei: bigint;
   boostCount: number;
+  /** Belief text captured from event args, when emitted on-chain. */
+  text?: string;
   lastBoostAt?: number;
   participants: number;
   lastEventAt?: number;
@@ -61,6 +63,7 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
         r.createdAt = e.timestamp;
         if (e.yesToken) r.yesToken = e.yesToken;
       }
+      if (!r.text && e.beliefText) r.text = e.beliefText;
       if (e.kind === "buy") r.totalBuys++;
       if (e.kind === "sell") r.totalSells++;
       if (e.kind === "boost") {

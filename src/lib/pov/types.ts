@@ -31,6 +31,8 @@ export interface DecodedEvent extends RawLog {
   yes?: boolean;
   /** Human-readable question id, when the event carries it. */
   questionId?: string;
+  /** Belief text when the event itself carries it as a string arg. */
+  beliefText?: string;
   _newUntil?: number;
 }
 
