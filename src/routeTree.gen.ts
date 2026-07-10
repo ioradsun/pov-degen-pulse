@@ -15,6 +15,7 @@ import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headl
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
 import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
+import { Route as ApiPublicHooksHydrateTitlesRouteImport } from './routes/api.public.hooks.hydrate-titles'
 import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,12 @@ const ApiPublicHooksIndexTickRoute = ApiPublicHooksIndexTickRouteImport.update({
   path: '/api/public/hooks/index-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksHydrateTitlesRoute =
+  ApiPublicHooksHydrateTitlesRouteImport.update({
+    id: '/api/public/hooks/hydrate-titles',
+    path: '/api/public/hooks/hydrate-titles',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBeliefIdRoute = ApiPublicBeliefIdRouteImport.update({
   id: '/api/public/belief/$id',
   path: '/api/public/belief/$id',
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +77,7 @@ export interface FileRoutesByTo {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRoutesById {
@@ -79,6 +88,7 @@ export interface FileRoutesById {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +110,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
   id:
     | '__root__'
@@ -108,6 +120,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +131,7 @@ export interface RootRouteChildren {
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
+  ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
   ApiPublicHooksIndexTickRoute: typeof ApiPublicHooksIndexTickRoute
 }
 
@@ -165,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksIndexTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/hydrate-titles': {
+      id: '/api/public/hooks/hydrate-titles'
+      path: '/api/public/hooks/hydrate-titles'
+      fullPath: '/api/public/hooks/hydrate-titles'
+      preLoaderRoute: typeof ApiPublicHooksHydrateTitlesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/belief/$id': {
       id: '/api/public/belief/$id'
       path: '/api/public/belief/$id'
@@ -182,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
+  ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
   ApiPublicHooksIndexTickRoute: ApiPublicHooksIndexTickRoute,
 }
 export const routeTree = rootRouteImport
