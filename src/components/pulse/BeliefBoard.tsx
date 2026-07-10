@@ -1,11 +1,13 @@
 import { Panel } from "@/components/pov/primitives/Panel";
-import { formatEth, timeAgo } from "@/lib/pov/format";
+import { formatEth, formatUsd, timeAgo, type Currency } from "@/lib/pov/format";
 import type { BeliefRow } from "@/hooks/pov/useBeliefs";
 
 interface BeliefBoardProps {
   beliefs: BeliefRow[];
   /** beliefId -> resolved human text, from useBeliefTexts. */
   beliefTexts: Map<string, string>;
+  currency: Currency;
+  ethUsd?: number;
 }
 
 function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
