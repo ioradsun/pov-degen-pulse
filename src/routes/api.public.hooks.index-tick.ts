@@ -8,9 +8,19 @@ import {
 
 const CHAIN_ID = 8453;
 const LOCK_KEY = 987001; // stable advisory-lock id for this indexer
-const MAX_BLOCK_RANGE = 500; // safety cap per tick (Base ≈ 2s/block, 5s cadence)
+const MAX_BLOCK_RANGE = 800; // publicnode allows large ranges; keep conservative
 const CONFIRMATIONS = 1;
 const START_LOOKBACK = 50; // on first run, start at (head - N)
+
+// RPCs, in order. First one wins; on getLogs range errors we auto-shrink.
+// Alchemy free tier caps getLogs at 10 blocks, so we prefer public RPCs
+// that permit large ranges for the indexer even when Alchemy is set.
+const RPC_URLS = [
+  "https://base-rpc.publicnode.com",
+  "https://base.llamarpc.com",
+  "https://base.drpc.org",
+  "https://mainnet.base.org",
+];
 
 const TRACKED_ADDRS = [
   POV_CONTRACTS.beliefMarketProxy.toLowerCase() as `0x${string}`,
@@ -68,13 +78,10 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           });
         }
 
-        const rpcUrl = process.env.ALCHEMY_BASE_RPC_URL;
-        if (!rpcUrl) {
-          return Response.json(
-            { error: "ALCHEMY_BASE_RPC_URL not configured" },
-            { status: 500 },
-          );
-        }
+        const rpcOverride = process.env.ALCHEMY_BASE_RPC_URL;
+        // If user set an override, still keep the public RPCs as fallbacks
+        // for getLogs (Alchemy free tier limits ranges to 10 blocks).
+        const rpcList = rpcOverride ? [rpcOverride, ...RPC_URLS] : RPC_URLS;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -96,12 +103,26 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           if (stateErr) throw stateErr;
           const cursor = BigInt(stateRow?.last_indexed_block ?? 0);
 
-          const client = createPublicClient({
-            chain: base,
-            transport: http(rpcUrl, { timeout: 8000 }),
-          });
+          // Helper: try each RPC until one succeeds. Records last error.
+          async function withRpc<T>(fn: (url: string) => Promise<T>): Promise<T> {
+            let lastErr: unknown;
+            for (const url of rpcList) {
+              try {
+                return await fn(url);
+              } catch (e) {
+                lastErr = e;
+              }
+            }
+            throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+          }
 
-          const head = await client.getBlockNumber();
+          const head = await withRpc(async (url) => {
+            const c = createPublicClient({
+              chain: base,
+              transport: http(url, { timeout: 8000 }),
+            });
+            return c.getBlockNumber();
+          });
           const safeHead = head - BigInt(CONFIRMATIONS);
 
           const fromBlock =
@@ -122,19 +143,33 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
               ? fromBlock + BigInt(MAX_BLOCK_RANGE)
               : safeHead;
 
-          // 3. Fetch logs for the three core events across the range.
-          const logs: Log[] = await client.getLogs({
-            address: TRACKED_ADDRS,
-            fromBlock,
-            toBlock,
-            events: [], // topic filter below covers this
+          // 3. Fetch logs — pass topic0 as an OR filter so the RPC does the work.
+          // viem's `topics` accepts a 2D array: outer = positional, inner = OR.
+          const logs: Log[] = await withRpc(async (url) => {
+            const c = createPublicClient({
+              chain: base,
+              transport: http(url, { timeout: 10000 }),
+            });
+            return c.request({
+              method: "eth_getLogs",
+              params: [
+                {
+                  address: TRACKED_ADDRS,
+                  topics: [CORE_TOPICS],
+                  fromBlock: `0x${fromBlock.toString(16)}`,
+                  toBlock: `0x${toBlock.toString(16)}`,
+                },
+              ],
+            } as never) as Promise<Log[]>;
           });
-          // Post-filter by our 3 core topic0 hashes (viem's `events` needs
-          // parsed AbiEvents; we filter by raw topic0 to stay ABI-free).
-          const povLogs = logs.filter((l) => {
-            const t0 = (l.topics?.[0] ?? "").toLowerCase();
-            return CORE_TOPICS.some((t) => t.toLowerCase() === t0);
+          const povLogs = logs; // already filtered by topic0 server-side
+
+          // Track which RPC succeeded for enrichment (tx.value + block ts).
+          const enrichClient = createPublicClient({
+            chain: base,
+            transport: http(rpcList[0], { timeout: 8000 }),
           });
+
 
           // 4. Enrich: unique tx.value + block timestamps for the touched blocks.
           const uniqueTxs = Array.from(
@@ -147,7 +182,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             Promise.all(
               uniqueTxs.map(async (h) => {
                 try {
-                  const tx = await client.getTransaction({ hash: h as `0x${string}` });
+                  const tx = await enrichClient.getTransaction({ hash: h as `0x${string}` });
                   return [h, tx.value] as const;
                 } catch {
                   return [h, 0n] as const;
@@ -157,7 +192,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             Promise.all(
               uniqueBlocks.map(async (n) => {
                 try {
-                  const b = await client.getBlock({ blockNumber: BigInt(n) });
+                  const b = await enrichClient.getBlock({ blockNumber: BigInt(n) });
                   return [n, Number(b.timestamp)] as const;
                 } catch {
                   return [n, Math.floor(Date.now() / 1000)] as const;
@@ -245,6 +280,46 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           }
 
           // 6. Upserts. Beliefs first (FK from trades).
+          //
+          // Backfill safety: a trade may reference a belief_id whose
+          // `created` event was emitted before our scan window. Insert a
+          // stub row for any such id so the FK holds; the hydrator can
+          // fill title/creator later.
+          const knownIds = new Set<number>(
+            beliefsToInsert.map((b) => b.belief_id as number),
+          );
+          const orphanBeliefIds = new Set<number>();
+          for (const t of tradesToInsert) {
+            const id = t.belief_id as number;
+            if (!knownIds.has(id)) orphanBeliefIds.add(id);
+          }
+          if (orphanBeliefIds.size) {
+            const { data: existing } = await supabaseAdmin
+              .from("beliefs")
+              .select("belief_id")
+              .in("belief_id", Array.from(orphanBeliefIds));
+            const existingIds = new Set<number>(
+              (existing ?? []).map((r) => r.belief_id as number),
+            );
+            for (const id of orphanBeliefIds) {
+              if (existingIds.has(id)) continue;
+              const firstTrade = tradesToInsert.find((t) => t.belief_id === id)!;
+              beliefsToInsert.push({
+                belief_id: id,
+                chain_id: CHAIN_ID,
+                market_address: POV_CONTRACTS.beliefMarketProxy.toLowerCase(),
+                creator_address: "0x0000000000000000000000000000000000000000",
+                title: null,
+                raw_title_source: "backfill_stub",
+                is_ai_generated: false,
+                created_block: firstTrade.block_number,
+                created_at: firstTrade.block_timestamp,
+                creation_tx_hash: firstTrade.tx_hash,
+                creation_log_index: 0,
+              });
+            }
+          }
+
           if (beliefsToInsert.length) {
             const { error } = await supabaseAdmin
               .from("beliefs")
@@ -295,7 +370,12 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             duration_ms: Date.now() - startedAt,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
+          const msg =
+            err instanceof Error
+              ? `${err.name}: ${err.message}${err.cause ? ` (cause: ${JSON.stringify(err.cause).slice(0, 200)})` : ""}`
+              : typeof err === "object"
+                ? JSON.stringify(err).slice(0, 500)
+                : String(err);
           await supabaseAdmin
             .from("indexer_state")
             .update({
