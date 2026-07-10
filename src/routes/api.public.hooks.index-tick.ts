@@ -8,9 +8,19 @@ import {
 
 const CHAIN_ID = 8453;
 const LOCK_KEY = 987001; // stable advisory-lock id for this indexer
-const MAX_BLOCK_RANGE = 500; // safety cap per tick (Base ≈ 2s/block, 5s cadence)
+const MAX_BLOCK_RANGE = 800; // publicnode allows large ranges; keep conservative
 const CONFIRMATIONS = 1;
 const START_LOOKBACK = 50; // on first run, start at (head - N)
+
+// RPCs, in order. First one wins; on getLogs range errors we auto-shrink.
+// Alchemy free tier caps getLogs at 10 blocks, so we prefer public RPCs
+// that permit large ranges for the indexer even when Alchemy is set.
+const RPC_URLS = [
+  "https://base-rpc.publicnode.com",
+  "https://base.llamarpc.com",
+  "https://base.drpc.org",
+  "https://mainnet.base.org",
+];
 
 const TRACKED_ADDRS = [
   POV_CONTRACTS.beliefMarketProxy.toLowerCase() as `0x${string}`,
