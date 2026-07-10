@@ -182,7 +182,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             Promise.all(
               uniqueTxs.map(async (h) => {
                 try {
-                  const tx = await client.getTransaction({ hash: h as `0x${string}` });
+                  const tx = await enrichClient.getTransaction({ hash: h as `0x${string}` });
                   return [h, tx.value] as const;
                 } catch {
                   return [h, 0n] as const;
@@ -192,7 +192,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             Promise.all(
               uniqueBlocks.map(async (n) => {
                 try {
-                  const b = await client.getBlock({ blockNumber: BigInt(n) });
+                  const b = await enrichClient.getBlock({ blockNumber: BigInt(n) });
                   return [n, Number(b.timestamp)] as const;
                 } catch {
                   return [n, Math.floor(Date.now() / 1000)] as const;
