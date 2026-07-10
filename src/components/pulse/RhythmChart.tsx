@@ -2,9 +2,12 @@ import { useMemo } from "react";
 import { Bar, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Panel } from "@/components/pov/primitives/Panel";
 import type { PulseBucket } from "@/lib/pov/pulse";
+import { formatDegenPrice, usdToEthPrice, type Currency } from "@/lib/pov/format";
 
 interface RhythmChartProps {
   buckets: PulseBucket[];
+  currency: Currency;
+  ethUsd?: number;
 }
 
 interface Row {
@@ -22,7 +25,7 @@ function hourLabel(ts: number): string {
   });
 }
 
-export function RhythmChart({ buckets }: RhythmChartProps) {
+export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
   const rows = useMemo<Row[]>(
     () =>
       buckets.map((b) => ({
@@ -30,9 +33,9 @@ export function RhythmChart({ buckets }: RhythmChartProps) {
         volumeEth: Number(b.volumeEth.toFixed(5)),
         trades: b.buys + b.sells,
         created: b.created,
-        degen: b.degenPriceUsd,
+        degen: currency === "eth" ? usdToEthPrice(b.degenPriceUsd, ethUsd) : b.degenPriceUsd,
       })),
-    [buckets],
+    [buckets, currency, ethUsd],
   );
 
   const hasDegen = rows.some((r) => r.degen != null);
@@ -47,7 +50,8 @@ export function RhythmChart({ buckets }: RhythmChartProps) {
             <span className="inline-block h-2 w-2 bg-[var(--pov)]" /> POV ETH volume
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0.5 w-4 bg-[var(--degen)]" /> DEGEN price
+            <span className="inline-block h-0.5 w-4 bg-[var(--degen)]" /> DEGEN price (
+            {currency === "usd" ? "USD" : "ETH"})
           </span>
         </span>
       }
@@ -78,8 +82,10 @@ export function RhythmChart({ buckets }: RhythmChartProps) {
               tick={{ fill: "var(--degen)", fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              width={64}
-              tickFormatter={(v: number) => `$${v.toFixed(4)}`}
+              width={currency === "eth" ? 84 : 72}
+              tickFormatter={(v: number) =>
+                currency === "eth" ? v.toFixed(8) : formatDegenPrice(v, currency)
+              }
               hide={!hasDegen}
             />
             <Tooltip
@@ -93,7 +99,7 @@ export function RhythmChart({ buckets }: RhythmChartProps) {
               labelStyle={{ color: "var(--ink-dim)" }}
               formatter={(value: number, name: string) => {
                 if (name === "volumeEth") return [`${value} ETH`, "POV volume"];
-                if (name === "degen") return [`$${value?.toFixed(5)}`, "DEGEN"];
+                if (name === "degen") return [formatDegenPrice(value, currency), "DEGEN"];
                 if (name === "created") return [value, "beliefs created"];
                 return [value, name];
               }}
