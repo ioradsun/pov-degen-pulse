@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
-import { formatEth } from "@/lib/pov/format";
+import { formatEth, formatUsd, type Currency } from "@/lib/pov/format";
 import type { DecodedEvent } from "@/lib/pov/types";
 
 interface StatGridProps {
   events: DecodedEvent[];
+  currency: Currency;
+  ethUsd?: number;
 }
 
 export interface PovStats {
