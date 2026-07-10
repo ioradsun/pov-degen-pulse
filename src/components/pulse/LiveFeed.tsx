@@ -450,6 +450,7 @@ export function LiveFeed({
                   row={r}
                   lifecycle={r.beliefId ? lifecycles.get(r.beliefId) : undefined}
                   isNew={visibleIds.has(r.id)}
+                  currency={currency}
                 />
               ))}
             </ul>
