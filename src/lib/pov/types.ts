@@ -1,12 +1,5 @@
 export type EventKind =
-  | "created"
-  | "buy"
-  | "sell"
-  | "boost"
-  | "transfer"
-  | "approval"
-  | "admin"
-  | "unknown";
+  "created" | "buy" | "sell" | "boost" | "transfer" | "approval" | "admin" | "unknown";
 
 export interface RawLog {
   block: number;
@@ -17,6 +10,8 @@ export interface RawLog {
   topics: string[];
   data: string;
   timestamp?: number;
+  /** UI flash marker for freshly-seen logs. */
+  _newUntil?: number;
 }
 
 export interface DecodedEvent extends RawLog {
@@ -38,8 +33,6 @@ export interface DecodedEvent extends RawLog {
   questionId?: string;
   _newUntil?: number;
 }
-
-
 
 export interface DegenSnapshot {
   ts: number;

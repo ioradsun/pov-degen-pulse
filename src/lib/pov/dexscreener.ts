@@ -15,9 +15,7 @@ interface Pair {
 
 export async function fetchDegenSnapshot(): Promise<DegenSnapshot | null> {
   try {
-    const r = await fetch(
-      `https://api.dexscreener.com/latest/dex/tokens/${DEGEN.address}`,
-    );
+    const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${DEGEN.address}`);
     if (!r.ok) return null;
     const j = (await r.json()) as { pairs?: Pair[] };
     const pairs = j?.pairs ?? [];

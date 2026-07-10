@@ -20,20 +20,18 @@ export interface AbiFetchResult {
  * implementation ABI (per Etherscan's `getsourcecode` proxy detection).
  */
 export const fetchAbis = createServerFn({ method: "POST" })
-  .inputValidator(
-    (input: { chainId: number; addresses: string[] }) => {
-      if (!input || typeof input.chainId !== "number") {
-        throw new Error("chainId is required");
-      }
-      if (!Array.isArray(input.addresses) || input.addresses.length === 0) {
-        throw new Error("addresses[] required");
-      }
-      return {
-        chainId: input.chainId,
-        addresses: input.addresses.map((a) => a.toLowerCase()),
-      };
-    },
-  )
+  .inputValidator((input: { chainId: number; addresses: string[] }) => {
+    if (!input || typeof input.chainId !== "number") {
+      throw new Error("chainId is required");
+    }
+    if (!Array.isArray(input.addresses) || input.addresses.length === 0) {
+      throw new Error("addresses[] required");
+    }
+    return {
+      chainId: input.chainId,
+      addresses: input.addresses.map((a) => a.toLowerCase()),
+    };
+  })
   .handler(async ({ data }): Promise<AbiFetchResult[]> => {
     const apiKey = process.env.ETHERSCAN_API_KEY;
     if (!apiKey) {

@@ -1,143 +1,96 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Header } from "@/components/pov/layout/Header";
-import { StatsStrip } from "@/components/pov/layout/StatsStrip";
-import { TwinLaneChart } from "@/components/pov/charts/TwinLaneChart";
-import { CurveMixArea } from "@/components/pov/charts/CurveMixArea";
-import { LifecycleFunnel } from "@/components/pov/charts/LifecycleFunnel";
-import { CohortHeatmap } from "@/components/pov/charts/CohortHeatmap";
-import { LiveFeed } from "@/components/pov/panels/LiveFeed";
-import { ContractRegistry } from "@/components/pov/panels/ContractRegistry";
-import { RpcHealth } from "@/components/pov/panels/RpcHealth";
-import { BeliefLeaderboard } from "@/components/pov/panels/BeliefLeaderboard";
-import { DegenBoostPanel } from "@/components/pov/panels/DegenBoostPanel";
-import { AbiStatus } from "@/components/pov/panels/AbiStatus";
-import { DegenOhlcChart } from "@/components/pov/charts/DegenOhlcChart";
-import { LaggedXcorrChart } from "@/components/pov/charts/LaggedXcorrChart";
-import { RollingRegressionPanel } from "@/components/pov/panels/RollingRegressionPanel";
-import { CorrelationSummary } from "@/components/pov/panels/CorrelationSummary";
-import { useRealtime } from "@/hooks/pov/useRealtime";
-import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
-import { useBalances } from "@/hooks/pov/useBalances";
-import { useRpcHealth } from "@/hooks/pov/useRpcHealth";
-import { useTabs, type TabId } from "@/hooks/pov/useTabs";
-import { useAbis } from "@/hooks/pov/useAbis";
+import { PulseBar } from "@/components/pulse/PulseBar";
+import { StatGrid, computeStats } from "@/components/pulse/StatGrid";
+import { RhythmChart } from "@/components/pulse/RhythmChart";
+import { BeliefBoard } from "@/components/pulse/BeliefBoard";
+import { ActivityFeed } from "@/components/pulse/ActivityFeed";
+import { InsightPanel } from "@/components/pulse/InsightPanel";
+import { useActivity } from "@/hooks/pov/useActivity";
 import { useBeliefs } from "@/hooks/pov/useBeliefs";
+import { useBeliefNames } from "@/hooks/pov/useBeliefNames";
+import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
+import { useAbis } from "@/hooks/pov/useAbis";
 import { buildAbiIndex } from "@/lib/pov/events";
-import { buildHourlyBuckets } from "@/lib/pov/buckets";
-import { joinPovDegen, summarize, xcorrSeries } from "@/lib/pov/correlations";
-import { Panel } from "@/components/pov/primitives/Panel";
+import { buildPulse } from "@/lib/pov/pulse";
+import { formatEth } from "@/lib/pov/format";
 
 export const Route = createFileRoute("/")({
-  component: Dashboard,
+  component: Pulse,
 });
 
-const ENABLED_TABS: readonly TabId[] = ["overview", "pov", "correlations", "registry"];
-
-function Dashboard() {
-  const { tab, setTab, tabs } = useTabs();
+function Pulse() {
   const abis = useAbis();
   const abiIndex = useMemo(() => buildAbiIndex(abis.results), [abis.results]);
-  const { events, latestBlock } = useRealtime(abiIndex);
-  const { snapshot: degen, history } = useDegenPrice();
-  const balances = useBalances();
-  const health = useRpcHealth();
+  const { events, latestBlock, backfill, live } = useActivity(abiIndex);
+  const { snapshot: degen } = useDegenPrice();
+  const { bars: ohlc } = useDegenOhlc(24);
   const beliefs = useBeliefs(events);
-  const { bars: ohlc, loading: ohlcLoading } = useDegenOhlc(168);
+  const names = useBeliefNames(beliefs);
 
-  const buckets = useMemo(
-    () => buildHourlyBuckets(events, history, 24),
-    [events, history],
-  );
+  const buckets = useMemo(() => buildPulse(events, ohlc, 24), [events, ohlc]);
 
-  const joined = useMemo(() => joinPovDegen(events, ohlc), [events, ohlc]);
-  const corrSummary = useMemo(() => summarize(joined), [joined]);
-  const xcorr = useMemo(() => xcorrSeries(joined, 12), [joined]);
-
-  const effectiveTab: TabId = ENABLED_TABS.includes(tab) ? tab : "overview";
+  const insightSnapshot = useMemo(() => {
+    const s = computeStats(events);
+    return JSON.stringify({
+      window: "24h",
+      pov: {
+        ethTransacted: formatEth(s.volumeWei, 4),
+        beliefsCreated: s.created,
+        buys: s.buys,
+        sells: s.sells,
+        boosts: s.boosts,
+        uniqueTraders: s.traders,
+      },
+      topBeliefs: beliefs.slice(0, 15).map((b) => ({
+        belief: names.get(b.id) ?? `#${b.id}`,
+        buys: b.totalBuys,
+        sells: b.totalSells,
+        ethVolume: formatEth(b.volumeWei, 4),
+        wallets: b.participants,
+        boosts: b.boostCount,
+      })),
+      hourly: buckets.map((b) => ({
+        h: new Date(b.hour * 1000).toISOString().slice(11, 16),
+        eth: Number(b.volumeEth.toFixed(4)),
+        trades: b.buys + b.sells,
+        created: b.created,
+        degenUsd: b.degenPriceUsd,
+      })),
+      degen: degen
+        ? {
+            priceUsd: degen.priceUsd,
+            change24hPct: degen.change24h,
+            volume24hUsd: degen.volume24h,
+            buys24h: degen.buys24h,
+            sells24h: degen.sells24h,
+            marketCapUsd: degen.marketCap,
+          }
+        : null,
+    });
+  }, [events, beliefs, names, buckets, degen]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
-      <Header
-        tab={effectiveTab}
-        setTab={setTab}
-        tabs={tabs}
-        enabled={ENABLED_TABS}
-        health={health}
-        latestBlock={latestBlock}
-        degen={degen}
-      />
-      <main className="mx-auto max-w-[1400px] px-3 py-4 md:px-4 md:py-6">
-        {effectiveTab === "overview" && (
-          <div className="flex flex-col gap-4">
-            <StatsStrip events={events} degen={degen} balances={balances} />
-            <TwinLaneChart buckets={buckets} />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="lg:col-span-7">
-                <LiveFeed events={events} />
-              </div>
-              <div className="lg:col-span-5 flex flex-col gap-4">
-                <DegenBoostPanel events={events} />
-                <RpcHealth health={health} />
-              </div>
-            </div>
-            <ContractRegistry balances={balances} events={events} />
+      <PulseBar latestBlock={latestBlock} live={live} backfill={backfill} degen={degen} />
+      <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
+        <StatGrid events={events} />
+        <RhythmChart buckets={buckets} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <BeliefBoard beliefs={beliefs} names={names} />
           </div>
-        )}
-
-        {effectiveTab === "pov" && (
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="lg:col-span-7">
-                <LifecycleFunnel beliefs={beliefs} />
-              </div>
-              <div className="lg:col-span-5">
-                <DegenBoostPanel events={events} />
-              </div>
-            </div>
-            <CurveMixArea beliefs={beliefs} />
-            <BeliefLeaderboard beliefs={beliefs} />
-            <CohortHeatmap events={events} />
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            <InsightPanel snapshot={insightSnapshot} ready={live} />
+            <ActivityFeed events={events} names={names} />
           </div>
-        )}
-
-        {effectiveTab === "correlations" && (
-          <div className="flex flex-col gap-4">
-            <CorrelationSummary summary={corrSummary} />
-            <DegenOhlcChart bars={ohlc} loading={ohlcLoading} />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className="lg:col-span-6">
-                <LaggedXcorrChart data={xcorr} />
-              </div>
-              <div className="lg:col-span-6">
-                <RollingRegressionPanel rows={joined} windowHours={24} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {effectiveTab === "registry" && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            <div className="lg:col-span-7 flex flex-col gap-4">
-              <ContractRegistry balances={balances} events={events} />
-              <AbiStatus state={abis} />
-            </div>
-            <div className="lg:col-span-5">
-              <RpcHealth health={health} />
-            </div>
-          </div>
-        )}
+        </div>
       </main>
-      <footer className="mx-auto max-w-[1400px] border-t border-[var(--line)] px-4 py-4">
-        <Panel bodyClassName="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-            <span>
-              v3 · Overview + POV + Correlations live · DEGEN deep-dive next
-            </span>
-            <span>Read-only · Base · chainId 8453</span>
-          </div>
-        </Panel>
+      <footer className="mx-auto max-w-[1200px] px-4 pb-6">
+        <p className="border-t border-[var(--line)] pt-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+          Read-only · Base · POV activity vs $DEGEN · fees burn DEGEN
+        </p>
       </footer>
     </div>
   );

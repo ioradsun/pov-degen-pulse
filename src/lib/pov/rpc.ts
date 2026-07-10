@@ -47,14 +47,8 @@ export function getConsecutiveFailures(): number {
   return state.consecutiveFailures;
 }
 
-export async function rpc<T = unknown>(
-  method: string,
-  params: unknown[],
-): Promise<T> {
-  const ordered = [
-    state.active,
-    ...BASE_RPCS.filter((u) => u !== state.active),
-  ];
+export async function rpc<T = unknown>(method: string, params: unknown[]): Promise<T> {
+  const ordered = [state.active, ...BASE_RPCS.filter((u) => u !== state.active)];
   let lastErr: Error | null = null;
   let anySuccess = false;
   for (const url of ordered) {

@@ -30,8 +30,7 @@ export function formatEth(wei: bigint | number, digits = 4): string {
 
 export function formatUsd(n: number, digits = 2): string {
   if (!Number.isFinite(n)) return "$0";
-  if (Math.abs(n) >= 1_000_000_000)
-    return `$${(n / 1e9).toFixed(2)}B`;
+  if (Math.abs(n) >= 1_000_000_000) return `$${(n / 1e9).toFixed(2)}B`;
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1e6).toFixed(2)}M`;
   if (Math.abs(n) >= 10_000) return `$${(n / 1e3).toFixed(1)}K`;
   return `$${n.toLocaleString(undefined, {

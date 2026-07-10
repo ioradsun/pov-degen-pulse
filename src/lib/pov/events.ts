@@ -45,22 +45,12 @@ function classifyEventName(name: string): EventKind {
     n.includes("minted")
   )
     return "buy";
-  if (
-    n.includes("sold") ||
-    n.includes("sell") ||
-    n.includes("redeem") ||
-    n.includes("burn")
-  )
+  if (n.includes("sold") || n.includes("sell") || n.includes("redeem") || n.includes("burn"))
     return "sell";
   if (n.includes("boost")) return "boost";
   if (n === "transfer") return "transfer";
   if (n === "approval") return "approval";
-  if (
-    n.includes("upgrade") ||
-    n.includes("admin") ||
-    n.includes("owner") ||
-    n === "initialized"
-  )
+  if (n.includes("upgrade") || n.includes("admin") || n.includes("owner") || n === "initialized")
     return "admin";
   return "unknown";
 }
@@ -86,8 +76,7 @@ export function buildAbiIndex(results: AbiFetchResult[]): EventAbiIndex {
   for (const r of results) {
     if (!r.abi) continue;
     const events = r.abi.filter(
-      (item): item is AbiEvent =>
-        item && item.type === "event" && typeof item.name === "string",
+      (item): item is AbiEvent => item && item.type === "event" && typeof item.name === "string",
     );
     eventsByAddress.set(r.address, events);
     for (const ev of events) {
@@ -133,10 +122,7 @@ export function buildAbiIndex(results: AbiFetchResult[]): EventAbiIndex {
   return { byAddress, global };
 }
 
-export function decodeLog(
-  raw: RawLog,
-  index?: EventAbiIndex,
-): DecodedEvent {
+export function decodeLog(raw: RawLog, index?: EventAbiIndex): DecodedEvent {
   const label = CONTRACT_LABELS[raw.address] ?? "Unknown";
 
   // Try ABI-based decode first
@@ -220,15 +206,10 @@ export function decodeLog(
                     : undefined;
 
         const yesToken =
-          typeof args.yesToken === "string"
-            ? args.yesToken.toLowerCase()
-            : undefined;
-        const curveAddress =
-          typeof args.curve === "string" ? args.curve.toLowerCase() : undefined;
-        const yes =
-          typeof args.yes === "boolean" ? args.yes : undefined;
-        const questionId =
-          typeof args.questionId === "string" ? args.questionId : undefined;
+          typeof args.yesToken === "string" ? args.yesToken.toLowerCase() : undefined;
+        const curveAddress = typeof args.curve === "string" ? args.curve.toLowerCase() : undefined;
+        const yes = typeof args.yes === "boolean" ? args.yes : undefined;
+        const questionId = typeof args.questionId === "string" ? args.questionId : undefined;
 
         return {
           ...raw,

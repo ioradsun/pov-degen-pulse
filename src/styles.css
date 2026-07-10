@@ -17,6 +17,7 @@
   --ink-dim:    #7A7A82;
   --ink-faint:  #4A4A52;
   --pov:        #B26DF0;
+  --degen:      #F0B84D;
   --up:         #63D68E;
   --down:       #F26860;
   --boost:      #F5D46B;
@@ -36,6 +37,7 @@
   --color-ink-dim: var(--ink-dim);
   --color-ink-faint: var(--ink-faint);
   --color-pov: var(--pov);
+  --color-degen: var(--degen);
   --color-up: var(--up);
   --color-down: var(--down);
   --color-boost: var(--boost);

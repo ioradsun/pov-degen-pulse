@@ -25,9 +25,7 @@ export function useDegenPrice(): {
         setSnapshot(s);
         setHistory((prev) => {
           const next = [...prev, s];
-          return next.length > HISTORY_CAP
-            ? next.slice(next.length - HISTORY_CAP)
-            : next;
+          return next.length > HISTORY_CAP ? next.slice(next.length - HISTORY_CAP) : next;
         });
       }
       setLoading(false);
