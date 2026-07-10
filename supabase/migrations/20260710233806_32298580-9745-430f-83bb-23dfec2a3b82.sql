@@ -1,0 +1,1 @@
+ALTER VIEW public.behavioral_grid SET (security_invoker = on);
