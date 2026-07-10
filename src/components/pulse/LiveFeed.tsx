@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
-import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
+import { formatEth, formatUsd, shortAddr, timeAgo, type Currency } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
 import type { DecodedEvent } from "@/lib/pov/types";
 import type { BeliefRow } from "@/hooks/pov/useBeliefs";
@@ -13,6 +13,7 @@ interface LiveFeedProps {
   ethUsd?: number;
   live: boolean;
   backfill: number;
+  currency: Currency;
 }
 
 /** Feed row derived from a DecodedEvent — the only shape the UI renders. */
