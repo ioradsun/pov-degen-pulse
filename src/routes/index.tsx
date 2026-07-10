@@ -86,7 +86,7 @@ function Pulse() {
       />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         <DecodeBanner events={events} abis={abis} live={live} />
-        <StatGrid events={events} />
+        <StatGrid events={events} currency={currency} ethUsd={ethUsd} />
         <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
@@ -97,11 +97,17 @@ function Pulse() {
               ethUsd={ethUsd}
               live={live}
               backfill={backfill}
+              currency={currency}
             />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
             <InsightPanel snapshot={insightSnapshot} ready={live} />
-            <BeliefBoard beliefs={beliefs} beliefTexts={beliefTexts} />
+            <BeliefBoard
+              beliefs={beliefs}
+              beliefTexts={beliefTexts}
+              currency={currency}
+              ethUsd={ethUsd}
+            />
           </div>
         </div>
       </main>
