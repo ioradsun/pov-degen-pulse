@@ -22,7 +22,7 @@ export interface FeedEvent {
 }
 
 export interface HeadlineMetrics {
-  range: "1h" | "24h" | "7d" | "30d";
+  range: "1h" | "24h" | "7d" | "30d" | "all";
   buy_volume_usd?: number;
   active_traders?: number;
   new_beliefs?: number;
