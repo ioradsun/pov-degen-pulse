@@ -280,6 +280,46 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           }
 
           // 6. Upserts. Beliefs first (FK from trades).
+          //
+          // Backfill safety: a trade may reference a belief_id whose
+          // `created` event was emitted before our scan window. Insert a
+          // stub row for any such id so the FK holds; the hydrator can
+          // fill title/creator later.
+          const knownIds = new Set<number>(
+            beliefsToInsert.map((b) => b.belief_id as number),
+          );
+          const orphanBeliefIds = new Set<number>();
+          for (const t of tradesToInsert) {
+            const id = t.belief_id as number;
+            if (!knownIds.has(id)) orphanBeliefIds.add(id);
+          }
+          if (orphanBeliefIds.size) {
+            const { data: existing } = await supabaseAdmin
+              .from("beliefs")
+              .select("belief_id")
+              .in("belief_id", Array.from(orphanBeliefIds));
+            const existingIds = new Set<number>(
+              (existing ?? []).map((r) => r.belief_id as number),
+            );
+            for (const id of orphanBeliefIds) {
+              if (existingIds.has(id)) continue;
+              const firstTrade = tradesToInsert.find((t) => t.belief_id === id)!;
+              beliefsToInsert.push({
+                belief_id: id,
+                chain_id: CHAIN_ID,
+                market_address: POV_CONTRACTS.beliefMarketProxy.toLowerCase(),
+                creator_address: "0x0000000000000000000000000000000000000000",
+                title: null,
+                raw_title_source: "backfill_stub",
+                is_ai_generated: false,
+                created_block: firstTrade.block_number,
+                created_at: firstTrade.block_timestamp,
+                creation_tx_hash: firstTrade.tx_hash,
+                creation_log_index: 0,
+              });
+            }
+          }
+
           if (beliefsToInsert.length) {
             const { error } = await supabaseAdmin
               .from("beliefs")
