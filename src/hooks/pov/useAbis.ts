@@ -44,23 +44,26 @@ export function useAbis(): AbiState {
       /* noop */
     }
 
-    (async () => {
+    let retry: number | undefined;
+
+    async function load() {
       try {
         const results = await fetchAbis({
           data: { chainId: CHAIN_ID, addresses: ADDRS },
         });
         if (!alive) return;
-        const payload = { results, loadedAt: Date.now() };
-        setState({
-          results,
-          loading: false,
-          error: null,
-          loadedAt: payload.loadedAt,
-        });
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
-        } catch {
-          /* noop */
+        const loadedAt = Date.now();
+        setState({ results, loading: false, error: null, loadedAt });
+        const allOk = results.every((r) => r.ok);
+        if (allOk) {
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ results, loadedAt }));
+          } catch {
+            /* noop */
+          }
+        } else {
+          // Some ABIs missing — retry so decoding self-heals without a reload.
+          retry = window.setTimeout(load, 30_000);
         }
       } catch (e) {
         if (!alive) return;
@@ -69,11 +72,14 @@ export function useAbis(): AbiState {
           loading: false,
           error: (e as Error).message,
         }));
+        retry = window.setTimeout(load, 30_000);
       }
-    })();
+    }
+    load();
 
     return () => {
       alive = false;
+      if (retry) clearTimeout(retry);
     };
   }, []);
 

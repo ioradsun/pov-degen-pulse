@@ -6,6 +6,7 @@ import { RhythmChart } from "@/components/pulse/RhythmChart";
 import { BeliefBoard } from "@/components/pulse/BeliefBoard";
 import { ActivityFeed } from "@/components/pulse/ActivityFeed";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
+import { DecodeBanner } from "@/components/pulse/DecodeBanner";
 import { useActivity } from "@/hooks/pov/useActivity";
 import { useBeliefs } from "@/hooks/pov/useBeliefs";
 import { useBeliefNames } from "@/hooks/pov/useBeliefNames";
@@ -75,6 +76,7 @@ function Pulse() {
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
       <PulseBar latestBlock={latestBlock} live={live} backfill={backfill} degen={degen} />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
+        <DecodeBanner events={events} abis={abis} live={live} />
         <StatGrid events={events} />
         <RhythmChart buckets={buckets} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">

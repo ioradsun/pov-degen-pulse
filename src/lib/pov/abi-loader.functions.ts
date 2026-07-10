@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
 // Loose ABI item shape — viem re-parses it on the client anyway.
-// Kept JSON-serializable so it can cross the server-fn RPC boundary.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AbiItem = Record<string, any>;
 
@@ -12,13 +11,116 @@ export interface AbiFetchResult {
   error?: string;
   isProxy: boolean;
   implementation?: string; // lowercase, when detected
+  source?: "etherscan" | "blockscout";
 }
 
 /**
- * Fetches verified ABIs from Etherscan v2 for a set of addresses on a chain.
- * If a contract is an EIP-1967 proxy, also resolves and fetches the
- * implementation ABI (per Etherscan's `getsourcecode` proxy detection).
+ * ABI resolution with no required config:
+ *   1. Blockscout (base.blockscout.com) — keyless, tried first
+ *   2. Etherscan v2 — only if ETHERSCAN_API_KEY is set
+ * Results are cached in server memory for 24h so every viewer shares them.
  */
+
+const cache = new Map<string, { at: number; result: AbiFetchResult }>();
+const CACHE_MS = 24 * 60 * 60 * 1000;
+
+function parseAbi(raw: string | undefined | null): AbiItem[] | null {
+  if (!raw || raw === "Contract source code not verified") return null;
+  try {
+    const parsed = JSON.parse(raw) as AbiItem[];
+    return Array.isArray(parsed) && parsed.length ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fromBlockscout(addr: string): Promise<AbiFetchResult> {
+  const base = "https://base.blockscout.com/api";
+  const out: AbiFetchResult = {
+    address: addr,
+    ok: false,
+    abi: null,
+    isProxy: false,
+    source: "blockscout",
+  };
+  try {
+    const sr = await fetch(`${base}?module=contract&action=getsourcecode&address=${addr}`);
+    const sj = (await sr.json()) as {
+      status: string;
+      result?: Array<{
+        ABI?: string;
+        IsProxy?: string;
+        Proxy?: string;
+        ImplementationAddress?: string;
+        Implementation?: string;
+      }>;
+    };
+    const entry = sj.status === "1" ? sj.result?.[0] : undefined;
+    if (entry) {
+      out.abi = parseAbi(entry.ABI);
+      out.isProxy = entry.IsProxy === "true" || entry.Proxy === "1";
+      const impl = (entry.ImplementationAddress || entry.Implementation || "").toLowerCase();
+      if (impl && impl !== "0x" && impl.length === 42) out.implementation = impl;
+    }
+    // Proxy with unusable ABI → pull the implementation's ABI.
+    if ((!out.abi || out.abi.length < 3) && out.implementation) {
+      const ir = await fetch(`${base}?module=contract&action=getabi&address=${out.implementation}`);
+      const ij = (await ir.json()) as { status: string; result?: string };
+      if (ij.status === "1") out.abi = parseAbi(ij.result) ?? out.abi;
+    }
+    out.ok = !!out.abi;
+    if (!out.ok) out.error = "not verified on Blockscout";
+  } catch (e) {
+    out.error = (e as Error).message;
+  }
+  return out;
+}
+
+async function fromEtherscan(
+  addr: string,
+  chainId: number,
+  apiKey: string,
+): Promise<AbiFetchResult> {
+  const base = "https://api.etherscan.io/v2/api";
+  const out: AbiFetchResult = {
+    address: addr,
+    ok: false,
+    abi: null,
+    isProxy: false,
+    source: "etherscan",
+  };
+  try {
+    const r = await fetch(
+      `${base}?chainid=${chainId}&module=contract&action=getsourcecode&address=${addr}&apikey=${apiKey}`,
+    );
+    const j = (await r.json()) as {
+      status: string;
+      message: string;
+      result?: Array<{ ABI?: string; Proxy?: string; Implementation?: string }>;
+    };
+    const entry = j.status === "1" ? j.result?.[0] : undefined;
+    if (!entry) {
+      out.error = j.message || "not verified";
+      return out;
+    }
+    out.isProxy = entry.Proxy === "1";
+    out.implementation = entry.Implementation?.toLowerCase() || undefined;
+    out.abi = parseAbi(entry.ABI);
+    if (out.isProxy && out.implementation && (!out.abi || out.abi.length < 3)) {
+      const ir = await fetch(
+        `${base}?chainid=${chainId}&module=contract&action=getabi&address=${out.implementation}&apikey=${apiKey}`,
+      );
+      const ij = (await ir.json()) as { status: string; result: string };
+      if (ij.status === "1") out.abi = parseAbi(ij.result) ?? out.abi;
+    }
+    out.ok = !!out.abi;
+    if (!out.ok) out.error = "no ABI available";
+  } catch (e) {
+    out.error = (e as Error).message;
+  }
+  return out;
+}
+
 export const fetchAbis = createServerFn({ method: "POST" })
   .inputValidator((input: { chainId: number; addresses: string[] }) => {
     if (!input || typeof input.chainId !== "number") {
@@ -34,94 +136,21 @@ export const fetchAbis = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<AbiFetchResult[]> => {
     const apiKey = process.env.ETHERSCAN_API_KEY;
-    if (!apiKey) {
-      return data.addresses.map((a) => ({
-        address: a,
-        ok: false,
-        abi: null,
-        error: "ETHERSCAN_API_KEY not configured",
-        isProxy: false,
-      }));
-    }
-
-    const base = "https://api.etherscan.io/v2/api";
     const results: AbiFetchResult[] = [];
 
-    // Serial fetch to stay well under 5 req/sec free-tier cap.
     for (const addr of data.addresses) {
-      try {
-        const srcUrl = `${base}?chainid=${data.chainId}&module=contract&action=getsourcecode&address=${addr}&apikey=${apiKey}`;
-        const r = await fetch(srcUrl);
-        const j = (await r.json()) as {
-          status: string;
-          message: string;
-          result?: Array<{
-            ABI?: string;
-            Proxy?: string;
-            Implementation?: string;
-          }>;
-        };
-        if (j.status !== "1" || !j.result?.length) {
-          results.push({
-            address: addr,
-            ok: false,
-            abi: null,
-            error: j.message || "not verified",
-            isProxy: false,
-          });
-          continue;
-        }
-        const entry = j.result[0];
-        const isProxy = entry.Proxy === "1";
-        const impl = entry.Implementation?.toLowerCase() || undefined;
-        const abiRaw = entry.ABI ?? "";
-        let abi: AbiItem[] | null = null;
-        if (abiRaw && abiRaw !== "Contract source code not verified") {
-          try {
-            abi = JSON.parse(abiRaw) as AbiItem[];
-          } catch {
-            abi = null;
-          }
-        }
-
-        // If proxy AND implementation is separately verified, fetch its ABI too
-        if (isProxy && impl && (!abi || abi.length < 3)) {
-          try {
-            const iUrl = `${base}?chainid=${data.chainId}&module=contract&action=getabi&address=${impl}&apikey=${apiKey}`;
-            const ir = await fetch(iUrl);
-            const ij = (await ir.json()) as {
-              status: string;
-              result: string;
-            };
-            if (ij.status === "1") {
-              try {
-                abi = JSON.parse(ij.result) as AbiItem[];
-              } catch {
-                /* keep original */
-              }
-            }
-          } catch {
-            /* noop */
-          }
-        }
-
-        results.push({
-          address: addr,
-          ok: !!abi,
-          abi,
-          isProxy,
-          implementation: impl,
-          error: abi ? undefined : "no ABI available",
-        });
-      } catch (e) {
-        results.push({
-          address: addr,
-          ok: false,
-          abi: null,
-          error: (e as Error).message,
-          isProxy: false,
-        });
+      const hit = cache.get(addr);
+      if (hit && hit.result.ok && Date.now() - hit.at < CACHE_MS) {
+        results.push(hit.result);
+        continue;
       }
+      // Blockscout first (keyless), Etherscan as backup when a key exists.
+      let result = await fromBlockscout(addr);
+      if (!result.ok && apiKey) {
+        result = await fromEtherscan(addr, data.chainId, apiKey);
+      }
+      if (result.ok) cache.set(addr, { at: Date.now(), result });
+      results.push(result);
     }
 
     return results;

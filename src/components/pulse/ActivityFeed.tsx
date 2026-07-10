@@ -44,11 +44,13 @@ const KIND_ICON: Record<string, string> = {
 };
 
 export function ActivityFeed({ events, names }: ActivityFeedProps) {
-  const rows = useMemo(
-    () =>
-      events.filter((e) => ["created", "buy", "sell", "boost"].includes(e.kind)).slice(0, FEED_CAP),
-    [events],
-  );
+  const rows = useMemo(() => {
+    const decoded = events.filter((e) => ["created", "buy", "sell", "boost"].includes(e.kind));
+    // If nothing decodes (e.g. ABIs unavailable), fall back to raw on-chain
+    // activity so the tape is never dead while the chain is busy.
+    const source = decoded.length ? decoded : events.filter((e) => e.kind !== "approval");
+    return source.slice(0, FEED_CAP);
+  }, [events]);
 
   return (
     <Panel title="Live tape" meta={`${rows.length} recent`} bodyClassName="p-0">
