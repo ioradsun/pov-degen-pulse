@@ -25,13 +25,15 @@ function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
   );
 }
 
-export function BeliefBoard({ beliefs, beliefTexts }: BeliefBoardProps) {
+export function BeliefBoard({ beliefs, beliefTexts, currency, ethUsd }: BeliefBoardProps) {
   const rows = [...beliefs]
     .sort((a, b) => (b.volumeWei > a.volumeWei ? 1 : b.volumeWei < a.volumeWei ? -1 : 0))
     .slice(0, 12);
+  const showUsd = currency === "usd" && ethUsd;
+  const meta = showUsd ? "ranked by USD in, last 24h" : "ranked by ETH in, last 24h";
 
   return (
-    <Panel title="What people believe" meta="ranked by ETH in, last 24h" bodyClassName="p-0">
+    <Panel title="What people believe" meta={meta} bodyClassName="p-0">
       {rows.length === 0 ? (
         <div className="p-6 text-center text-xs text-[var(--ink-dim)]">
           No belief activity in the last 24h yet. New beliefs will appear here the moment they're
