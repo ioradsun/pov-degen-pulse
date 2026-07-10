@@ -56,18 +56,24 @@ function wordToAddr(w: string | undefined): string | undefined {
  * Manual decoder for POV's three core trading events. No ABI exists for
  * these anywhere (impl/curve/token contracts are all unverified) — the
  * topic0 hashes and field offsets below were reverse engineered from raw
- * logs and cross-checked against real transactions (mint/burn amounts,
- * `name()` on the resulting tokens, fee-percentage sanity). See
- * POV_CORE_SIGS / POV_FEE_SIGS in constants.ts for how these were found.
+ * logs and cross-checked against real transactions: mint/burn amounts,
+ * `name()` on the resulting tokens, wallet balance deltas, and msg.value.
+ * Full evidence and tx hashes in VERIFICATION.md — every field here is
+ * either hard-confirmed or explicitly left unset, never guessed.
  *
- * Confirmed layout, all three events: topics[1] = marketId (uint256),
- * topics[2] = actor address.
- *   created: data = [strOff, strOff, strOff, yesToken, noToken, curve,
- *                     initialValueWei, 0, 0, (3x UUID strings — off-chain
- *                     content ids, NOT belief text)]
- *   buy:     data = [strOff, side(0=NO/1=YES), ethSpentWei, fee x6, (UUID)]
- *   sell:    data = [strOff, side(0=NO/1=YES), tokenAmount18dec,
- *                     ethProceedsWei, feeWei, (UUID)]
+ * topics[1] = marketId (uint256), topics[2] = actor address, all three.
+ *   created: data = [strOff x3, yesToken, noToken, curve, curveConstant,
+ *                     0, 0, (3x UUID strings — off-chain content ids,
+ *                     NOT belief text, and NOT real ETH — curveConstant
+ *                     is a fixed parameter, confirmed via msg.value=0)]
+ *   buy:     data = [strOff, side(0=NO/1=YES), tokenAmount18dec (CONFIRMED
+ *                     token mint amount, not ETH), words3-8 UNRESOLVED
+ *                     (not gross+fee — their sum exceeds msg.value in one
+ *                     sample), (UUID)]. Gross ETH comes from tx.value,
+ *                     attached as raw.txValueWei before this runs.
+ *   sell:    data = [strOff, side(0=NO/1=YES), tokenAmount18dec (CONFIRMED
+ *                     burn amount), ethProceedsWei (CONFIRMED via seller
+ *                     balance delta), feeWei, (UUID)]
  */
 function decodePovCore(raw: RawLog): DecodedEvent | null {
   const label = CONTRACT_LABELS[raw.address] ?? "Unknown";
@@ -76,6 +82,8 @@ function decodePovCore(raw: RawLog): DecodedEvent | null {
   const words = dataWords(raw.data);
 
   if (raw.topic0 === POV_CORE_SIGS.created) {
+    // word6 (~0.001 ETH) is a fixed curve constant, not ETH the creator
+    // actually paid — confirmed this tx's msg.value is 0. Not real volume.
     return {
       ...raw,
       contractLabel: label,
@@ -86,14 +94,18 @@ function decodePovCore(raw: RawLog): DecodedEvent | null {
       yesToken: wordToAddr(words[3]),
       noToken: wordToAddr(words[4]),
       curveAddress: wordToAddr(words[5]),
-      valueWei: wordToBigInt(words[6]),
     };
   }
 
   if (raw.topic0 === POV_CORE_SIGS.buy) {
-    const feeWei = words
-      .slice(3, 9)
-      .reduce((sum, w) => sum + wordToBigInt(w), 0n);
+    // Gross ETH spent is NOT in this event — confirmed via wallet balance
+    // delta, it only exists in the transaction's `value` field, fetched
+    // separately via fetchTxValues() and attached as raw.txValueWei before
+    // decode (see useActivity.ts). word2 is the belief-token amount minted
+    // (18dec), confirmed exact against the mint Transfer — it is NOT ETH,
+    // despite superficially looking like a plausible wei amount.
+    // words3-8 have unresolved semantics (see VERIFICATION.md); we do not
+    // guess a fee from them.
     return {
       ...raw,
       contractLabel: label,
@@ -102,8 +114,8 @@ function decodePovCore(raw: RawLog): DecodedEvent | null {
       from: actor,
       beliefId: marketId,
       yes: wordToBigInt(words[1]) === 1n,
-      valueWei: wordToBigInt(words[2]),
-      feeWei,
+      tokenAmountWei: wordToBigInt(words[2]),
+      valueWei: raw.txValueWei,
     };
   }
 

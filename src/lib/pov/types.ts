@@ -18,6 +18,8 @@ export interface RawLog {
   topics: string[];
   data: string;
   timestamp?: number;
+  /** Gross ETH for buys — not in the event itself, fetched from tx.value. */
+  txValueWei?: bigint;
   /** UI flash marker for freshly-seen logs. */
   _newUntil?: number;
 }

@@ -1,4 +1,4 @@
-import { rpc } from "./rpc";
+import { rpc, rpcBatch } from "./rpc";
 import { POV_TRACKED } from "./constants";
 import { hexToInt } from "./format";
 
@@ -97,6 +97,35 @@ export async function fetchLogsAdaptive(
       } else {
         chunk = Math.max(MIN_CHUNK, Math.floor(chunk / 2));
       }
+    }
+  }
+  return out;
+}
+
+const TX_VALUE_BATCH_SIZE = 40;
+
+/**
+ * Gross ETH spent on a POV buy is not in the TokensBought event at all —
+ * confirmed via wallet balance deltas (see VERIFICATION.md) — it only
+ * exists on the transaction itself. Fetches `tx.value` for a set of tx
+ * hashes in chunked batched RPC calls (one HTTP round trip per chunk
+ * instead of one per tx).
+ */
+export async function fetchTxValues(txHashes: string[]): Promise<Map<string, bigint>> {
+  const unique = [...new Set(txHashes)];
+  const out = new Map<string, bigint>();
+
+  for (let i = 0; i < unique.length; i += TX_VALUE_BATCH_SIZE) {
+    const chunk = unique.slice(i, i + TX_VALUE_BATCH_SIZE);
+    try {
+      const results = await rpcBatch<{ value: string } | null>(
+        chunk.map((hash) => ({ method: "eth_getTransactionByHash", params: [hash] })),
+      );
+      results.forEach((tx, idx) => {
+        if (tx?.value) out.set(chunk[idx], BigInt(tx.value));
+      });
+    } catch {
+      /* leave this chunk's values unresolved rather than failing the whole batch */
     }
   }
   return out;

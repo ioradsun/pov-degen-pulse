@@ -5,10 +5,12 @@ import {
   estimateTimestamp,
   fetchAnchor,
   fetchLogsAdaptive,
+  fetchTxValues,
   type BlockAnchor,
 } from "@/lib/pov/logs";
 import { rpc } from "@/lib/pov/rpc";
 import { hexToInt } from "@/lib/pov/format";
+import { POV_CORE_SIGS } from "@/lib/pov/constants";
 import type { DecodedEvent, RawLog } from "@/lib/pov/types";
 
 const HEAD_POLL_MS = 5_000;
@@ -41,7 +43,7 @@ export function useActivity(index?: EventAbiIndex): ActivityState {
     let alive = true;
     let timer: number | undefined;
 
-    function ingest(logs: RawLog[], flash: boolean) {
+    async function ingest(logs: RawLog[], flash: boolean) {
       const anchor = anchorRef.current;
       const fresh: RawLog[] = [];
       for (const l of logs) {
@@ -55,6 +57,25 @@ export function useActivity(index?: EventAbiIndex): ActivityState {
         });
       }
       if (!fresh.length) return;
+
+      // Gross ETH for a buy lives only in tx.value, not the event itself
+      // (see VERIFICATION.md) — fetch it in one batched call per ingest.
+      const buyTxHashes = fresh
+        .filter((l) => l.topic0 === POV_CORE_SIGS.buy)
+        .map((l) => l.txHash);
+      if (buyTxHashes.length) {
+        try {
+          const values = await fetchTxValues(buyTxHashes);
+          for (const l of fresh) {
+            const v = values.get(l.txHash);
+            if (v != null) l.txValueWei = v;
+          }
+        } catch {
+          /* leave unresolved — buy events just show no ETH figure */
+        }
+      }
+      if (!alive) return;
+
       const cutoff = Math.floor(Date.now() / 1000) - WINDOW_HOURS * 3600;
       setRawLogs((prev) =>
         [...prev, ...fresh]
@@ -75,7 +96,7 @@ export function useActivity(index?: EventAbiIndex): ActivityState {
           if (alive) setBackfill(pct);
         });
         if (!alive) return;
-        ingest(logs.map(normalizeLog), false);
+        await ingest(logs.map(normalizeLog), false);
         cursorRef.current = anchor.block;
         setBackfill(1);
         setLive(true);
@@ -102,7 +123,7 @@ export function useActivity(index?: EventAbiIndex): ActivityState {
         const logs = await fetchLogsAdaptive(cursorRef.current + 1, head);
         if (!alive) return;
         cursorRef.current = head;
-        ingest(logs.map(normalizeLog), true);
+        await ingest(logs.map(normalizeLog), true);
       } catch {
         /* failover handled inside rpc() */
       }

@@ -76,7 +76,10 @@ export const KNOWN_SIGS: Record<string, { name: string; kind: EventKind }> = {
  * events anywhere. These topic0 hashes and field layouts were reverse
  * engineered directly from on-chain logs (see events.ts `decodePovCore`)
  * and cross-checked against real transactions: minted/burned token amounts,
- * `name()` calls on the resulting tokens, and fee-percentage sanity checks.
+ * `name()` calls on the resulting tokens, and wallet balance deltas. Full
+ * evidence and tx hashes in VERIFICATION.md — plausibility/percentage
+ * checks alone previously produced a wrong field mapping, so every claim
+ * here is now backed by an exact match against real chain state.
  */
 export const POV_CORE_SIGS = {
   created: "0x3763381a96c90abffc097e48cddec39f4c2d156fbdf0505509ba2b71f8e2061e",

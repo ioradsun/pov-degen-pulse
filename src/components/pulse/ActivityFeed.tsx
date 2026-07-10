@@ -14,20 +14,20 @@ const FEED_CAP = 40;
 function describe(e: DecodedEvent): string {
   const belief = e.beliefText ?? (e.beliefId ? `Belief #${e.beliefId}` : "a belief");
   const side = e.yes == null ? "" : e.yes ? "YES" : "NO";
-  const eth = e.valueWei ? `${formatEth(e.valueWei, 4)} Ξ` : "";
+  const eth = e.valueWei ? `${formatEth(e.valueWei, 4)} Ξ` : null;
   switch (e.kind) {
     case "created":
       return `${shortAddr(e.from)} created "${belief}"`;
     case "buy":
-      return `${shortAddr(e.from)} bought ${side} on "${belief}" for ${eth}`;
+      return `${shortAddr(e.from)} bought ${side} on "${belief}"${eth ? ` for ${eth}` : ""}`;
     case "sell": {
-      const tokens = e.tokenAmountWei ? formatEth(e.tokenAmountWei, 2) : "";
-      return `${shortAddr(e.from)} sold ${tokens} ${side} on "${belief}" for ${eth}`;
+      const tokens = e.tokenAmountWei ? `${formatEth(e.tokenAmountWei, 2)} ` : "";
+      return `${shortAddr(e.from)} sold ${tokens}${side} on "${belief}"${eth ? ` for ${eth}` : ""}`;
     }
     case "boost":
       return `${shortAddr(e.from)} boosted "${belief}" with DEGEN`;
     case "fee":
-      return `${e.eventName}${e.valueWei ? ` — ${formatEth(e.valueWei, 4)} Ξ` : ""}`;
+      return `${e.eventName}${eth ? ` — ${eth}` : ""}`;
     default:
       return `${e.eventName} on ${e.contractLabel}`;
   }

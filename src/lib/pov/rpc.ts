@@ -88,3 +88,51 @@ export async function rpc<T = unknown>(method: string, params: unknown[]): Promi
   if (!anySuccess) state.consecutiveFailures++;
   throw lastErr ?? new Error("all RPCs failed");
 }
+
+/**
+ * Batched JSON-RPC — sends many calls in one HTTP request. Used for things
+ * like fetching `tx.value` for a page of buy events, where per-tx calls
+ * would otherwise multiply request count 1:1 with event count.
+ */
+export async function rpcBatch<T = unknown>(
+  calls: Array<{ method: string; params: unknown[] }>,
+): Promise<Array<T | undefined>> {
+  if (calls.length === 0) return [];
+  const ordered = [state.active, ...BASE_RPCS.filter((u) => u !== state.active)];
+  const ids = calls.map((_, i) => i);
+  let lastErr: Error | null = null;
+
+  for (const url of ordered) {
+    state.attempts++;
+    state.perEndpoint[url] ??= { s: 0, f: 0 };
+    try {
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          calls.map((c, i) => ({ jsonrpc: "2.0", id: ids[i], method: c.method, params: c.params })),
+        ),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = (await r.json()) as Array<{ id: number; result?: T; error?: { message: string } }>;
+      const byId = new Map(j.map((entry) => [entry.id, entry]));
+      const out = ids.map((id) => byId.get(id)?.result);
+      state.active = url;
+      state.successes++;
+      state.perEndpoint[url].s++;
+      state.lastSuccessAt = Date.now();
+      state.consecutiveFailures = 0;
+      notify();
+      return out;
+    } catch (e) {
+      lastErr = e as Error;
+      state.failures++;
+      state.perEndpoint[url].f++;
+      state.lastError = `${url.replace("https://", "")} · ${(e as Error).message}`;
+      state.lastErrorAt = Date.now();
+      notify();
+    }
+  }
+  state.consecutiveFailures++;
+  throw lastErr ?? new Error("all RPCs failed");
+}
