@@ -26,6 +26,7 @@ interface FeedRow {
   txHash: string;
   timestamp: number; // seconds
   usd?: number;
+  wei?: bigint;
   large: boolean;
 }
 
