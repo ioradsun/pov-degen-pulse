@@ -337,7 +337,18 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      headline_metrics: {
+        Args: { range_key: string }
+        Returns: {
+          active_traders: number
+          buy_volume_usd: number
+          creator_revenue_usd: number
+          degen_allocation_usd: number
+          new_beliefs: number
+        }[]
+      }
+      refresh_belief_stats: { Args: never; Returns: undefined }
+      update_lifecycle_stages: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
