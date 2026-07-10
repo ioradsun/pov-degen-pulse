@@ -330,7 +330,12 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             duration_ms: Date.now() - startedAt,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
+          const msg =
+            err instanceof Error
+              ? `${err.name}: ${err.message}${err.cause ? ` (cause: ${JSON.stringify(err.cause).slice(0, 200)})` : ""}`
+              : typeof err === "object"
+                ? JSON.stringify(err).slice(0, 500)
+                : String(err);
           await supabaseAdmin
             .from("indexer_state")
             .update({
