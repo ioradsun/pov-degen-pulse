@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PulseBar } from "@/components/pulse/PulseBar";
-import { StatGrid, computeStats } from "@/components/pulse/StatGrid";
+import { computeStats } from "@/components/pulse/StatGrid";
 import { StatGridApi } from "@/components/pulse/StatGridApi";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
 import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
