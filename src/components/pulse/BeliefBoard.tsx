@@ -1,11 +1,13 @@
 import { Panel } from "@/components/pov/primitives/Panel";
-import { formatEth, timeAgo } from "@/lib/pov/format";
+import { formatEth, formatUsd, timeAgo, type Currency } from "@/lib/pov/format";
 import type { BeliefRow } from "@/hooks/pov/useBeliefs";
 
 interface BeliefBoardProps {
   beliefs: BeliefRow[];
   /** beliefId -> resolved human text, from useBeliefTexts. */
   beliefTexts: Map<string, string>;
+  currency: Currency;
+  ethUsd?: number;
 }
 
 function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
@@ -23,13 +25,15 @@ function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
   );
 }
 
-export function BeliefBoard({ beliefs, beliefTexts }: BeliefBoardProps) {
+export function BeliefBoard({ beliefs, beliefTexts, currency, ethUsd }: BeliefBoardProps) {
   const rows = [...beliefs]
     .sort((a, b) => (b.volumeWei > a.volumeWei ? 1 : b.volumeWei < a.volumeWei ? -1 : 0))
     .slice(0, 12);
+  const showUsd = currency === "usd" && ethUsd;
+  const meta = showUsd ? "ranked by USD in, last 24h" : "ranked by ETH in, last 24h";
 
   return (
-    <Panel title="What people believe" meta="ranked by ETH in, last 24h" bodyClassName="p-0">
+    <Panel title="What people believe" meta={meta} bodyClassName="p-0">
       {rows.length === 0 ? (
         <div className="p-6 text-center text-xs text-[var(--ink-dim)]">
           No belief activity in the last 24h yet. New beliefs will appear here the moment they're
@@ -70,7 +74,9 @@ export function BeliefBoard({ beliefs, beliefTexts }: BeliefBoardProps) {
                 </div>
                 <div className="flex items-baseline gap-3 pl-6 sm:pl-0">
                   <span className="tabular-nums text-[13px] text-[var(--pov)]">
-                    {formatEth(b.volumeWei, 3)} Ξ
+                    {showUsd
+                      ? formatUsd((Number(b.volumeWei) / 1e18) * (ethUsd as number), 0)
+                      : `${formatEth(b.volumeWei, 3)} Ξ`}
                   </span>
                   <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                     {b.lastEventAt ? timeAgo(b.lastEventAt * 1000) : "—"}

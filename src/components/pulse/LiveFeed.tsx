@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
-import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
+import { formatEth, formatUsd, shortAddr, timeAgo, type Currency } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
 import type { DecodedEvent } from "@/lib/pov/types";
 import type { BeliefRow } from "@/hooks/pov/useBeliefs";
@@ -13,6 +13,7 @@ interface LiveFeedProps {
   ethUsd?: number;
   live: boolean;
   backfill: number;
+  currency: Currency;
 }
 
 /** Feed row derived from a DecodedEvent — the only shape the UI renders. */
@@ -25,6 +26,7 @@ interface FeedRow {
   txHash: string;
   timestamp: number; // seconds
   usd?: number;
+  wei?: bigint;
   large: boolean;
 }
 
@@ -114,6 +116,7 @@ function toRow(
       txHash: e.txHash,
       timestamp: ts,
       usd,
+      wei: wei ?? undefined,
       large: (usd ?? 0) >= LARGE_THRESHOLD_USD,
     };
   }
@@ -167,14 +170,23 @@ function Row({
   row,
   lifecycle,
   isNew,
+  currency,
 }: {
   row: FeedRow;
   lifecycle?: Lifecycle;
   isNew: boolean;
+  currency: Currency;
 }) {
   const [expanded, setExpanded] = useState(false);
   const isSell = row.kind === "YES_SELL" || row.kind === "NO_SELL";
-  const amount = row.usd != null ? formatUsd(row.usd, row.usd >= 100 ? 0 : 2) : null;
+  const amount =
+    currency === "eth"
+      ? row.wei != null
+        ? `${formatEth(row.wei, 4)} Ξ`
+        : null
+      : row.usd != null
+        ? formatUsd(row.usd, row.usd >= 100 ? 0 : 2)
+        : null;
   const label = row.large && !isSell ? `LARGE ${KIND_LABEL[row.kind]}` : KIND_LABEL[row.kind];
 
   return (
@@ -291,6 +303,7 @@ export function LiveFeed({
   ethUsd,
   live,
   backfill,
+  currency,
 }: LiveFeedProps) {
   const [largeOnly, setLargeOnly] = useState(false);
   const [queued, setQueued] = useState(0);
@@ -437,6 +450,7 @@ export function LiveFeed({
                   row={r}
                   lifecycle={r.beliefId ? lifecycles.get(r.beliefId) : undefined}
                   isNew={visibleIds.has(r.id)}
+                  currency={currency}
                 />
               ))}
             </ul>
