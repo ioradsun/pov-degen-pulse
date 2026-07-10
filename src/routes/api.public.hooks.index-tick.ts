@@ -24,6 +24,9 @@ const RPC_URLS = [
 
 const TRACKED_ADDRS = [
   POV_CONTRACTS.beliefMarketProxy.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.linearCurve.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.cpCurve.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.degenBoost.toLowerCase() as `0x${string}`,
 ];
 
 const CORE_TOPICS = [
