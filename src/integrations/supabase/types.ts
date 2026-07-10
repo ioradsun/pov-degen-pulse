@@ -77,6 +77,13 @@ export type Database = {
             foreignKeyName: "belief_stats_belief_id_fkey"
             columns: ["belief_id"]
             isOneToOne: true
+            referencedRelation: "behavioral_grid"
+            referencedColumns: ["belief_id"]
+          },
+          {
+            foreignKeyName: "belief_stats_belief_id_fkey"
+            columns: ["belief_id"]
+            isOneToOne: true
             referencedRelation: "beliefs"
             referencedColumns: ["belief_id"]
           },
@@ -241,6 +248,13 @@ export type Database = {
             foreignKeyName: "trades_belief_id_fkey"
             columns: ["belief_id"]
             isOneToOne: false
+            referencedRelation: "behavioral_grid"
+            referencedColumns: ["belief_id"]
+          },
+          {
+            foreignKeyName: "trades_belief_id_fkey"
+            columns: ["belief_id"]
+            isOneToOne: false
             referencedRelation: "beliefs"
             referencedColumns: ["belief_id"]
           },
@@ -281,7 +295,46 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      behavioral_grid: {
+        Row: {
+          belief_id: number | null
+          buy_volume_24h_usd: number | null
+          created_at: string | null
+          creator_address: string | null
+          creator_quality: number | null
+          delta_conviction_1h: number | null
+          distribution_gini: number | null
+          ignition_score: number | null
+          lifecycle_stage: string | null
+          momentum: number | null
+          split_pct: number | null
+          title: string | null
+          unique_wallets_24h: number | null
+          whale_activity_pct: number | null
+        }
+        Relationships: []
+      }
+      live_activity_events: {
+        Row: {
+          action: string | null
+          amount_usd: number | null
+          belief_id: number | null
+          belief_text: string | null
+          block_number: number | null
+          chain_id: number | null
+          event_id: string | null
+          event_timestamp: string | null
+          event_type: string | null
+          is_canonical: boolean | null
+          is_confirmed: boolean | null
+          log_index: number | null
+          payment_token_symbol: string | null
+          side: string | null
+          tx_hash: string | null
+          wallet_address: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
