@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/headline")({
         } as never);
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const row = Array.isArray(data) ? data[0] : data;
+        const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
         return Response.json(
           { range: parsed.data, ...(row ?? {}), computedAt: new Date().toISOString() },
           { headers: { "Cache-Control": "public, s-maxage=30" } },
