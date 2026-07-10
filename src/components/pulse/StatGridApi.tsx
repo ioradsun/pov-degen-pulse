@@ -10,6 +10,7 @@ const RANGES: { key: HeadlineMetrics["range"]; label: string }[] = [
   { key: "24h", label: "1D" },
   { key: "7d", label: "1W" },
   { key: "30d", label: "1M" },
+  { key: "all", label: "ALL" },
 ];
 
 const RANGE_TITLE: Record<HeadlineMetrics["range"], string> = {
@@ -17,6 +18,7 @@ const RANGE_TITLE: Record<HeadlineMetrics["range"], string> = {
   "24h": "POV · last 24 hours",
   "7d": "POV · last 7 days",
   "30d": "POV · last 30 days",
+  all: "POV · all time",
 };
 
 export function StatGridApi() {
