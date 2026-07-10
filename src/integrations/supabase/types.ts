@@ -341,6 +341,27 @@ export type Database = {
         }
         Relationships: []
       }
+      indexer_health: {
+        Row: {
+          chain_id: number | null
+          last_error: string | null
+          last_indexed_at: string | null
+          last_indexed_block: number | null
+        }
+        Insert: {
+          chain_id?: number | null
+          last_error?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number | null
+        }
+        Update: {
+          chain_id?: number | null
+          last_error?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number | null
+        }
+        Relationships: []
+      }
       live_activity_events: {
         Row: {
           action: string | null
@@ -372,15 +393,6 @@ export type Database = {
           creator_revenue_usd: number
           degen_allocation_usd: number
           new_beliefs: number
-        }[]
-      }
-      indexer_health: {
-        Args: never
-        Returns: {
-          chain_id: number
-          last_error: string
-          last_indexed_at: string
-          last_indexed_block: number
         }[]
       }
       refresh_belief_stats: { Args: never; Returns: undefined }
