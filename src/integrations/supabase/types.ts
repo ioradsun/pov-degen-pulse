@@ -14,7 +14,271 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      belief_stats: {
+        Row: {
+          belief_id: number
+          buy_velocity_15m: number
+          buy_velocity_baseline: number
+          buy_volume_1h_usd: number
+          buy_volume_24h_usd: number
+          buy_volume_30d_usd: number
+          buy_volume_7d_usd: number
+          computed_at: string
+          delta_conviction_1h: number | null
+          distribution_gini: number | null
+          ignition_score: number | null
+          lifecycle_since: string
+          lifecycle_stage: string
+          momentum: number | null
+          split_pct: number | null
+          unique_wallets_24h: number
+          whale_activity_pct: number | null
+        }
+        Insert: {
+          belief_id: number
+          buy_velocity_15m?: number
+          buy_velocity_baseline?: number
+          buy_volume_1h_usd?: number
+          buy_volume_24h_usd?: number
+          buy_volume_30d_usd?: number
+          buy_volume_7d_usd?: number
+          computed_at: string
+          delta_conviction_1h?: number | null
+          distribution_gini?: number | null
+          ignition_score?: number | null
+          lifecycle_since?: string
+          lifecycle_stage?: string
+          momentum?: number | null
+          split_pct?: number | null
+          unique_wallets_24h?: number
+          whale_activity_pct?: number | null
+        }
+        Update: {
+          belief_id?: number
+          buy_velocity_15m?: number
+          buy_velocity_baseline?: number
+          buy_volume_1h_usd?: number
+          buy_volume_24h_usd?: number
+          buy_volume_30d_usd?: number
+          buy_volume_7d_usd?: number
+          computed_at?: string
+          delta_conviction_1h?: number | null
+          distribution_gini?: number | null
+          ignition_score?: number | null
+          lifecycle_since?: string
+          lifecycle_stage?: string
+          momentum?: number | null
+          split_pct?: number | null
+          unique_wallets_24h?: number
+          whale_activity_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "belief_stats_belief_id_fkey"
+            columns: ["belief_id"]
+            isOneToOne: true
+            referencedRelation: "beliefs"
+            referencedColumns: ["belief_id"]
+          },
+        ]
+      }
+      beliefs: {
+        Row: {
+          belief_id: number
+          chain_id: number
+          created_at: string
+          created_block: number
+          creation_log_index: number
+          creation_tx_hash: string
+          creator_address: string
+          hydrated_at: string | null
+          hydration_attempts: number
+          is_ai_generated: boolean
+          market_address: string
+          raw_title_source: string | null
+          title: string | null
+        }
+        Insert: {
+          belief_id: number
+          chain_id?: number
+          created_at: string
+          created_block: number
+          creation_log_index: number
+          creation_tx_hash: string
+          creator_address: string
+          hydrated_at?: string | null
+          hydration_attempts?: number
+          is_ai_generated?: boolean
+          market_address: string
+          raw_title_source?: string | null
+          title?: string | null
+        }
+        Update: {
+          belief_id?: number
+          chain_id?: number
+          created_at?: string
+          created_block?: number
+          creation_log_index?: number
+          creation_tx_hash?: string
+          creator_address?: string
+          hydrated_at?: string | null
+          hydration_attempts?: number
+          is_ai_generated?: boolean
+          market_address?: string
+          raw_title_source?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      creators: {
+        Row: {
+          avg_market_volume_usd: number
+          creator_address: string
+          first_market_at: string
+          markets_created: number
+          quality_score: number | null
+          retention_rate: number | null
+          total_earned_usd: number
+        }
+        Insert: {
+          avg_market_volume_usd?: number
+          creator_address: string
+          first_market_at: string
+          markets_created?: number
+          quality_score?: number | null
+          retention_rate?: number | null
+          total_earned_usd?: number
+        }
+        Update: {
+          avg_market_volume_usd?: number
+          creator_address?: string
+          first_market_at?: string
+          markets_created?: number
+          quality_score?: number | null
+          retention_rate?: number | null
+          total_earned_usd?: number
+        }
+        Relationships: []
+      }
+      price_ticks: {
+        Row: {
+          block_timestamp: string
+          source: string
+          token: string
+          usd_price: number
+        }
+        Insert: {
+          block_timestamp: string
+          source: string
+          token: string
+          usd_price: number
+        }
+        Update: {
+          block_timestamp?: string
+          source?: string
+          token?: string
+          usd_price?: number
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          action: string
+          belief_id: number
+          block_number: number
+          block_timestamp: string
+          chain_id: number
+          event_id: string
+          gross_amount_native: number
+          gross_amount_usd: number | null
+          is_canonical: boolean
+          is_confirmed: boolean
+          log_index: number
+          payment_token: string
+          payment_token_symbol: string
+          side: string
+          tx_hash: string
+          wallet_address: string
+        }
+        Insert: {
+          action: string
+          belief_id: number
+          block_number: number
+          block_timestamp: string
+          chain_id?: number
+          event_id: string
+          gross_amount_native: number
+          gross_amount_usd?: number | null
+          is_canonical?: boolean
+          is_confirmed?: boolean
+          log_index: number
+          payment_token: string
+          payment_token_symbol: string
+          side: string
+          tx_hash: string
+          wallet_address: string
+        }
+        Update: {
+          action?: string
+          belief_id?: number
+          block_number?: number
+          block_timestamp?: string
+          chain_id?: number
+          event_id?: string
+          gross_amount_native?: number
+          gross_amount_usd?: number | null
+          is_canonical?: boolean
+          is_confirmed?: boolean
+          log_index?: number
+          payment_token?: string
+          payment_token_symbol?: string
+          side?: string
+          tx_hash?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_belief_id_fkey"
+            columns: ["belief_id"]
+            isOneToOne: false
+            referencedRelation: "beliefs"
+            referencedColumns: ["belief_id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          first_seen_at: string
+          last_seen_at: string
+          realized_pnl_usd: number | null
+          tier: string
+          total_volume_usd: number
+          trade_count: number
+          unique_beliefs_traded: number
+          wallet_address: string
+        }
+        Insert: {
+          first_seen_at: string
+          last_seen_at: string
+          realized_pnl_usd?: number | null
+          tier?: string
+          total_volume_usd?: number
+          trade_count?: number
+          unique_beliefs_traded?: number
+          wallet_address: string
+        }
+        Update: {
+          first_seen_at?: string
+          last_seen_at?: string
+          realized_pnl_usd?: number | null
+          tier?: string
+          total_volume_usd?: number
+          trade_count?: number
+          unique_beliefs_traded?: number
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
