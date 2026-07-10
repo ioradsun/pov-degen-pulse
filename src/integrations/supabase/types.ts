@@ -167,6 +167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      indexer_state: {
+        Row: {
+          chain_id: number
+          last_error: string | null
+          last_error_at: string | null
+          last_indexed_at: string | null
+          last_indexed_block: number
+          updated_at: string
+        }
+        Insert: {
+          chain_id: number
+          last_error?: string | null
+          last_error_at?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: number
+          last_error?: string | null
+          last_error_at?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_ticks: {
         Row: {
           block_timestamp: string
