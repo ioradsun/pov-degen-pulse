@@ -74,7 +74,9 @@ export function BeliefBoard({ beliefs, beliefTexts, currency, ethUsd }: BeliefBo
                 </div>
                 <div className="flex items-baseline gap-3 pl-6 sm:pl-0">
                   <span className="tabular-nums text-[13px] text-[var(--pov)]">
-                    {formatEth(b.volumeWei, 3)} Ξ
+                    {showUsd
+                      ? formatUsd((Number(b.volumeWei) / 1e18) * (ethUsd as number), 0)
+                      : `${formatEth(b.volumeWei, 3)} Ξ`}
                   </span>
                   <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                     {b.lastEventAt ? timeAgo(b.lastEventAt * 1000) : "—"}
