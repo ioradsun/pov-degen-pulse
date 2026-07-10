@@ -90,7 +90,6 @@ function Pulse() {
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         <DecodeBanner events={events} abis={abis} live={live} />
         <StatGridApi />
-        <StatGrid events={events} currency={currency} ethUsd={ethUsd} />
         <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
