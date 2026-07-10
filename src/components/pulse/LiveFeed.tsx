@@ -170,14 +170,23 @@ function Row({
   row,
   lifecycle,
   isNew,
+  currency,
 }: {
   row: FeedRow;
   lifecycle?: Lifecycle;
   isNew: boolean;
+  currency: Currency;
 }) {
   const [expanded, setExpanded] = useState(false);
   const isSell = row.kind === "YES_SELL" || row.kind === "NO_SELL";
-  const amount = row.usd != null ? formatUsd(row.usd, row.usd >= 100 ? 0 : 2) : null;
+  const amount =
+    currency === "eth"
+      ? row.wei != null
+        ? `${formatEth(row.wei, 4)} Ξ`
+        : null
+      : row.usd != null
+        ? formatUsd(row.usd, row.usd >= 100 ? 0 : 2)
+        : null;
   const label = row.large && !isSell ? `LARGE ${KIND_LABEL[row.kind]}` : KIND_LABEL[row.kind];
 
   return (
