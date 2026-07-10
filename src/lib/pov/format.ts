@@ -39,6 +39,23 @@ export function formatUsd(n: number, digits = 2): string {
   })}`;
 }
 
+export type Currency = "usd" | "eth";
+
+/** DEGEN trades at sub-cent prices, so USD is always shown to 5 decimal places (e.g. $0.00151). */
+export function formatDegenPrice(n: number | null | undefined, currency: Currency): string {
+  if (n == null || !Number.isFinite(n)) return currency === "usd" ? "$0.00000" : "0 Ξ";
+  if (currency === "usd") return `$${n.toFixed(5)}`;
+  if (n === 0) return "0 Ξ";
+  if (Math.abs(n) < 1e-8) return `${n.toExponential(2)} Ξ`;
+  return `${n.toFixed(8)} Ξ`;
+}
+
+/** Converts a USD-denominated DEGEN price into ETH using the live ETH/USD rate. */
+export function usdToEthPrice(usd: number | null | undefined, ethUsd: number | undefined): number | null {
+  if (usd == null || !ethUsd || ethUsd <= 0) return null;
+  return usd / ethUsd;
+}
+
 export function formatCompact(n: number): string {
   if (!Number.isFinite(n)) return "0";
   if (Math.abs(n) >= 1e9) return `${(n / 1e9).toFixed(2)}B`;

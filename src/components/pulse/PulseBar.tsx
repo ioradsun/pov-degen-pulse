@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { formatCompact, formatPct, formatUsd } from "@/lib/pov/format";
+import { formatCompact, formatDegenPrice, formatPct, formatUsd, type Currency } from "@/lib/pov/format";
 import type { DegenSnapshot } from "@/lib/pov/types";
 
 interface PulseBarProps {
@@ -7,9 +7,18 @@ interface PulseBarProps {
   live: boolean;
   backfill: number;
   degen: DegenSnapshot | null;
+  currency: Currency;
+  onCurrencyChange: (c: Currency) => void;
 }
 
-export function PulseBar({ latestBlock, live, backfill, degen }: PulseBarProps) {
+export function PulseBar({
+  latestBlock,
+  live,
+  backfill,
+  degen,
+  currency,
+  onCurrencyChange,
+}: PulseBarProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
@@ -37,7 +46,32 @@ export function PulseBar({ latestBlock, live, backfill, degen }: PulseBarProps) 
             <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--degen)]">
               $DEGEN
             </span>
-            <span className="text-sm text-[var(--ink)]">${degen.priceUsd.toFixed(5)}</span>
+            <span className="text-sm text-[var(--ink)]">
+              {formatDegenPrice(currency === "usd" ? degen.priceUsd : degen.priceEth, currency)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onCurrencyChange(currency === "usd" ? "eth" : "usd")}
+              className="flex items-center border border-[var(--line)] text-[10px] uppercase tracking-[0.14em] text-[var(--ink-dim)] transition-colors hover:border-[var(--degen)] hover:text-[var(--degen)]"
+              title="Switch price currency"
+            >
+              <span
+                className={clsx(
+                  "px-1.5 py-[1px]",
+                  currency === "usd" && "bg-[var(--degen)] text-[var(--bg)]",
+                )}
+              >
+                USD
+              </span>
+              <span
+                className={clsx(
+                  "px-1.5 py-[1px]",
+                  currency === "eth" && "bg-[var(--degen)] text-[var(--bg)]",
+                )}
+              >
+                ETH
+              </span>
+            </button>
             <span
               className={clsx(
                 "text-xs",

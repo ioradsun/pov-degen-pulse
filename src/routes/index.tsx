@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { PulseBar } from "@/components/pulse/PulseBar";
 import { StatGrid, computeStats } from "@/components/pulse/StatGrid";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
@@ -15,7 +15,7 @@ import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { useAbis } from "@/hooks/pov/useAbis";
 import { buildAbiIndex } from "@/lib/pov/events";
 import { buildPulse } from "@/lib/pov/pulse";
-import { formatEth } from "@/lib/pov/format";
+import { formatEth, type Currency } from "@/lib/pov/format";
 
 export const Route = createFileRoute("/")({
   component: Pulse,
@@ -30,6 +30,7 @@ function Pulse() {
   const beliefs = useBeliefs(events);
   const beliefTexts = useBeliefTexts(beliefs);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
+  const [currency, setCurrency] = useState<Currency>("usd");
 
   const buckets = useMemo(() => buildPulse(events, ohlc, 24), [events, ohlc]);
 
@@ -75,11 +76,18 @@ function Pulse() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
-      <PulseBar latestBlock={latestBlock} live={live} backfill={backfill} degen={degen} />
+      <PulseBar
+        latestBlock={latestBlock}
+        live={live}
+        backfill={backfill}
+        degen={degen}
+        currency={currency}
+        onCurrencyChange={setCurrency}
+      />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         <DecodeBanner events={events} abis={abis} live={live} />
         <StatGrid events={events} />
-        <RhythmChart buckets={buckets} />
+        <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <BeliefBoard beliefs={beliefs} beliefTexts={beliefTexts} />
