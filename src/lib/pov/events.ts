@@ -313,17 +313,23 @@ export function decodeLog(raw: RawLog, index?: EventAbiIndex): DecodedEvent {
               ? args.recipient.toLowerCase()
               : undefined;
 
-        // Prefer ethSpent/proceeds for POV events; fall back to generic names.
+        // Prefer explicitly ETH-named args; "amount"/"tokens" are last
+        // resort since they may be a different unit entirely (e.g.
+        // BoostPurchased's "amount" is DEGEN, confirmed in VERIFICATION.md).
         let valueWei: bigint | undefined;
         for (const k of [
           "ethSpent",
-          "proceeds",
-          "value",
-          "cost",
+          "ethIn",
+          "ethOut",
           "ethAmount",
+          "ethValue",
+          "proceeds",
+          "payment",
+          "cost",
+          "value",
           "wei",
+          "deposit",
           "amount",
-          "tokens",
         ]) {
           const v = args[k];
           if (typeof v === "bigint") {

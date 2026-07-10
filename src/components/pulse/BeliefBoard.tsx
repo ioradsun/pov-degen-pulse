@@ -4,6 +4,8 @@ import type { BeliefRow } from "@/hooks/pov/useBeliefs";
 
 interface BeliefBoardProps {
   beliefs: BeliefRow[];
+  /** beliefId -> resolved human text, from useBeliefTexts. */
+  beliefTexts: Map<string, string>;
 }
 
 function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
@@ -21,7 +23,7 @@ function ConvictionBar({ buys, sells }: { buys: number; sells: number }) {
   );
 }
 
-export function BeliefBoard({ beliefs }: BeliefBoardProps) {
+export function BeliefBoard({ beliefs, beliefTexts }: BeliefBoardProps) {
   const rows = [...beliefs]
     .sort((a, b) => (b.volumeWei > a.volumeWei ? 1 : b.volumeWei < a.volumeWei ? -1 : 0))
     .slice(0, 12);
@@ -36,7 +38,7 @@ export function BeliefBoard({ beliefs }: BeliefBoardProps) {
       ) : (
         <ul className="divide-y divide-[var(--line-dim)]">
           {rows.map((b, i) => {
-            const name = b.text;
+            const name = b.text ?? beliefTexts.get(b.id);
             return (
               <li
                 key={b.id}
