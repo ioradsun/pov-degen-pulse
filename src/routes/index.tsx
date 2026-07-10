@@ -4,7 +4,7 @@ import { PulseBar } from "@/components/pulse/PulseBar";
 import { StatGrid, computeStats } from "@/components/pulse/StatGrid";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
 import { BeliefBoard } from "@/components/pulse/BeliefBoard";
-import { ActivityFeed } from "@/components/pulse/ActivityFeed";
+import { LiveFeed } from "@/components/pulse/LiveFeed";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { DecodeBanner } from "@/components/pulse/DecodeBanner";
 import { useActivity } from "@/hooks/pov/useActivity";
@@ -89,12 +89,19 @@ function Pulse() {
         <StatGrid events={events} />
         <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            <BeliefBoard beliefs={beliefs} beliefTexts={beliefTexts} />
+          <div className="lg:col-span-8">
+            <LiveFeed
+              events={events}
+              beliefs={beliefs}
+              beliefTexts={beliefTexts}
+              ethUsd={ethUsd}
+              live={live}
+              backfill={backfill}
+            />
           </div>
-          <div className="flex flex-col gap-4 lg:col-span-5">
+          <div className="flex flex-col gap-4 lg:col-span-4">
             <InsightPanel snapshot={insightSnapshot} ready={live} />
-            <ActivityFeed events={events} beliefTexts={beliefTexts} ethUsd={ethUsd} />
+            <BeliefBoard beliefs={beliefs} beliefTexts={beliefTexts} />
           </div>
         </div>
       </main>
