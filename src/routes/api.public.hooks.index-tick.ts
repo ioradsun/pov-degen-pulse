@@ -324,11 +324,29 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           }
 
           if (beliefsToInsert.length) {
-            const { error } = await supabaseAdmin
-              .from("beliefs")
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .upsert(beliefsToInsert as any, { onConflict: "belief_id", ignoreDuplicates: true });
-            if (error) throw error;
+            // Split real created events from backfill stubs. Real events
+            // must overwrite any pre-existing stub row (so created_at gets
+            // corrected). Stubs must NEVER overwrite an existing row.
+            const realCreated = beliefsToInsert.filter(
+              (b) => b.raw_title_source !== "backfill_stub",
+            );
+            const stubs = beliefsToInsert.filter(
+              (b) => b.raw_title_source === "backfill_stub",
+            );
+            if (realCreated.length) {
+              const { error } = await supabaseAdmin
+                .from("beliefs")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .upsert(realCreated as any, { onConflict: "belief_id" });
+              if (error) throw error;
+            }
+            if (stubs.length) {
+              const { error } = await supabaseAdmin
+                .from("beliefs")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .upsert(stubs as any, { onConflict: "belief_id", ignoreDuplicates: true });
+              if (error) throw error;
+            }
           }
           if (creatorsToUpsert.size) {
             const rows = Array.from(creatorsToUpsert.entries()).map(([addr, { at }]) => ({
