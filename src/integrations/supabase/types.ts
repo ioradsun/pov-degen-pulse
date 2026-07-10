@@ -374,6 +374,15 @@ export type Database = {
           new_beliefs: number
         }[]
       }
+      indexer_health: {
+        Args: never
+        Returns: {
+          chain_id: number
+          last_error: string
+          last_indexed_at: string
+          last_indexed_block: number
+        }[]
+      }
       refresh_belief_stats: { Args: never; Returns: undefined }
       update_lifecycle_stages: { Args: never; Returns: undefined }
     }
