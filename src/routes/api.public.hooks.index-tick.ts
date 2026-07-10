@@ -103,12 +103,26 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           if (stateErr) throw stateErr;
           const cursor = BigInt(stateRow?.last_indexed_block ?? 0);
 
-          const client = createPublicClient({
-            chain: base,
-            transport: http(rpcUrl, { timeout: 8000 }),
-          });
+          // Helper: try each RPC until one succeeds. Records last error.
+          async function withRpc<T>(fn: (url: string) => Promise<T>): Promise<T> {
+            let lastErr: unknown;
+            for (const url of rpcList) {
+              try {
+                return await fn(url);
+              } catch (e) {
+                lastErr = e;
+              }
+            }
+            throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+          }
 
-          const head = await client.getBlockNumber();
+          const head = await withRpc(async (url) => {
+            const c = createPublicClient({
+              chain: base,
+              transport: http(url, { timeout: 8000 }),
+            });
+            return c.getBlockNumber();
+          });
           const safeHead = head - BigInt(CONFIRMATIONS);
 
           const fromBlock =
@@ -129,19 +143,33 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
               ? fromBlock + BigInt(MAX_BLOCK_RANGE)
               : safeHead;
 
-          // 3. Fetch logs for the three core events across the range.
-          const logs: Log[] = await client.getLogs({
-            address: TRACKED_ADDRS,
-            fromBlock,
-            toBlock,
-            events: [], // topic filter below covers this
+          // 3. Fetch logs — pass topic0 as an OR filter so the RPC does the work.
+          // viem's `topics` accepts a 2D array: outer = positional, inner = OR.
+          const logs: Log[] = await withRpc(async (url) => {
+            const c = createPublicClient({
+              chain: base,
+              transport: http(url, { timeout: 10000 }),
+            });
+            return c.request({
+              method: "eth_getLogs",
+              params: [
+                {
+                  address: TRACKED_ADDRS,
+                  topics: [CORE_TOPICS],
+                  fromBlock: `0x${fromBlock.toString(16)}`,
+                  toBlock: `0x${toBlock.toString(16)}`,
+                },
+              ],
+            } as never) as Promise<Log[]>;
           });
-          // Post-filter by our 3 core topic0 hashes (viem's `events` needs
-          // parsed AbiEvents; we filter by raw topic0 to stay ABI-free).
-          const povLogs = logs.filter((l) => {
-            const t0 = (l.topics?.[0] ?? "").toLowerCase();
-            return CORE_TOPICS.some((t) => t.toLowerCase() === t0);
+          const povLogs = logs; // already filtered by topic0 server-side
+
+          // Track which RPC succeeded for enrichment (tx.value + block ts).
+          const enrichClient = createPublicClient({
+            chain: base,
+            transport: http(rpcList[0], { timeout: 8000 }),
           });
+
 
           // 4. Enrich: unique tx.value + block timestamps for the touched blocks.
           const uniqueTxs = Array.from(
