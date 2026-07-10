@@ -10,7 +10,7 @@ const CHAIN_ID = 8453;
 const LOCK_KEY = 987001; // stable advisory-lock id for this indexer
 const MAX_BLOCK_RANGE = 800; // publicnode allows large ranges; keep conservative
 const CONFIRMATIONS = 1;
-const START_LOOKBACK = 50; // on first run, start at (head - N)
+const START_LOOKBACK = 43_200; // ~24h at 2s Base blocks — one-shot backfill on cursor reset
 
 // RPCs, in order. First one wins; on getLogs range errors we auto-shrink.
 // Alchemy free tier caps getLogs at 10 blocks, so we prefer public RPCs
