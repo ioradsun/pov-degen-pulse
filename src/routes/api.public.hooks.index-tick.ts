@@ -10,7 +10,7 @@ const CHAIN_ID = 8453;
 const LOCK_KEY = 987001; // stable advisory-lock id for this indexer
 const MAX_BLOCK_RANGE = 800; // publicnode allows large ranges; keep conservative
 const CONFIRMATIONS = 1;
-const START_LOOKBACK = 50; // on first run, start at (head - N)
+const START_LOOKBACK = 43_200; // ~24h at 2s Base blocks — one-shot backfill on cursor reset
 
 // RPCs, in order. First one wins; on getLogs range errors we auto-shrink.
 // Alchemy free tier caps getLogs at 10 blocks, so we prefer public RPCs
@@ -24,6 +24,9 @@ const RPC_URLS = [
 
 const TRACKED_ADDRS = [
   POV_CONTRACTS.beliefMarketProxy.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.linearCurve.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.cpCurve.toLowerCase() as `0x${string}`,
+  POV_CONTRACTS.degenBoost.toLowerCase() as `0x${string}`,
 ];
 
 const CORE_TOPICS = [
@@ -321,11 +324,29 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           }
 
           if (beliefsToInsert.length) {
-            const { error } = await supabaseAdmin
-              .from("beliefs")
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .upsert(beliefsToInsert as any, { onConflict: "belief_id", ignoreDuplicates: true });
-            if (error) throw error;
+            // Split real created events from backfill stubs. Real events
+            // must overwrite any pre-existing stub row (so created_at gets
+            // corrected). Stubs must NEVER overwrite an existing row.
+            const realCreated = beliefsToInsert.filter(
+              (b) => b.raw_title_source !== "backfill_stub",
+            );
+            const stubs = beliefsToInsert.filter(
+              (b) => b.raw_title_source === "backfill_stub",
+            );
+            if (realCreated.length) {
+              const { error } = await supabaseAdmin
+                .from("beliefs")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .upsert(realCreated as any, { onConflict: "belief_id" });
+              if (error) throw error;
+            }
+            if (stubs.length) {
+              const { error } = await supabaseAdmin
+                .from("beliefs")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .upsert(stubs as any, { onConflict: "belief_id", ignoreDuplicates: true });
+              if (error) throw error;
+            }
           }
           if (creatorsToUpsert.size) {
             const rows = Array.from(creatorsToUpsert.entries()).map(([addr, { at }]) => ({
