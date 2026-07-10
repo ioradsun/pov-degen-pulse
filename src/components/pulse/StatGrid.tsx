@@ -43,17 +43,23 @@ export function computeStats(events: DecodedEvent[]): PovStats {
   return s;
 }
 
-export function StatGrid({ events }: StatGridProps) {
+export function StatGrid({ events, currency, ethUsd }: StatGridProps) {
   const s = useMemo(() => computeStats(events), [events]);
   const convictionPct =
     s.buys + s.sells > 0 ? Math.round((s.buys / (s.buys + s.sells)) * 100) : null;
+
+  const ethAmount = Number(s.volumeWei) / 1e18;
+  const showUsd = currency === "usd" && ethUsd;
+  const volumeDisplay = showUsd
+    ? formatUsd(ethAmount * (ethUsd as number), 0)
+    : `${formatEth(s.volumeWei, 3)} Ξ`;
 
   return (
     <Panel title="POV · last 24 hours" bodyClassName="p-0">
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-6">
         <Metric
-          label="ETH transacted"
-          value={<span className="text-[var(--pov)]">{formatEth(s.volumeWei, 3)}</span>}
+          label={showUsd ? "USD transacted" : "ETH transacted"}
+          value={<span className="text-[var(--pov)]">{volumeDisplay}</span>}
           sub="buys + sells"
         />
         <Metric label="Beliefs created" value={s.created} sub="new markets" />
