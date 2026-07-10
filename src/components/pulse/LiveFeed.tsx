@@ -116,6 +116,7 @@ function toRow(
       txHash: e.txHash,
       timestamp: ts,
       usd,
+      wei: wei ?? undefined,
       large: (usd ?? 0) >= LARGE_THRESHOLD_USD,
     };
   }
