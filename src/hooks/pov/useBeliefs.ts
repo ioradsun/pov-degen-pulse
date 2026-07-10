@@ -70,7 +70,7 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
         r.boostCount++;
         r.lastBoostAt = e.timestamp;
       }
-      if (e.valueWei) r.volumeWei += e.valueWei;
+      if (e.valueWei && (e.kind === "buy" || e.kind === "sell")) r.volumeWei += e.valueWei;
       if (e.from) r._addrs.add(e.from);
       if (e.to) r._addrs.add(e.to);
       const curveArg = e.curveAddress;

@@ -70,5 +70,31 @@ export const KNOWN_SIGS: Record<string, { name: string; kind: EventKind }> = {
   },
 };
 
+/**
+ * The BeliefMarket impl, curve, and belief-token contracts are NOT verified
+ * on Blockscout or Basescan — there is no public ABI for POV's core trading
+ * events anywhere. These topic0 hashes and field layouts were reverse
+ * engineered directly from on-chain logs (see events.ts `decodePovCore`)
+ * and cross-checked against real transactions: minted/burned token amounts,
+ * `name()` calls on the resulting tokens, and fee-percentage sanity checks.
+ */
+export const POV_CORE_SIGS = {
+  created: "0x3763381a96c90abffc097e48cddec39f4c2d156fbdf0505509ba2b71f8e2061e",
+  buy: "0xcae03a4e04b999ff7f42e7303a8573cdd0a983dfeb874f33cf93610321f66a18",
+  sell: "0xa7796618d9cf132535c50e8284b93c935eef8ca99f5db7412d708026a1f05931",
+} as const;
+
+/**
+ * Auxiliary fee/referral events on the proxy. Signatures resolved via the
+ * OpenChain public hash registry (crowd-sourced, matches by hash so the
+ * name/types are reliable even though this specific contract isn't verified).
+ */
+export const POV_FEE_SIGS = {
+  referralCreated: "0x59401499203519cc0aa58c644591c8538c041ff58fa97c7d2f767b945e5dd3fd",
+  feesClaimed: "0x9493e5bbe4e8e0ac67284469a2d677403d0378a85a59e341d3abc433d0d9a209",
+  referralFeePaid: "0x2d86eaa89c1bf59c51148f13caf015070dfcb55b273a8bfca944b38b2cf60809",
+  referralFeesClaimed: "0x48da114cbb70df50064204591b1e4de39bbf228aed4dd83eb18c1957dc4c5119",
+} as const;
+
 export const BASESCAN_TX = (h: string) => `https://basescan.org/tx/${h}`;
 export const BASESCAN_ADDR = (a: string) => `https://basescan.org/address/${a}`;

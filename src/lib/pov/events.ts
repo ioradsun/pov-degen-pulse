@@ -1,5 +1,11 @@
 import { decodeEventLog, toEventSelector, type AbiEvent } from "viem";
-import { CONTRACT_LABELS, KNOWN_SIGS, POV_CONTRACTS } from "./constants";
+import {
+  CONTRACT_LABELS,
+  KNOWN_SIGS,
+  POV_CONTRACTS,
+  POV_CORE_SIGS,
+  POV_FEE_SIGS,
+} from "./constants";
 import { hexToBigInt, hexToInt } from "./format";
 import type { AbiFetchResult } from "./abi-loader.functions";
 import type { DecodedEvent, EventKind, RawLog } from "./types";
@@ -28,6 +34,131 @@ export function normalizeLog(l: RpcLog): RawLog {
 function topicToAddr(t: string | undefined): string | undefined {
   if (!t || t.length < 42) return undefined;
   return `0x${t.slice(-40)}`.toLowerCase();
+}
+
+/** Splits a 0x-prefixed data blob into 32-byte (64 hex char) words. */
+function dataWords(data: string): string[] {
+  const hex = data.startsWith("0x") ? data.slice(2) : data;
+  const out: string[] = [];
+  for (let i = 0; i + 64 <= hex.length; i += 64) out.push(hex.slice(i, i + 64));
+  return out;
+}
+
+function wordToBigInt(w: string | undefined): bigint {
+  return w ? BigInt(`0x${w}`) : 0n;
+}
+
+function wordToAddr(w: string | undefined): string | undefined {
+  return w ? `0x${w.slice(-40)}`.toLowerCase() : undefined;
+}
+
+/**
+ * Manual decoder for POV's three core trading events. No ABI exists for
+ * these anywhere (impl/curve/token contracts are all unverified) — the
+ * topic0 hashes and field offsets below were reverse engineered from raw
+ * logs and cross-checked against real transactions (mint/burn amounts,
+ * `name()` on the resulting tokens, fee-percentage sanity). See
+ * POV_CORE_SIGS / POV_FEE_SIGS in constants.ts for how these were found.
+ *
+ * Confirmed layout, all three events: topics[1] = marketId (uint256),
+ * topics[2] = actor address.
+ *   created: data = [strOff, strOff, strOff, yesToken, noToken, curve,
+ *                     initialValueWei, 0, 0, (3x UUID strings — off-chain
+ *                     content ids, NOT belief text)]
+ *   buy:     data = [strOff, side(0=NO/1=YES), ethSpentWei, fee x6, (UUID)]
+ *   sell:    data = [strOff, side(0=NO/1=YES), tokenAmount18dec,
+ *                     ethProceedsWei, feeWei, (UUID)]
+ */
+function decodePovCore(raw: RawLog): DecodedEvent | null {
+  const label = CONTRACT_LABELS[raw.address] ?? "Unknown";
+  const marketId = raw.topics[1] ? hexToInt(raw.topics[1]).toString() : undefined;
+  const actor = topicToAddr(raw.topics[2]);
+  const words = dataWords(raw.data);
+
+  if (raw.topic0 === POV_CORE_SIGS.created) {
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName: "MarketCreated",
+      kind: "created",
+      from: actor,
+      beliefId: marketId,
+      yesToken: wordToAddr(words[3]),
+      noToken: wordToAddr(words[4]),
+      curveAddress: wordToAddr(words[5]),
+      valueWei: wordToBigInt(words[6]),
+    };
+  }
+
+  if (raw.topic0 === POV_CORE_SIGS.buy) {
+    const feeWei = words
+      .slice(3, 9)
+      .reduce((sum, w) => sum + wordToBigInt(w), 0n);
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName: "TokensBought",
+      kind: "buy",
+      from: actor,
+      beliefId: marketId,
+      yes: wordToBigInt(words[1]) === 1n,
+      valueWei: wordToBigInt(words[2]),
+      feeWei,
+    };
+  }
+
+  if (raw.topic0 === POV_CORE_SIGS.sell) {
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName: "TokensSold",
+      kind: "sell",
+      from: actor,
+      beliefId: marketId,
+      yes: wordToBigInt(words[1]) === 1n,
+      tokenAmountWei: wordToBigInt(words[2]),
+      valueWei: wordToBigInt(words[3]),
+      feeWei: wordToBigInt(words[4]),
+    };
+  }
+
+  if (raw.topic0 === POV_FEE_SIGS.referralCreated) {
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName: "ReferralCreated",
+      kind: "fee",
+      from: topicToAddr(raw.topics[1]),
+      to: topicToAddr(raw.topics[2]),
+    };
+  }
+
+  if (raw.topic0 === POV_FEE_SIGS.feesClaimed || raw.topic0 === POV_FEE_SIGS.referralFeesClaimed) {
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName:
+        raw.topic0 === POV_FEE_SIGS.feesClaimed ? "FeesClaimed" : "ReferralFeesClaimed",
+      kind: "fee",
+      from: topicToAddr(raw.topics[1]),
+      valueWei: wordToBigInt(words[0]),
+    };
+  }
+
+  if (raw.topic0 === POV_FEE_SIGS.referralFeePaid) {
+    return {
+      ...raw,
+      contractLabel: label,
+      eventName: "ReferralFeePaid",
+      kind: "fee",
+      from: topicToAddr(raw.topics[1]),
+      to: topicToAddr(raw.topics[2]),
+      beliefId: raw.topics[3] ? hexToInt(raw.topics[3]).toString() : undefined,
+      valueWei: wordToBigInt(words[0]),
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -124,6 +255,11 @@ export function buildAbiIndex(results: AbiFetchResult[]): EventAbiIndex {
 
 export function decodeLog(raw: RawLog, index?: EventAbiIndex): DecodedEvent {
   const label = CONTRACT_LABELS[raw.address] ?? "Unknown";
+
+  // POV's core trading events have no ABI anywhere (see decodePovCore) —
+  // check these hardcoded, verified signatures before anything else.
+  const core = decodePovCore(raw);
+  if (core) return core;
 
   // Try ABI-based decode first
   if (index) {

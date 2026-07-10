@@ -9,7 +9,6 @@ import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { DecodeBanner } from "@/components/pulse/DecodeBanner";
 import { useActivity } from "@/hooks/pov/useActivity";
 import { useBeliefs } from "@/hooks/pov/useBeliefs";
-import { useBeliefNames } from "@/hooks/pov/useBeliefNames";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { useAbis } from "@/hooks/pov/useAbis";
@@ -28,7 +27,6 @@ function Pulse() {
   const { snapshot: degen } = useDegenPrice();
   const { bars: ohlc } = useDegenOhlc(24);
   const beliefs = useBeliefs(events);
-  const names = useBeliefNames(beliefs);
 
   const buckets = useMemo(() => buildPulse(events, ohlc, 24), [events, ohlc]);
 
@@ -45,7 +43,7 @@ function Pulse() {
         uniqueTraders: s.traders,
       },
       topBeliefs: beliefs.slice(0, 15).map((b) => ({
-        belief: names.get(b.id) ?? `#${b.id}`,
+        belief: b.text ?? `#${b.id}`,
         buys: b.totalBuys,
         sells: b.totalSells,
         ethVolume: formatEth(b.volumeWei, 4),
@@ -70,7 +68,7 @@ function Pulse() {
           }
         : null,
     });
-  }, [events, beliefs, names, buckets, degen]);
+  }, [events, beliefs, buckets, degen]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
@@ -81,11 +79,11 @@ function Pulse() {
         <RhythmChart buckets={buckets} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <BeliefBoard beliefs={beliefs} names={names} />
+            <BeliefBoard beliefs={beliefs} />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-5">
             <InsightPanel snapshot={insightSnapshot} ready={live} />
-            <ActivityFeed events={events} names={names} />
+            <ActivityFeed events={events} />
           </div>
         </div>
       </main>

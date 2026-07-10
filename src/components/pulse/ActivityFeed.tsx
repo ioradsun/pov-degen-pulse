@@ -7,23 +7,27 @@ import type { DecodedEvent } from "@/lib/pov/types";
 
 interface ActivityFeedProps {
   events: DecodedEvent[];
-  names: Map<string, string>;
 }
 
 const FEED_CAP = 40;
 
-function describe(e: DecodedEvent, name?: string): string {
-  const belief = name ?? (e.beliefId ? `Belief #${e.beliefId}` : "a belief");
+function describe(e: DecodedEvent): string {
+  const belief = e.beliefText ?? (e.beliefId ? `Belief #${e.beliefId}` : "a belief");
+  const side = e.yes == null ? "" : e.yes ? "YES" : "NO";
   const eth = e.valueWei ? `${formatEth(e.valueWei, 4)} Ξ` : "";
   switch (e.kind) {
     case "created":
-      return `New belief created — "${belief}"`;
+      return `${shortAddr(e.from)} created "${belief}"`;
     case "buy":
-      return `${shortAddr(e.from)} invested ${eth} in "${belief}"`;
-    case "sell":
-      return `${shortAddr(e.from)} exited ${eth} from "${belief}"`;
+      return `${shortAddr(e.from)} bought ${side} on "${belief}" for ${eth}`;
+    case "sell": {
+      const tokens = e.tokenAmountWei ? formatEth(e.tokenAmountWei, 2) : "";
+      return `${shortAddr(e.from)} sold ${tokens} ${side} on "${belief}" for ${eth}`;
+    }
     case "boost":
       return `${shortAddr(e.from)} boosted "${belief}" with DEGEN`;
+    case "fee":
+      return `${e.eventName}${e.valueWei ? ` — ${formatEth(e.valueWei, 4)} Ξ` : ""}`;
     default:
       return `${e.eventName} on ${e.contractLabel}`;
   }
@@ -34,6 +38,7 @@ const KIND_STYLE: Record<string, string> = {
   buy: "text-[var(--up)]",
   sell: "text-[var(--down)]",
   boost: "text-[var(--boost)]",
+  fee: "text-[var(--ink-faint)]",
 };
 
 const KIND_ICON: Record<string, string> = {
@@ -41,11 +46,14 @@ const KIND_ICON: Record<string, string> = {
   buy: "▲",
   sell: "▼",
   boost: "⚡",
+  fee: "·",
 };
 
-export function ActivityFeed({ events, names }: ActivityFeedProps) {
+export function ActivityFeed({ events }: ActivityFeedProps) {
   const rows = useMemo(() => {
-    const decoded = events.filter((e) => ["created", "buy", "sell", "boost"].includes(e.kind));
+    const decoded = events.filter((e) =>
+      ["created", "buy", "sell", "boost", "fee"].includes(e.kind),
+    );
     // If nothing decodes (e.g. ABIs unavailable), fall back to raw on-chain
     // activity so the tape is never dead while the chain is busy.
     const source = decoded.length ? decoded : events.filter((e) => e.kind !== "approval");
@@ -62,7 +70,6 @@ export function ActivityFeed({ events, names }: ActivityFeedProps) {
         <ul className="max-h-[420px] divide-y divide-[var(--line-dim)] overflow-y-auto">
           {rows.map((e) => {
             const isNew = e._newUntil != null && e._newUntil > Date.now();
-            const name = e.beliefId ? names.get(e.beliefId) : undefined;
             return (
               <li
                 key={`${e.txHash}:${e.logIndex}`}
@@ -79,9 +86,9 @@ export function ActivityFeed({ events, names }: ActivityFeedProps) {
                   target="_blank"
                   rel="noreferrer"
                   className="min-w-0 flex-1 truncate text-[var(--ink)] hover:text-[var(--pov)]"
-                  title={describe(e, name)}
+                  title={describe(e)}
                 >
-                  {describe(e, name)}
+                  {describe(e)}
                 </a>
                 <span className="shrink-0 tabular-nums text-[10px] text-[var(--ink-faint)]">
                   {e.timestamp ? timeAgo(e.timestamp * 1000) : ""}
