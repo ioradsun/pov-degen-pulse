@@ -1,0 +1,126 @@
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface FeedEvent {
+  event_id: string;
+  chain_id: number;
+  tx_hash: string;
+  log_index: number;
+  block_number: number;
+  event_timestamp: string;
+  event_type: "new_belief" | "yes_buy" | "no_buy" | "yes_sell" | "no_sell";
+  action: "buy" | "sell" | null;
+  side: "yes" | "no" | null;
+  belief_id: number;
+  belief_text: string | null;
+  wallet_address: string;
+  amount_usd: number | null;
+  payment_token_symbol: string | null;
+  is_confirmed: boolean;
+  is_canonical: boolean;
+}
+
+export interface HeadlineMetrics {
+  range: "1h" | "24h" | "7d" | "30d";
+  buy_volume_usd?: number;
+  active_traders?: number;
+  new_beliefs?: number;
+  creator_revenue_usd?: number;
+  degen_allocation_usd?: number;
+  computedAt: string;
+}
+
+export interface GridRow {
+  belief_id: number;
+  title: string | null;
+  creator_address: string;
+  created_at: string;
+  buy_volume_24h_usd: number;
+  split_pct: number | null;
+  ignition_score: number | null;
+  momentum: number | null;
+  whale_activity_pct: number | null;
+  distribution_gini: number | null;
+  delta_conviction_1h: number | null;
+  lifecycle_stage: string;
+  unique_wallets_24h: number;
+  creator_quality: number | null;
+}
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`${path} → ${res.status}`);
+  return (await res.json()) as T;
+}
+
+export function useApiFeed(opts: { largeOnly?: boolean; limit?: number } = {}) {
+  const { largeOnly = false, limit = 100 } = opts;
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  if (largeOnly) params.set("large", "true");
+  return useQuery({
+    queryKey: ["pov", "feed", largeOnly, limit],
+    queryFn: () =>
+      fetchJson<{ events: FeedEvent[]; nextCursor: string | null }>(
+        `/api/public/feed?${params.toString()}`,
+      ),
+    refetchInterval: 15_000,
+    staleTime: 5_000,
+  });
+}
+
+export function useApiHeadline(range: HeadlineMetrics["range"] = "24h") {
+  return useQuery({
+    queryKey: ["pov", "headline", range],
+    queryFn: () => fetchJson<HeadlineMetrics>(`/api/public/headline?range=${range}`),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+export function useApiGrid(sort = "ignition", limit = 12) {
+  return useQuery({
+    queryKey: ["pov", "grid", sort, limit],
+    queryFn: () =>
+      fetchJson<{ rows: GridRow[] }>(`/api/public/grid?sort=${sort}&limit=${limit}`),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+/** Subscribe once to Postgres changes and invalidate the POV queries. */
+export function usePulseRealtime() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const channel = supabase
+      .channel("pov-pulse")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "trades" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["pov", "feed"] });
+          qc.invalidateQueries({ queryKey: ["pov", "headline"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "beliefs" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["pov", "feed"] });
+          qc.invalidateQueries({ queryKey: ["pov", "headline"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "belief_stats" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["pov", "grid"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+}
