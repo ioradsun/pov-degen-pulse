@@ -9,6 +9,8 @@ export interface BeliefRow {
   id: string;
   /** Yes-token contract address, when known (from MarketCreated). */
   yesToken?: string;
+  /** No-token contract address, when known (from MarketCreated). */
+  noToken?: string;
   curve: Curve;
   createdBlock: number;
   createdAt?: number;
@@ -62,6 +64,7 @@ export function useBeliefs(events: DecodedEvent[]): BeliefRow[] {
         r.createdBlock = e.block;
         r.createdAt = e.timestamp;
         if (e.yesToken) r.yesToken = e.yesToken;
+        if (e.noToken) r.noToken = e.noToken;
       }
       if (!r.text && e.beliefText) r.text = e.beliefText;
       if (e.kind === "buy") r.totalBuys++;

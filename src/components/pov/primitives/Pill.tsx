@@ -9,6 +9,7 @@ const KIND_STYLES: Record<EventKind, string> = {
   transfer: "text-[var(--ink-dim)] border-[var(--line)]",
   approval: "text-[var(--ink-dim)] border-[var(--line)]",
   admin: "text-[var(--info)] border-[var(--info)]/40",
+  fee: "text-[var(--boost)] border-[var(--boost)]/40",
   unknown: "text-[var(--ink-faint)] border-[var(--line)]",
 };
 

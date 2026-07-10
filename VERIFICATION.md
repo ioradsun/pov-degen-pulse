@@ -147,3 +147,37 @@ All three are emitted by the proxy. `topics[1]` = marketId (uint256),
   breakdown.
 - Belief text source (pov.co API) is unknown and blocks the "belief text
   visible in feed" acceptance criterion.
+
+## Resolution: belief text source (2026-07-10)
+
+pov.co's homepage (`https://pov.co/`) is server-rendered and embeds a JSON
+blob listing every shown market's `title`, `slug`, and — critically — its
+`onChainMarketId`, which is exactly the marketId our on-chain events carry
+in `topics[1]`. Confirmed by hand: fetched the raw homepage HTML and found
+`onChainMarketId":"282"`, `"469"`, `"203"`, `"133"` etc. each paired with a
+real, well-formed belief title (e.g. `133` → "Will holding 1M $DEGEN change
+your life?"), matching markets we'd already observed on-chain. That numeric
+id is a direct, reliable join key — no address or UUID matching needed.
+
+Two other join strategies were tried by hand against the real site first
+and confirmed NOT to work, so implementation deliberately avoids them:
+- **Matching a belief's on-chain yes/no token address against 0x addresses
+  found in its pov.co page's HTML.** A sample market page
+  (`/markets/can-money-buy-happiness-1`) embeds 5 addresses, but
+  `eth_getCode` on all 5 returns `0x` — zero bytecode on Base. They're
+  unrelated (wallet/analytics/infra references), not the belief tokens.
+- **Matching the 3 UUIDs from MarketCreated against UUIDs found on the
+  page.** These looked promising (14 UUIDs appear on a single market page)
+  until cross-referencing: they're `agentId`s for AI personas (e.g.
+  `"agentId":"0f40a3db-...","agentUsername":"Notclementetv_"`) that post
+  opinions across *many* different markets — the same agentId shows up
+  under `onChainMarketId":"59"`, `"403"`, and others. Not a per-market
+  content id at all.
+
+Implementation: `src/lib/pov/povSite.functions.ts` (server fn) fetches
+pov.co's homepage, regex-extracts every `(title, onChainMarketId)` pair
+from the embedded JSON, and caches the map server-side (60s TTL on
+refetch) so every viewer shares one scrape. One request currently
+resolves ~59 markets. Coverage is biased toward recently-active markets
+(older ones may fall off the homepage listing and stay unresolved,
+showing "Belief #NNN" honestly rather than nothing).

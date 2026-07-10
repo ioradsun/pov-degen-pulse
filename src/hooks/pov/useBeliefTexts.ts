@@ -1,62 +1,81 @@
-import { useEffect, useMemo, useState } from "react";
-import { resolveBeliefTextsFromMarket } from "@/lib/pov/beliefText";
-import type { AbiFetchResult } from "@/lib/pov/abi-loader.functions";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchPovTexts } from "@/lib/pov/povSite.functions";
 import type { BeliefRow } from "@/hooks/pov/useBeliefs";
 
 /**
- * One map of beliefId -> human text, merged from every source we have,
- * in priority order:
- *   1. Text emitted in event args (free — already decoded onto BeliefRow.text)
- *   2. Market contract getter markets(id)/getBelief(id) via Multicall3
+ * beliefId -> human belief text, merged in priority order:
+ *   1. Text emitted in event args (free — already decoded onto BeliefRow.text).
+ *      Dead in practice today (MarketCreated only carries agent-id UUIDs,
+ *      confirmed in VERIFICATION.md) but kept in case that ever changes.
+ *   2. pov.co (server fn) — the only source that actually works right now.
+ *      See povSite.functions.ts for why event args and token name() don't.
  *
- * Deliberately does NOT fall back to the belief token's name() — confirmed
- * in VERIFICATION.md that it only ever returns a placeholder like
- * "Belief YES #246", not the real statement. Showing that as if it were
- * content is worse than showing "Belief #NNN" honestly.
+ * Brand-new beliefs may not be on pov.co's homepage listing for a few
+ * seconds, so unresolved ids are retried every 60s instead of given up on.
  */
-export function useBeliefTexts(
-  beliefs: BeliefRow[],
-  abiResults: AbiFetchResult[],
-): Map<string, string> {
+export function useBeliefTexts(beliefs: BeliefRow[]): Map<string, string> {
   const [resolved, setResolved] = useState<Map<string, string>>(new Map());
+  const resolvedRef = useRef(resolved);
+  resolvedRef.current = resolved;
+  const inFlight = useRef(false);
 
-  // Source 1: event-carried text (synchronous).
   const fromEvents = useMemo(() => {
     const m = new Map<string, string>();
     for (const b of beliefs) if (b.text) m.set(b.id, b.text);
     return m;
   }, [beliefs]);
 
-  const missingKey = beliefs
-    .filter((b) => !fromEvents.has(b.id))
+  const wantedKey = beliefs
+    .filter((b) => !b.text && /^\d+$/.test(b.id))
     .map((b) => b.id)
     .sort()
     .join(",");
-  const abisReady = abiResults.some((r) => r.ok);
 
   useEffect(() => {
-    if (!missingKey || !abisReady) return;
+    if (!wantedKey) return;
     let alive = true;
-    const missing = missingKey.split(",").filter(Boolean);
+    let timer: number | undefined;
 
-    resolveBeliefTextsFromMarket(abiResults, missing).then((fromMarket) => {
-      if (!alive || !fromMarket.size) return;
-      setResolved((prev) => {
-        const merged = new Map(prev);
-        for (const [k, v] of fromMarket) merged.set(k, v);
-        return merged;
-      });
-    });
+    async function resolve() {
+      if (inFlight.current) return;
+      const marketIds = wantedKey.split(",").filter((id) => !resolvedRef.current.has(id));
+      if (!marketIds.length) return;
 
+      inFlight.current = true;
+      try {
+        const texts = await fetchPovTexts({ data: { marketIds } });
+        if (!alive) return;
+        const entries = Object.entries(texts);
+        if (entries.length) {
+          setResolved((prev) => {
+            const next = new Map(prev);
+            for (const [id, t] of entries) next.set(id, t);
+            return next;
+          });
+        }
+        // Anything still unresolved (brand-new belief not yet listed on
+        // pov.co, or one that's fallen off the homepage) — retry gently.
+        if (entries.length < marketIds.length && alive) {
+          timer = window.setTimeout(resolve, 60_000) as unknown as number;
+        }
+      } catch {
+        if (alive) timer = window.setTimeout(resolve, 60_000) as unknown as number;
+      } finally {
+        inFlight.current = false;
+      }
+    }
+
+    // Short delay so a burst of newly discovered beliefs batches into one call.
+    timer = window.setTimeout(resolve, 800) as unknown as number;
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [missingKey, abisReady]);
+  }, [wantedKey]);
 
   return useMemo(() => {
     const m = new Map(resolved);
-    for (const [k, v] of fromEvents) m.set(k, v); // event text wins
+    for (const [k, v] of fromEvents) m.set(k, v); // event text wins if it ever exists
     return m;
   }, [fromEvents, resolved]);
 }

@@ -28,7 +28,7 @@ function Pulse() {
   const { snapshot: degen } = useDegenPrice();
   const { bars: ohlc } = useDegenOhlc(24);
   const beliefs = useBeliefs(events);
-  const beliefTexts = useBeliefTexts(beliefs, abis.results);
+  const beliefTexts = useBeliefTexts(beliefs);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
 
   const buckets = useMemo(() => buildPulse(events, ohlc, 24), [events, ohlc]);
