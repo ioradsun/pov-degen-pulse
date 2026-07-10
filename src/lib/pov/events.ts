@@ -167,6 +167,10 @@ function decodePovCore(raw: RawLog): DecodedEvent | null {
  */
 function classifyEventName(name: string): EventKind {
   const n = name.toLowerCase();
+  // Check "boost" first — e.g. BoostPurchased contains "purchase" and would
+  // otherwise misclassify as "buy", pulling its DEGEN-denominated amount
+  // into ETH trade volume.
+  if (n.includes("boost")) return "boost";
   if (n.includes("created") || n.includes("launched")) return "created";
   if (
     n.includes("bought") ||
@@ -178,7 +182,6 @@ function classifyEventName(name: string): EventKind {
     return "buy";
   if (n.includes("sold") || n.includes("sell") || n.includes("redeem") || n.includes("burn"))
     return "sell";
-  if (n.includes("boost")) return "boost";
   if (n === "transfer") return "transfer";
   if (n === "approval") return "approval";
   if (n.includes("upgrade") || n.includes("admin") || n.includes("owner") || n === "initialized")
