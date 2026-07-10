@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 
+const STALL_THRESHOLD_SEC = 60;
+
 export const Route = createFileRoute("/api/public/health")({
   server: {
     handlers: {
@@ -27,9 +29,32 @@ export const Route = createFileRoute("/api/public/health")({
             .maybeSingle(),
         ]);
 
+        // Indexer state is service-role-only, so we call an RPC that exposes
+        // just the two fields we need for a public health check.
+        const { data: idxRow } = await supabase.rpc("indexer_health" as never);
+        const idx = (idxRow as {
+          chain_id?: number;
+          last_indexed_block?: number;
+          last_indexed_at?: string | null;
+          last_error?: string | null;
+        } | null) ?? null;
+
         const beliefs_total = total.count ?? 0;
         const beliefs_hydrated = hydrated.count ?? 0;
         const latest = (latestTrade.data as { block_timestamp?: string } | null)?.block_timestamp;
+
+        const secondsSinceIndex = idx?.last_indexed_at
+          ? Math.floor((Date.now() - new Date(idx.last_indexed_at).getTime()) / 1000)
+          : null;
+
+        let writer_status: "ok" | "stalled" | "starting" | "no writer connected";
+        if (!idx || idx.last_indexed_block === 0) {
+          writer_status = beliefs_total === 0 ? "no writer connected" : "starting";
+        } else if (secondsSinceIndex != null && secondsSinceIndex > STALL_THRESHOLD_SEC) {
+          writer_status = "stalled";
+        } else {
+          writer_status = "ok";
+        }
 
         return Response.json({
           beliefs_total,
@@ -41,7 +66,16 @@ export const Route = createFileRoute("/api/public/health")({
             : null,
           last_stats_refresh:
             (latestStats.data as { computed_at?: string } | null)?.computed_at ?? null,
-          writer_status: beliefs_total === 0 ? "no writer connected" : "ok",
+          indexer: idx
+            ? {
+                chain_id: idx.chain_id,
+                last_indexed_block: idx.last_indexed_block,
+                last_indexed_at: idx.last_indexed_at ?? null,
+                seconds_since_last_index: secondsSinceIndex,
+                last_error: idx.last_error ?? null,
+              }
+            : null,
+          writer_status,
         });
       },
     },
