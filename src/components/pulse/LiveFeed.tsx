@@ -303,6 +303,7 @@ export function LiveFeed({
   ethUsd,
   live,
   backfill,
+  currency,
 }: LiveFeedProps) {
   const [largeOnly, setLargeOnly] = useState(false);
   const [queued, setQueued] = useState(0);
