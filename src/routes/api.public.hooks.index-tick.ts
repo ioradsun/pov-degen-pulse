@@ -78,13 +78,10 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           });
         }
 
-        const rpcUrl = process.env.ALCHEMY_BASE_RPC_URL;
-        if (!rpcUrl) {
-          return Response.json(
-            { error: "ALCHEMY_BASE_RPC_URL not configured" },
-            { status: 500 },
-          );
-        }
+        const rpcOverride = process.env.ALCHEMY_BASE_RPC_URL;
+        // If user set an override, still keep the public RPCs as fallbacks
+        // for getLogs (Alchemy free tier limits ranges to 10 blocks).
+        const rpcList = rpcOverride ? [rpcOverride, ...RPC_URLS] : RPC_URLS;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
