@@ -29,9 +29,11 @@ export const Route = createFileRoute("/api/public/health")({
             .maybeSingle(),
         ]);
 
-        // Indexer state is service-role-only, so we call an RPC that exposes
-        // just the two fields we need for a public health check.
-        const { data: idxRow } = await supabase.rpc("indexer_health" as never);
+        // Indexer state exposed via a narrow view (chain, block, ts, error).
+        const { data: idxRow } = await supabase
+          .from("indexer_health" as never)
+          .select("*")
+          .maybeSingle();
         const idx = (idxRow as {
           chain_id?: number;
           last_indexed_block?: number;
