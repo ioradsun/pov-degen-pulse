@@ -14,6 +14,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
+import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
 import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
   path: '/api/public/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksIndexTickRoute = ApiPublicHooksIndexTickRouteImport.update({
+  id: '/api/public/hooks/index-tick',
+  path: '/api/public/hooks/index-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBeliefIdRoute = ApiPublicBeliefIdRouteImport.update({
   id: '/api/public/belief/$id',
   path: '/api/public/belief/$id',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
+  '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/index-tick'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/index-tick'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/public/headline'
     | '/api/public/health'
     | '/api/public/belief/$id'
+    | '/api/public/hooks/index-tick'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
+  ApiPublicHooksIndexTickRoute: typeof ApiPublicHooksIndexTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/index-tick': {
+      id: '/api/public/hooks/index-tick'
+      path: '/api/public/hooks/index-tick'
+      fullPath: '/api/public/hooks/index-tick'
+      preLoaderRoute: typeof ApiPublicHooksIndexTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/belief/$id': {
       id: '/api/public/belief/$id'
       path: '/api/public/belief/$id'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
+  ApiPublicHooksIndexTickRoute: ApiPublicHooksIndexTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

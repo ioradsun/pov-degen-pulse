@@ -248,7 +248,8 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           if (beliefsToInsert.length) {
             const { error } = await supabaseAdmin
               .from("beliefs")
-              .upsert(beliefsToInsert, { onConflict: "belief_id", ignoreDuplicates: true });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .upsert(beliefsToInsert as any, { onConflict: "belief_id", ignoreDuplicates: true });
             if (error) throw error;
           }
           if (creatorsToUpsert.size) {
@@ -266,7 +267,8 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           if (tradesToInsert.length) {
             const { error } = await supabaseAdmin
               .from("trades")
-              .upsert(tradesToInsert, { onConflict: "event_id", ignoreDuplicates: true });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .upsert(tradesToInsert as any, { onConflict: "event_id", ignoreDuplicates: true });
             if (error) throw error;
           }
 
