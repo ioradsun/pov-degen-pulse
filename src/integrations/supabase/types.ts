@@ -167,6 +167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      indexer_state: {
+        Row: {
+          chain_id: number
+          last_error: string | null
+          last_error_at: string | null
+          last_indexed_at: string | null
+          last_indexed_block: number
+          updated_at: string
+        }
+        Insert: {
+          chain_id: number
+          last_error?: string | null
+          last_error_at?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: number
+          last_error?: string | null
+          last_error_at?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_ticks: {
         Row: {
           block_timestamp: string
@@ -311,6 +338,27 @@ export type Database = {
           title: string | null
           unique_wallets_24h: number | null
           whale_activity_pct: number | null
+        }
+        Relationships: []
+      }
+      indexer_health: {
+        Row: {
+          chain_id: number | null
+          last_error: string | null
+          last_indexed_at: string | null
+          last_indexed_block: number | null
+        }
+        Insert: {
+          chain_id?: number | null
+          last_error?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number | null
+        }
+        Update: {
+          chain_id?: number | null
+          last_error?: string | null
+          last_indexed_at?: string | null
+          last_indexed_block?: number | null
         }
         Relationships: []
       }
