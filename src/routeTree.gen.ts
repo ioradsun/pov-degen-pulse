@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicValueflowRouteImport } from './routes/api.public.valueflow'
+import { Route as ApiPublicTraderOutcomesRouteImport } from './routes/api.public.trader-outcomes'
 import { Route as ApiPublicRhythmRouteImport } from './routes/api.public.rhythm'
 import { Route as ApiPublicRetentionRouteImport } from './routes/api.public.retention'
 import { Route as ApiPublicMarketCapsRouteImport } from './routes/api.public.market-caps'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiPublicValueflowRoute = ApiPublicValueflowRouteImport.update({
   id: '/api/public/valueflow',
   path: '/api/public/valueflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTraderOutcomesRoute = ApiPublicTraderOutcomesRouteImport.update({
+  id: '/api/public/trader-outcomes',
+  path: '/api/public/trader-outcomes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRhythmRoute = ApiPublicRhythmRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/trader-outcomes': typeof ApiPublicTraderOutcomesRoute
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/trader-outcomes': typeof ApiPublicTraderOutcomesRoute
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/trader-outcomes': typeof ApiPublicTraderOutcomesRoute
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/trader-outcomes'
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/trader-outcomes'
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/trader-outcomes'
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   ApiPublicMarketCapsRoute: typeof ApiPublicMarketCapsRoute
   ApiPublicRetentionRoute: typeof ApiPublicRetentionRoute
   ApiPublicRhythmRoute: typeof ApiPublicRhythmRoute
+  ApiPublicTraderOutcomesRoute: typeof ApiPublicTraderOutcomesRoute
   ApiPublicValueflowRoute: typeof ApiPublicValueflowRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
   ApiPublicHooksBackfillTokensRoute: typeof ApiPublicHooksBackfillTokensRoute
@@ -294,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/valueflow'
       fullPath: '/api/public/valueflow'
       preLoaderRoute: typeof ApiPublicValueflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/trader-outcomes': {
+      id: '/api/public/trader-outcomes'
+      path: '/api/public/trader-outcomes'
+      fullPath: '/api/public/trader-outcomes'
+      preLoaderRoute: typeof ApiPublicTraderOutcomesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/rhythm': {
@@ -428,6 +448,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMarketCapsRoute: ApiPublicMarketCapsRoute,
   ApiPublicRetentionRoute: ApiPublicRetentionRoute,
   ApiPublicRhythmRoute: ApiPublicRhythmRoute,
+  ApiPublicTraderOutcomesRoute: ApiPublicTraderOutcomesRoute,
   ApiPublicValueflowRoute: ApiPublicValueflowRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
   ApiPublicHooksBackfillTokensRoute: ApiPublicHooksBackfillTokensRoute,
