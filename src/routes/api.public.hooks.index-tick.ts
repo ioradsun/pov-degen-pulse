@@ -261,6 +261,10 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
                 : 0n;
             const grossEth = Number(grossWei) / 1e18;
             const grossUsd = ethUsd ? grossEth * ethUsd : null;
+            // word2 = belief-token amount (18 dec), confirmed for both
+            // TokensBought (minted to buyer) and TokensSold (burned from
+            // seller). See VERIFICATION.md.
+            const tokensDeltaWei = ws[2] ? toBigInt(ws[2]) : 0n;
 
             tradesToInsert.push({
               event_id: eventId,
@@ -275,6 +279,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
               side,
               gross_amount_native: grossWei.toString(),
               gross_amount_usd: grossUsd,
+              tokens_delta: tokensDeltaWei.toString(),
               payment_token: "0x0000000000000000000000000000000000000000",
               payment_token_symbol: "ETH",
               is_canonical: true,
