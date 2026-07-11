@@ -3,7 +3,8 @@ import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { formatUsd } from "@/lib/pov/format";
-import { useApiHeadline, type HeadlineMetrics } from "@/hooks/pov/useApiPulse";
+import { useApiHeadline, useApiRetention, type HeadlineMetrics } from "@/hooks/pov/useApiPulse";
+
 
 const RANGES: { key: HeadlineMetrics["range"]; label: string }[] = [
   { key: "1h", label: "1H" },
