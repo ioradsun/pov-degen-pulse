@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatPct, formatUsd } from "@/lib/pov/format";
+import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
 
-/** % change vs. prev; null when there's nothing to compare against. */
+type Denom = "usd" | "eth";
+
 function pctDelta(cur: number, prev: number | null | undefined): number | null {
   if (prev == null || prev === 0) return null;
   return ((cur - prev) / prev) * 100;
@@ -29,42 +31,79 @@ interface StatGridApiProps {
 }
 
 export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
+  const [denom, setDenom] = useState<Denom>("usd");
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
-  const vol = Number(data?.buy_volume_usd ?? 0);
+
+  const fmt = (n: number) => (denom === "usd" ? formatUsd(n, 0) : formatEthAmount(n));
+  const unit = denom === "usd" ? "USD" : "ETH";
+
+  const vol = Number(
+    (denom === "usd" ? data?.buy_volume_usd : data?.buy_volume_eth) ?? 0,
+  );
+  const volPrev = denom === "usd" ? data?.buy_volume_usd_prev : data?.buy_volume_eth_prev;
+  const creatorRev = Number(
+    (denom === "usd" ? data?.creator_revenue_usd : data?.creator_revenue_eth) ?? 0,
+  );
+  const creatorRevPrev =
+    denom === "usd" ? data?.creator_revenue_usd_prev : data?.creator_revenue_eth_prev;
+  const degenAlloc = Number(
+    (denom === "usd" ? data?.degen_allocation_usd : data?.degen_allocation_eth) ?? 0,
+  );
+  const degenAllocPrev =
+    denom === "usd" ? data?.degen_allocation_usd_prev : data?.degen_allocation_eth_prev;
+
   const traders = Number(data?.active_traders ?? 0);
   const created = Number(data?.new_beliefs ?? 0);
-  const creatorRev = Number(data?.creator_revenue_usd ?? 0);
-  const degenAlloc = Number(data?.degen_allocation_usd ?? 0);
   const repeatRate = retention?.repeat_rate;
   const repeatWallets = retention?.repeat_wallets ?? 0;
   const newWallets = retention?.new_wallets ?? 0;
   const rangeLabel = RANGE_META[range];
 
-  const volDelta = pctDelta(vol, data?.buy_volume_usd_prev);
+  const volDelta = pctDelta(vol, volPrev);
   const tradersDelta = pctDelta(traders, data?.active_traders_prev);
   const createdDelta = pctDelta(created, data?.new_beliefs_prev);
-  const creatorRevDelta = pctDelta(creatorRev, data?.creator_revenue_usd_prev);
-  const degenAllocDelta = pctDelta(degenAlloc, data?.degen_allocation_usd_prev);
+  const creatorRevDelta = pctDelta(creatorRev, creatorRevPrev);
+  const degenAllocDelta = pctDelta(degenAlloc, degenAllocPrev);
 
   const action = (
-    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-      {RANGES.map((r) => (
-        <button
-          key={r.key}
-          role="tab"
-          aria-selected={range === r.key}
-          onClick={() => onRangeChange(r.key)}
-          className={clsx(
-            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-            range === r.key
-              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-          )}
-        >
-          {r.label}
-        </button>
-      ))}
+    <div className="flex items-center gap-2">
+      <div role="tablist" aria-label="Denomination" className="flex items-center gap-1">
+        {(["usd", "eth"] as const).map((d) => (
+          <button
+            key={d}
+            role="tab"
+            aria-selected={denom === d}
+            onClick={() => setDenom(d)}
+            className={clsx(
+              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+              denom === d
+                ? "border-[var(--boost)]/60 bg-[var(--boost)]/10 text-[var(--boost)]"
+                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+            )}
+          >
+            {d}
+          </button>
+        ))}
+      </div>
+      <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
+        {RANGES.map((r) => (
+          <button
+            key={r.key}
+            role="tab"
+            aria-selected={range === r.key}
+            onClick={() => onRangeChange(r.key)}
+            className={clsx(
+              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+              range === r.key
+                ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
+                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+            )}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
@@ -82,11 +121,11 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
             isLoading ? (
               <Skeleton className="h-6 w-20" />
             ) : (
-              <span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>
+              <span className="text-[var(--pov)]">{fmt(vol)}</span>
             )
           }
           delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
-          sub="all buys · USD"
+          sub={`all buys · ${unit}`}
         />
 
         <Metric
@@ -111,7 +150,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
 
         <Metric
           label="Creator revenue"
-          value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
+          value={isLoading ? <Skeleton className="h-6 w-20" /> : fmt(creatorRev)}
           delta={<Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />}
           sub="3.33% of buy volume"
         />
@@ -122,7 +161,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
             isLoading ? (
               <Skeleton className="h-6 w-20" />
             ) : (
-              <span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>
+              <span className="text-[var(--boost)]">{fmt(degenAlloc)}</span>
             )
           }
           delta={<Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />}

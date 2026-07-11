@@ -39,6 +39,15 @@ export function formatUsd(n: number, digits = 2): string {
   })}`;
 }
 
+export function formatEthAmount(n: number, digits = 3): string {
+  if (!Number.isFinite(n)) return "0 Ξ";
+  if (Math.abs(n) >= 1_000) return `${(n / 1e3).toFixed(2)}K Ξ`;
+  if (Math.abs(n) >= 1) return `${n.toFixed(Math.max(2, digits))} Ξ`;
+  if (Math.abs(n) >= 0.001) return `${n.toFixed(4)} Ξ`;
+  if (n === 0) return "0 Ξ";
+  return `${n.toFixed(6)} Ξ`;
+}
+
 export type Currency = "usd" | "eth";
 
 /** DEGEN trades at sub-cent prices, so USD is always shown to 5 decimal places (e.g. $0.00151). */
