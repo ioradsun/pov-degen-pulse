@@ -15,6 +15,7 @@ export interface FeedEvent {
   side: "yes" | "no" | null;
   belief_id: number;
   belief_text: string | null;
+  belief_slug: string | null;
   wallet_address: string;
   amount_usd: number | null;
   payment_token_symbol: string | null;

@@ -69,15 +69,26 @@ function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
             </span>
           )}
         </div>
-        <a
-          href={`https://pov.co/markets/${e.belief_id}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 block truncate text-[14px] leading-snug text-[var(--ink)] hover:text-[var(--pov)] hover:underline"
-          title={e.belief_text ?? undefined}
-        >
-          {e.belief_text ?? `Belief #${e.belief_id}`}
-        </a>
+        {e.belief_slug ? (
+          <a
+            href={`https://pov.co/markets/${e.belief_slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 block truncate text-[14px] leading-snug text-[var(--ink)] hover:text-[var(--pov)] hover:underline"
+            title={e.belief_text ?? undefined}
+          >
+            {e.belief_text ?? `Belief #${e.belief_id}`}
+          </a>
+        ) : (
+          // pov.co has no /markets/{numericId} route — only /markets/{slug} —
+          // so without a resolved slug there's nowhere real to link to yet.
+          <span
+            className="mt-1 block truncate text-[14px] leading-snug text-[var(--ink)]"
+            title={e.belief_text ?? undefined}
+          >
+            {e.belief_text ?? `Belief #${e.belief_id}`}
+          </span>
+        )}
 
         <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--ink-faint)]">
           <span>
