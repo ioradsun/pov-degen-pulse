@@ -469,6 +469,15 @@ export type Database = {
           sells: number
         }[]
       }
+      growth_health: {
+        Args: never
+        Returns: {
+          belief_fill_rate_7d: number
+          beliefs_created_7d: number
+          beliefs_filled_7d: number
+          degen_burn_all_time_usd: number
+        }[]
+      }
       headline_metrics: {
         Args: { range_key: string }
         Returns: {
