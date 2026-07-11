@@ -389,10 +389,15 @@ export type Database = {
         Args: { range_key: string }
         Returns: {
           active_traders: number
+          active_traders_prev: number
           buy_volume_usd: number
+          buy_volume_usd_prev: number
           creator_revenue_usd: number
+          creator_revenue_usd_prev: number
           degen_allocation_usd: number
+          degen_allocation_usd_prev: number
           new_beliefs: number
+          new_beliefs_prev: number
         }[]
       }
       hourly_activity: {
