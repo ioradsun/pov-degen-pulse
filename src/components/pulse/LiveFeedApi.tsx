@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
-import { useApiFeed, type FeedEvent } from "@/hooks/pov/useApiPulse";
+import { useApiFeed, useApiHealth, type FeedEvent } from "@/hooks/pov/useApiPulse";
 
 const LARGE_THRESHOLD_USD = 500;
+const POLL_INTERVAL_MS = 15_000;
 
 const KIND_LABEL: Record<FeedEvent["event_type"], string> = {
   new_belief: "NEW BELIEF",
