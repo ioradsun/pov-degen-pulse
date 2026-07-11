@@ -148,7 +148,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
       action={action}
       bodyClassName="p-0"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-7">
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4 lg:grid-cols-8">
         <MetricButton onClick={() => setOpenMetric("buy_volume")}>
           <Metric
             label="Buy volume"
