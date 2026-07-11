@@ -101,11 +101,13 @@ export type Database = {
           creation_log_index: number
           creation_tx_hash: string
           creator_address: string
+          creator_display_name: string | null
           hydrated_at: string | null
           hydration_attempts: number
           is_ai_generated: boolean
           market_address: string
           raw_title_source: string | null
+          slug: string | null
           title: string | null
         }
         Insert: {
@@ -116,11 +118,13 @@ export type Database = {
           creation_log_index: number
           creation_tx_hash: string
           creator_address: string
+          creator_display_name?: string | null
           hydrated_at?: string | null
           hydration_attempts?: number
           is_ai_generated?: boolean
           market_address: string
           raw_title_source?: string | null
+          slug?: string | null
           title?: string | null
         }
         Update: {
@@ -131,11 +135,13 @@ export type Database = {
           creation_log_index?: number
           creation_tx_hash?: string
           creator_address?: string
+          creator_display_name?: string | null
           hydrated_at?: string | null
           hydration_attempts?: number
           is_ai_generated?: boolean
           market_address?: string
           raw_title_source?: string | null
+          slug?: string | null
           title?: string | null
         }
         Relationships: []
@@ -370,6 +376,7 @@ export type Database = {
           action: string | null
           amount_usd: number | null
           belief_id: number | null
+          belief_slug: string | null
           belief_text: string | null
           block_number: number | null
           chain_id: number | null
