@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd, formatPct, formatEthAmount, type Currency } from "@/lib/pov/format";
-import { RANGES, type Range } from "@/lib/pov/ranges";
+import { type Range } from "@/lib/pov/ranges";
 import { useApiPnlWallets } from "@/hooks/pov/useApiPulse";
 
 
