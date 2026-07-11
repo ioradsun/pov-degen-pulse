@@ -140,10 +140,15 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
     () => rows.reduce((s, r) => s + (r.value ?? r.valuePartial ?? 0), 0),
     [rows],
   );
-  const peak = useMemo(
-    () => rows.reduce((m, r) => Math.max(m, r.value ?? r.valuePartial ?? 0), 0),
-    [rows],
-  );
+  const peak = useMemo(() => {
+    if (rows.length === 0) return 0;
+    // For signed metrics (realized P&L), pick the value with the largest
+    // absolute magnitude so it's meaningful even when everything is negative.
+    return rows.reduce((m, r) => {
+      const v = r.value ?? r.valuePartial ?? 0;
+      return Math.abs(v) > Math.abs(m) ? v : m;
+    }, 0);
+  }, [rows]);
   const trendLabel = useMemo(() => {
     if (rows.length < 2) return null;
     const vals = rows.map((r) => r.value ?? r.valuePartial ?? 0);
