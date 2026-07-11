@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, type Currency } from "@/lib/pov/format";
+import { type Currency } from "@/lib/pov/format";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiPulse";
 
@@ -11,19 +11,11 @@ import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiP
  * Primary: how many wallets are AHEAD vs BEHIND, scored by cash taken out +
  * what they still hold (paper) minus what they put in. Colour is always the
  * outcome: green = up, red = down. Solid = cashed out (real money), outline =
- * still holding (paper, marked at the last trade price). Concentration shows
- * whether a few wallets took most of the real profit.
+ * still holding (paper, marked at the last trade price).
  */
 
 const GREEN = "var(--up)";
 const RED = "var(--down)";
-
-function fmtEth(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  const a = Math.abs(n);
-  const d = a >= 10 ? 1 : a >= 0.1 ? 2 : 3;
-  return `${a.toFixed(d)} Ξ`;
-}
 
 function Bucket({
   tone,
@@ -64,11 +56,9 @@ interface Props {
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, currency }: Props) {
+export function TraderOutcomesPanel({ range }: Props) {
   const { data, isLoading } = useApiTraderOutcomes(range);
   const [showAbout, setShowAbout] = useState(false);
-  const useUsd = currency === "usd";
-  const money = (v: number) => (useUsd ? formatUsd(Math.abs(v), Math.abs(v) >= 100 ? 0 : 2) : fmtEth(v));
 
   const now: OutcomesSnapshot | null = data?.now ?? null;
   const prev: OutcomesSnapshot | null = data?.prev ?? null;
@@ -88,17 +78,6 @@ export function TraderOutcomesPanel({ range, currency }: Props) {
       : fullyExited > 0
         ? `nobody has sold out ahead yet — all ${fullyExited.toLocaleString()} who fully exited did so at a loss`
         : "no wallet has fully cashed out yet";
-
-  const top3 = now?.top3_gain_share ?? null;
-  const winners = n(now?.realized_winners);
-  const topWalletsN = Math.min(winners, 3);
-
-  // Money flow — the liquidity read. How much went in, how much has actually
-  // come back out, how much is still locked in positions (paper).
-  const moneyIn = useUsd ? n(now?.money_in_usd) : n(now?.money_in_eth);
-  const moneyOut = useUsd ? n(now?.money_out_usd) : n(now?.money_out_eth);
-  const locked = useUsd ? n(now?.holding_value_usd) : n(now?.holding_value_eth);
-  const cashBack = moneyIn > 0 ? Math.round((moneyOut / moneyIn) * 100) : null;
 
   // How many more wallets are ahead than one window ago (approximate — paper
   // is marked at today's price).
@@ -199,75 +178,6 @@ export function TraderOutcomesPanel({ range, currency }: Props) {
         />
       </div>
 
-      {/* MONEY FLOW — where the money is, and how much has come back out */}
-      <div className="border-t border-[var(--line-dim)] bg-[var(--surface-2)] px-4 py-4">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          Where the money is
-        </div>
-        {isLoading ? (
-          <Skeleton className="mt-3 h-16 w-full" />
-        ) : (
-          <>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div>
-                <div className="text-[12px] text-[var(--ink-dim)]">Put in</div>
-                <div className="mt-1 text-[24px] font-semibold leading-none tabular-nums">
-                  {money(moneyIn)}
-                </div>
-                <div className="mt-1 text-[11px] text-[var(--ink-faint)]">all buys, ever</div>
-              </div>
-              <div>
-                <div className="text-[12px] text-[var(--ink-dim)]">Came back out</div>
-                <div
-                  className="mt-1 text-[24px] font-semibold leading-none tabular-nums"
-                  style={{ color: GREEN }}
-                >
-                  {money(moneyOut)}
-                </div>
-                <div className="mt-1 text-[11px] text-[var(--ink-faint)]">actually cashed out</div>
-              </div>
-              <div>
-                <div className="text-[12px] text-[var(--ink-dim)]">Still locked in</div>
-                <div className="mt-1 text-[24px] font-semibold leading-none tabular-nums">
-                  {money(locked)}
-                </div>
-                <div className="mt-1 text-[11px] text-[var(--ink-faint)]">paper · at today's price</div>
-              </div>
-            </div>
-
-            {/* cash-back ratio: green = came back out, faint = still in */}
-            <div className="mt-3 flex h-[12px] gap-[2px] overflow-hidden rounded-full bg-[var(--surface)]">
-              <div style={{ flexGrow: Math.max(moneyOut, 0), background: GREEN }} />
-              <div
-                style={{ flexGrow: Math.max(moneyIn - moneyOut, 0), background: GREEN, opacity: 0.3 }}
-              />
-            </div>
-
-            <p className="mt-3 text-[13px] leading-relaxed text-[var(--ink-dim)]">
-              {cashBack == null ? (
-                "No money has moved yet."
-              ) : (
-                <>
-                  Only <span className="font-medium text-[var(--ink)]">{cashBack}%</span> of the
-                  money put in has come back out — the rest sits in positions that can&apos;t all be
-                  sold at today&apos;s price.
-                </>
-              )}
-              {top3 != null && winners > 0 && (
-                <>
-                  {" "}
-                  And <span className="font-medium text-[var(--ink)]">
-                    {Math.round(top3 * 100)}%
-                  </span>{" "}
-                  of the cashed-out profit went to just {topWalletsN.toLocaleString()}
-                  {topWalletsN === 1 ? " wallet" : " wallets"}.
-                </>
-              )}
-            </p>
-          </>
-        )}
-      </div>
-
       <div className="border-t border-[var(--line-dim)] px-4 py-2">
         <button
           onClick={() => setShowAbout((s) => !s)}
@@ -282,8 +192,7 @@ export function TraderOutcomesPanel({ range, currency }: Props) {
             above zero. <strong>Solid</strong> bars/dots are wallets that have cashed out (real
             money); <strong>outline</strong> ones are still holding, valued at the most recent trade
             price for that belief and side — an estimate, not a live quote, so paper gains can vanish
-            if everyone tries to sell. Everything is decided in ETH. Concentration counts only real,
-            realized profit.
+            if everyone tries to sell. Everything is decided in ETH.
           </p>
         )}
       </div>
