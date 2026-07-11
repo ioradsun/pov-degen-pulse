@@ -621,6 +621,7 @@ export type Database = {
           label: string
           locked_loss: number
           lost_positions: number
+          lost_roi: number
           money_in_eth: number
           money_in_usd: number
           money_out_eth: number
@@ -628,8 +629,10 @@ export type Database = {
           net_eth: number
           net_usd: number
           open_down: number
+          open_down_roi: number
           open_positions: number
           open_up: number
+          open_up_roi: number
           paper_up: number
           realized_net_eth: number
           realized_net_usd: number
@@ -642,6 +645,7 @@ export type Database = {
           unrealized_usd: number
           wallets_total: number
           won_positions: number
+          won_roi: number
         }[]
       }
       trigger_hydrate_titles: { Args: never; Returns: undefined }
