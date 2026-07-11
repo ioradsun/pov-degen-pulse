@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 
 /**
  * AI read on the tape. Runs server-side so the API key never ships to the
- * browser. Set ANTHROPIC_API_KEY (and optionally ANTHROPIC_MODEL) in env.
+ * browser. Powered by Lovable AI (LOVABLE_API_KEY is auto-provisioned).
  * Responses are cached for 5 minutes — every viewer shares one read.
  */
+
 
 export interface PulseInsight {
   headline: string;
