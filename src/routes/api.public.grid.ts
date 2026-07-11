@@ -10,7 +10,7 @@ const VOLUME_COLUMN: Record<z.infer<typeof RangeSchema>, string> = {
   "24h": "buy_volume_24h_usd",
   "7d": "buy_volume_7d_usd",
   "30d": "buy_volume_30d_usd",
-  all: "buy_volume_all_usd",
+  all: "buy_volume_30d_usd",
 };
 
 const SORT_COLUMN: Record<Exclude<z.infer<typeof SortSchema>, "volume">, string> = {
@@ -42,16 +42,38 @@ export const Route = createFileRoute("/api/public/grid")({
 
         const supabase = getPublicSupabase();
         const { data, error } = await supabase
-          .from("behavioral_grid" as never)
-          .select("*")
+          .from("belief_stats")
+          .select(
+            "belief_id, buy_volume_1h_usd, buy_volume_24h_usd, buy_volume_7d_usd, buy_volume_30d_usd, split_pct, ignition_score, momentum, whale_activity_pct, delta_conviction_1h, distribution_gini, lifecycle_stage, unique_wallets_24h, beliefs!inner(title, creator_address, created_at)",
+          )
           .order(orderColumn, { ascending: false, nullsFirst: false })
           .limit(limit);
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const rows = ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-          ...row,
-          buy_volume_usd: Number(row[volumeColumn] ?? 0),
-        }));
+        const rows = ((data ?? []) as Array<Record<string, unknown> & { beliefs?: { title: string | null; creator_address: string; created_at: string } | null }>).map((row) => {
+          const b = row.beliefs ?? null;
+          return {
+            belief_id: row.belief_id,
+            title: b?.title ?? null,
+            creator_address: b?.creator_address ?? "",
+            created_at: b?.created_at ?? "",
+            buy_volume_usd: Number(row[volumeColumn] ?? 0),
+            buy_volume_1h_usd: Number(row.buy_volume_1h_usd ?? 0),
+            buy_volume_24h_usd: Number(row.buy_volume_24h_usd ?? 0),
+            buy_volume_7d_usd: Number(row.buy_volume_7d_usd ?? 0),
+            buy_volume_30d_usd: Number(row.buy_volume_30d_usd ?? 0),
+            buy_volume_all_usd: Number(row.buy_volume_30d_usd ?? 0),
+            split_pct: row.split_pct ?? null,
+            ignition_score: row.ignition_score ?? null,
+            momentum: row.momentum ?? null,
+            whale_activity_pct: row.whale_activity_pct ?? null,
+            distribution_gini: row.distribution_gini ?? null,
+            delta_conviction_1h: row.delta_conviction_1h ?? null,
+            lifecycle_stage: row.lifecycle_stage ?? "new",
+            unique_wallets_24h: row.unique_wallets_24h ?? 0,
+            creator_quality: null,
+          };
+        });
         return Response.json({ range, rows });
       },
     },
