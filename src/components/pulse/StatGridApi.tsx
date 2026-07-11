@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
+import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
