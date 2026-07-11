@@ -1,9 +1,10 @@
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd } from "@/lib/pov/format";
+import { formatUsd, formatEthAmount, type Currency } from "@/lib/pov/format";
 import type { Range } from "@/lib/pov/ranges";
 import { useApiValueFlow } from "@/hooks/pov/useApiPulse";
+
 
 /**
  * The positive lens that is also the true one: on POV, buy fees aren't a
