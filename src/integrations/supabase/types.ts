@@ -426,6 +426,8 @@ export type Database = {
           degen_allocation_usd_prev: number
           new_beliefs: number
           new_beliefs_prev: number
+          transactions: number
+          transactions_prev: number
         }[]
       }
       hourly_activity: {
