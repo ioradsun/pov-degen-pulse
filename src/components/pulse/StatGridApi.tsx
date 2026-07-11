@@ -6,7 +6,9 @@ import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd, type Currency } from "@/lib/pov/format";
 import { RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline } from "@/hooks/pov/useApiPulse";
+import { useMetricStreaks } from "@/hooks/pov/useMetricStreaks";
 import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
+import { StreakRow } from "./StreakRow";
 
 function MetricButton({
   onClick,
@@ -54,6 +56,7 @@ export function StatGridApi({ range, currency }: StatGridApiProps) {
 
 
   const { data, isLoading } = useApiHeadline(range);
+  const { streaks, isLoading: streaksLoading } = useMetricStreaks();
 
   const fmt = (n: number) => (currency === "usd" ? formatUsd(n, 0) : formatEthAmount(n));
   const unit = currency === "usd" ? "USD" : "ETH";
@@ -91,6 +94,13 @@ export function StatGridApi({ range, currency }: StatGridApiProps) {
             }
             delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
             sub={`all buys · ${unit} · view history ↗`}
+            streak={
+              <StreakRow
+                streak={streaks?.buy_volume}
+                loading={streaksLoading}
+                metricLabel="Buy volume"
+              />
+            }
           />
         </MetricButton>
 
@@ -106,6 +116,13 @@ export function StatGridApi({ range, currency }: StatGridApiProps) {
             }
             delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
             sub="unique participants · view history ↗"
+            streak={
+              <StreakRow
+                streak={streaks?.active_traders}
+                loading={streaksLoading}
+                metricLabel="Active wallets"
+              />
+            }
           />
         </MetricButton>
 
@@ -127,6 +144,13 @@ export function StatGridApi({ range, currency }: StatGridApiProps) {
                   ? "buys · view history ↗"
                   : `${txPerWallet.toFixed(1)} per wallet · view history ↗`
             }
+            streak={
+              <StreakRow
+                streak={streaks?.transactions}
+                loading={streaksLoading}
+                metricLabel="Transactions"
+              />
+            }
           />
         </MetricButton>
 
@@ -136,6 +160,13 @@ export function StatGridApi({ range, currency }: StatGridApiProps) {
             value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
             delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
             sub="markets created · view history ↗"
+            streak={
+              <StreakRow
+                streak={streaks?.new_beliefs}
+                loading={streaksLoading}
+                metricLabel="New beliefs"
+              />
+            }
           />
         </MetricButton>
       </div>

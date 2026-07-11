@@ -7,10 +7,11 @@ interface MetricProps {
   sub?: ReactNode;
   trend?: number; // signed number for color
   delta?: ReactNode;
+  streak?: ReactNode; // optional streak indicator, rendered at the bottom
   className?: string;
 }
 
-export function Metric({ label, value, sub, trend, delta, className }: MetricProps) {
+export function Metric({ label, value, sub, trend, delta, streak, className }: MetricProps) {
   const trendCls =
     trend == null
       ? "text-[var(--ink-dim)]"
@@ -31,6 +32,7 @@ export function Metric({ label, value, sub, trend, delta, className }: MetricPro
       {sub != null && (
         <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
       )}
+      {streak != null && streak}
     </div>
   );
 }
