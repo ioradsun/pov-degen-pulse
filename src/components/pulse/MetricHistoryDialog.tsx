@@ -96,8 +96,21 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
 
   const rows = useMemo(() => {
     if (!metric || !data) return [];
-    return data.buckets.map((b) => ({
-      ts: b.bucket,
+    const lastIdx = data.buckets.length - 1;
+    return data.buckets.map((b, i) => {
+      const v = Number(extract(b, metric, denom).toFixed(4));
+      const isCurrent = i === lastIdx;
+      return {
+        ts: b.bucket,
+        label: bucketLabel(b.bucket, granularity),
+        // Solid line stops one point early so the dashed segment can start there.
+        value: isCurrent ? null : v,
+        // Dashed segment covers only the last two points (previous → current).
+        valuePartial: isCurrent || i === lastIdx - 1 ? v : null,
+        isCurrent,
+      };
+    });
+  }, [data, metric, denom, granularity]);
       label: bucketLabel(b.bucket, granularity),
       value: Number(extract(b, metric, denom).toFixed(4)),
     }));
