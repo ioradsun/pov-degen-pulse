@@ -49,11 +49,13 @@ function Delta({ pct, rangeLabel }: { pct: number | null; rangeLabel: string }) 
 interface StatGridApiProps {
   range: Range;
   onRangeChange: (range: Range) => void;
+  currency: Currency;
 }
 
-export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
-  const [denom, setDenom] = useState<Denom>("usd");
+export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps) {
+  const denom = currency;
   const [openMetric, setOpenMetric] = useState<MetricKey | null>(null);
+
 
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
