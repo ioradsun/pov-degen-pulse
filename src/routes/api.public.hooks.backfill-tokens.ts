@@ -140,7 +140,9 @@ export const Route = createFileRoute("/api/public/hooks/backfill-tokens")({
             if (val == null) continue;
             const { error: upErr } = await supabaseAdmin
               .from("trades")
-              .update({ tokens_delta: val })
+              // Numeric column; string preserves 18-dec wei precision.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .update({ tokens_delta: val } as any)
               .eq("event_id", t.event_id);
             if (!upErr) updated += 1;
           }
