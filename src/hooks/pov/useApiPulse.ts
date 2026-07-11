@@ -67,6 +67,8 @@ export interface GridRow {
   lifecycle_stage: string;
   unique_wallets_24h: number;
   creator_quality: number | null;
+  market_cap_usd: number;
+
 }
 
 export type GridSort = "ignition" | "volume" | "momentum" | "whale" | "split" | "delta_conviction";
