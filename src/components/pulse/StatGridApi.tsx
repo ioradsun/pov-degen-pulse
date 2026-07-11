@@ -105,13 +105,10 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--up)]">{traders}</span>
             )
           }
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>unique wallets</span>
-              <Delta pct={tradersDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
+          sub="unique wallets"
         />
+
         <Metric
           label="Creator revenue"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
