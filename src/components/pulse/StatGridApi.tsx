@@ -5,7 +5,7 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
-import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
+import { useApiHeadline, useApiRetention, useApiPnlHeadline } from "@/hooks/pov/useApiPulse";
 import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
 type Denom = "usd" | "eth";
