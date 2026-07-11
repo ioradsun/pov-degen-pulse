@@ -69,9 +69,16 @@ function Row({ e }: { e: FeedEvent }) {
             </span>
           )}
         </div>
-        <div className="mt-1 truncate text-[14px] leading-snug text-[var(--ink)]" title={e.belief_text ?? undefined}>
+        <a
+          href={`https://pov.co/markets/${e.belief_id}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 block truncate text-[14px] leading-snug text-[var(--ink)] hover:text-[var(--pov)] hover:underline"
+          title={e.belief_text ?? undefined}
+        >
           {e.belief_text ?? `Belief #${e.belief_id}`}
-        </div>
+        </a>
+
         <div className="mt-1 flex items-center gap-2 text-[10px] text-[var(--ink-faint)]">
           <span>
             {e.event_type === "new_belief" ? "Created by " : ""}
