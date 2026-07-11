@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { clsx } from "clsx";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   Dialog,
@@ -8,7 +9,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { useApiRhythm, type RhythmBucket } from "@/hooks/pov/useApiPulse";
+import {
+  useApiActivityBuckets,
+  type HistoryGranularity,
+  type RhythmBucket,
+} from "@/hooks/pov/useApiPulse";
 import { formatEthAmount, formatUsd } from "@/lib/pov/format";
 
 export type MetricKey =
@@ -34,6 +39,18 @@ const LABELS: Record<MetricKey, string> = {
   degen_allocation: "DEGEN allocation",
 };
 
+const GRANULARITIES: Array<{
+  key: HistoryGranularity;
+  label: string;
+  buckets: number;
+  windowLabel: string;
+}> = [
+  { key: "hour", label: "HR", buckets: 24, windowLabel: "last 24 hours" },
+  { key: "day", label: "DAY", buckets: 14, windowLabel: "last 14 days" },
+  { key: "week", label: "WEEK", buckets: 12, windowLabel: "last 12 weeks" },
+  { key: "month", label: "MONTH", buckets: 12, windowLabel: "last 12 months" },
+];
+
 function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
   switch (metric) {
     case "buy_volume":
@@ -58,20 +75,28 @@ function fmtValue(v: number, metric: MetricKey, denom: Denom): string {
   return denom === "usd" ? formatUsd(v, 2) : formatEthAmount(v);
 }
 
+function bucketLabel(ts: string, g: HistoryGranularity): string {
+  const d = new Date(ts);
+  if (g === "hour") return d.toLocaleTimeString(undefined, { hour: "2-digit" });
+  if (g === "month")
+    return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   const open = metric !== null;
-  const { data, isLoading } = useApiRhythm("24h");
+  const [granularity, setGranularity] = useState<HistoryGranularity>("hour");
+  const gMeta = GRANULARITIES.find((g) => g.key === granularity)!;
+  const { data, isLoading } = useApiActivityBuckets(granularity, gMeta.buckets);
 
   const rows = useMemo(() => {
     if (!metric || !data) return [];
     return data.buckets.map((b) => ({
       ts: b.bucket,
-      label: new Date(b.bucket).toLocaleTimeString(undefined, {
-        hour: "2-digit",
-      }),
+      label: bucketLabel(b.bucket, granularity),
       value: Number(extract(b, metric, denom).toFixed(4)),
     }));
-  }, [data, metric, denom]);
+  }, [data, metric, denom, granularity]);
 
   const total = useMemo(() => rows.reduce((s, r) => s + r.value, 0), [rows]);
   const peak = useMemo(() => rows.reduce((m, r) => Math.max(m, r.value), 0), [rows]);
@@ -91,12 +116,35 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
       <DialogContent className="max-w-2xl border-[var(--line)] bg-[var(--surface)] text-[var(--ink)]">
         <DialogHeader>
           <DialogTitle className="text-[var(--ink)]">
-            {metric ? LABELS[metric] : ""} — last 24 hours
+            {metric ? LABELS[metric] : ""} — {gMeta.windowLabel}
           </DialogTitle>
           <DialogDescription className="text-[var(--ink-dim)]">
-            Hourly buckets. Newest on the right.
+            Grouped by {granularity}. Newest on the right.
           </DialogDescription>
         </DialogHeader>
+
+        <div
+          role="tablist"
+          aria-label="Granularity"
+          className="flex items-center gap-1"
+        >
+          {GRANULARITIES.map((g) => (
+            <button
+              key={g.key}
+              role="tab"
+              aria-selected={granularity === g.key}
+              onClick={() => setGranularity(g.key)}
+              className={clsx(
+                "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+                granularity === g.key
+                  ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
+                  : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+              )}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
 
         <div className="grid grid-cols-3 gap-4 border-y border-[var(--line-dim)] py-3 text-[11px] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
           <div>
@@ -106,7 +154,7 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
             </div>
           </div>
           <div>
-            <div>Peak hour</div>
+            <div>Peak {granularity}</div>
             <div className="mt-1 text-[16px] tabular-nums text-[var(--ink)]">
               {metric ? fmtValue(peak, metric, denom) : "—"}
             </div>
@@ -152,7 +200,7 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
                     fontSize: 12,
                   }}
                   formatter={(v: number) => (metric ? fmtValue(v, metric, denom) : v)}
-                  labelFormatter={(l) => `Hour ${l}`}
+                  labelFormatter={(l) => String(l)}
                 />
                 <Area
                   type="monotone"

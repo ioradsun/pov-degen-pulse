@@ -385,6 +385,18 @@ export type Database = {
       }
     }
     Functions: {
+      activity_buckets: {
+        Args: { buckets_back?: number; granularity?: string }
+        Returns: {
+          active_traders: number
+          bucket: string
+          buy_volume_eth: number
+          buy_volume_usd: number
+          buys: number
+          created: number
+          sells: number
+        }[]
+      }
       headline_metrics: {
         Args: { range_key: string }
         Returns: {

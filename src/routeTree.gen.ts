@@ -16,6 +16,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
+import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
 import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
 import { Route as ApiPublicHooksHydrateTitlesRouteImport } from './routes/api.public.hooks.hydrate-titles'
 import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
@@ -55,6 +56,12 @@ const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
   path: '/api/public/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicActivityBucketsRoute =
+  ApiPublicActivityBucketsRouteImport.update({
+    id: '/api/public/activity-buckets',
+    path: '/api/public/activity-buckets',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksIndexTickRoute = ApiPublicHooksIndexTickRouteImport.update({
   id: '/api/public/hooks/index-tick',
   path: '/api/public/hooks/index-tick',
@@ -74,6 +81,7 @@ const ApiPublicBeliefIdRoute = ApiPublicBeliefIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -86,6 +94,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -99,6 +108,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -150,6 +163,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicActivityBucketsRoute: typeof ApiPublicActivityBucketsRoute
   ApiPublicFeedRoute: typeof ApiPublicFeedRoute
   ApiPublicGridRoute: typeof ApiPublicGridRoute
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
@@ -212,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/activity-buckets': {
+      id: '/api/public/activity-buckets'
+      path: '/api/public/activity-buckets'
+      fullPath: '/api/public/activity-buckets'
+      preLoaderRoute: typeof ApiPublicActivityBucketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/index-tick': {
       id: '/api/public/hooks/index-tick'
       path: '/api/public/hooks/index-tick'
@@ -238,6 +259,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicActivityBucketsRoute: ApiPublicActivityBucketsRoute,
   ApiPublicFeedRoute: ApiPublicFeedRoute,
   ApiPublicGridRoute: ApiPublicGridRoute,
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
