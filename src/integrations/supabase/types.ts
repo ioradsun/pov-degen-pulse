@@ -541,10 +541,33 @@ export type Database = {
           avg_return: number
           full_exits: number
           median_hold_seconds: number
+          price_avg_return: number
+          price_pnl_usd: number
+          price_profitable_rate: number
+          price_profitable_sells: number
           profitable_exit_rate: number
           profitable_sells: number
           realized_usd: number
           total_sells: number
+        }[]
+      }
+      pnl_wallet_summary: {
+        Args: { range_key: string }
+        Returns: {
+          gross_gains_eth: number
+          median_position_return: number
+          median_wallet_return: number
+          median_winning_return: number
+          net_realized_eth: number
+          net_realized_usd: number
+          positions: number
+          profitable_position_rate: number
+          profitable_positions: number
+          profitable_wallet_rate: number
+          profitable_wallets: number
+          sellers: number
+          winners_net_eth: number
+          winners_net_usd: number
         }[]
       }
       realized_pnl_events: {
@@ -578,6 +601,19 @@ export type Database = {
       }
       trigger_hydrate_titles: { Args: never; Returns: undefined }
       update_lifecycle_stages: { Args: never; Returns: undefined }
+      value_flow: {
+        Args: { range_key: string }
+        Returns: {
+          agent_pool_usd: number
+          buy_volume_usd: number
+          buyers: number
+          creator_earned_usd: number
+          degen_burn_usd: number
+          holders_never_sold: number
+          net_conviction_usd: number
+          sell_proceeds_usd: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
