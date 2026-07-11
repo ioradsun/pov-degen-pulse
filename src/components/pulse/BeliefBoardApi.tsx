@@ -1,8 +1,33 @@
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, timeAgo } from "@/lib/pov/format";
+import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
-import { useApiGrid } from "@/hooks/pov/useApiPulse";
+import { useApiGrid, type GridRow } from "@/hooks/pov/useApiPulse";
+
+const POV_MARKET_URL = (slug: string) => `https://pov.co/markets/${slug}`;
+const POV_PROFILE_URL = (walletAddress: string) => `https://pov.co/${walletAddress}`;
+
+function BeliefTitle({ belief }: { belief: GridRow }) {
+  const label = belief.title ?? `Belief #${belief.belief_id}`;
+  if (!belief.slug) {
+    return (
+      <span className="truncate text-[13px] text-[var(--ink)]" title={belief.title ?? undefined}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <a
+      href={POV_MARKET_URL(belief.slug)}
+      target="_blank"
+      rel="noreferrer"
+      className="truncate text-[13px] text-[var(--ink)] hover:text-[var(--pov)] hover:underline"
+      title={belief.title ?? undefined}
+    >
+      {label}
+    </a>
+  );
+}
 
 function ConvictionBar({ splitPct }: { splitPct: number | null }) {
   const pct = splitPct != null ? Math.max(0, Math.min(1, splitPct)) * 100 : 50;
@@ -61,12 +86,7 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                   <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span
-                    className="truncate text-[13px] text-[var(--ink)]"
-                    title={b.title ?? undefined}
-                  >
-                    {b.title ?? `Belief #${b.belief_id}`}
-                  </span>
+                  <BeliefTitle belief={b} />
                   <span className="text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
                     {b.lifecycle_stage}
                   </span>
@@ -76,6 +96,21 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                   <span className="text-[10px] text-[var(--ink-faint)]">
                     {b.unique_wallets_24h} wallet{b.unique_wallets_24h === 1 ? "" : "s"} (24h)
                   </span>
+                </div>
+                <div className="mt-1 pl-6 text-[10px] text-[var(--ink-faint)]">
+                  by{" "}
+                  {b.creator_address ? (
+                    <a
+                      href={POV_PROFILE_URL(b.creator_address)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--ink-dim)] hover:text-[var(--pov)]"
+                    >
+                      {b.creator_display_name || shortAddr(b.creator_address)}
+                    </a>
+                  ) : (
+                    "unknown"
+                  )}
                 </div>
               </div>
               <div className="flex items-baseline gap-3 pl-6 sm:pl-0">

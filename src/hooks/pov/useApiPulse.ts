@@ -47,7 +47,9 @@ export interface HeadlineMetrics {
 export interface GridRow {
   belief_id: number;
   title: string | null;
+  slug: string | null;
   creator_address: string;
+  creator_display_name: string | null;
   created_at: string;
   /** Buy volume for the range the grid was queried with. */
   buy_volume_usd: number;
@@ -78,7 +80,6 @@ export interface RhythmBucket {
   created: number;
   active_traders: number;
 }
-
 
 export interface RetentionMetrics {
   new_wallets: number;
@@ -172,7 +173,6 @@ export function useApiActivityBuckets(granularity: HistoryGranularity, buckets: 
     staleTime: 30_000,
   });
 }
-
 
 /** 7-day repeat wallet rate — an all-time cohort metric, not range-scoped. */
 export function useApiRetention() {
