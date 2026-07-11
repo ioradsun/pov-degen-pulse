@@ -3,12 +3,12 @@ import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
+import { formatEthAmount, formatPct, formatUsd, type Currency } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention, useApiPnlHeadline } from "@/hooks/pov/useApiPulse";
 import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
-type Denom = "usd" | "eth";
+
 
 function MetricButton({
   onClick,
@@ -49,11 +49,13 @@ function Delta({ pct, rangeLabel }: { pct: number | null; rangeLabel: string }) 
 interface StatGridApiProps {
   range: Range;
   onRangeChange: (range: Range) => void;
+  currency: Currency;
 }
 
-export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
-  const [denom, setDenom] = useState<Denom>("usd");
+export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps) {
+  const denom = currency;
   const [openMetric, setOpenMetric] = useState<MetricKey | null>(null);
+
 
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
@@ -101,45 +103,26 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
     realized > 0 ? "text-[var(--up)]" : realized < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
 
   const action = (
-    <div className="flex items-center gap-2">
-      <div role="tablist" aria-label="Denomination" className="flex items-center gap-1">
-        {(["usd", "eth"] as const).map((d) => (
-          <button
-            key={d}
-            role="tab"
-            aria-selected={denom === d}
-            onClick={() => setDenom(d)}
-            className={clsx(
-              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-              denom === d
-                ? "border-[var(--boost)]/60 bg-[var(--boost)]/10 text-[var(--boost)]"
-                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-            )}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-      <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-        {RANGES.map((r) => (
-          <button
-            key={r.key}
-            role="tab"
-            aria-selected={range === r.key}
-            onClick={() => onRangeChange(r.key)}
-            className={clsx(
-              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-              range === r.key
-                ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-            )}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
+    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
+      {RANGES.map((r) => (
+        <button
+          key={r.key}
+          role="tab"
+          aria-selected={range === r.key}
+          onClick={() => onRangeChange(r.key)}
+          className={clsx(
+            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+            range === r.key
+              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
+              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+          )}
+        >
+          {r.label}
+        </button>
+      ))}
     </div>
   );
+
 
   return (
     <Panel

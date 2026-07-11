@@ -2,9 +2,10 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, formatPct } from "@/lib/pov/format";
+import { formatUsd, formatPct, formatEthAmount, type Currency } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
 import { useApiPnlWallets } from "@/hooks/pov/useApiPulse";
+
 
 /**
  * Wallet-first outcome hierarchy:
@@ -68,9 +69,11 @@ function Stat({
 interface Props {
   range: Range;
   onRangeChange: (range: Range) => void;
+  currency: Currency;
+  ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
+export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: Props) {
   const { data, isLoading } = useApiPnlWallets(range);
   const [showAbout, setShowAbout] = useState(false);
 
@@ -78,12 +81,27 @@ export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
   const winners = Number(data?.profitable_wallets ?? 0);
   const walletRate = data?.profitable_wallet_rate;
   const winnersNetEth = Number(data?.winners_net_eth ?? 0);
-  const net = Number(data?.net_realized_eth ?? NaN);
-  const netFmt = signedEth(net);
+  const winnersNetUsd = Number(
+    data?.winners_net_usd ??
+      (ethUsd && Number.isFinite(winnersNetEth) ? winnersNetEth * ethUsd : NaN),
+  );
+  const netEth = Number(data?.net_realized_eth ?? NaN);
+  const netUsd = Number(
+    data?.net_realized_usd ??
+      (ethUsd && Number.isFinite(netEth) ? netEth * ethUsd : NaN),
+  );
+  const useUsd = currency === "usd";
+  const winnersValue = useUsd
+    ? Number.isFinite(winnersNetUsd)
+      ? formatUsd(winnersNetUsd, 0)
+      : "—"
+    : fmtEth(winnersNetEth);
+  const netFmt = useUsd ? signedUsd(netUsd) : signedEth(netEth);
   const posRate = data?.profitable_position_rate;
   const positions = Number(data?.positions ?? 0);
   const profitablePositions = Number(data?.profitable_positions ?? 0);
   const medianWin = data?.median_winning_return;
+
 
   const rateCls =
     walletRate == null
@@ -118,7 +136,7 @@ export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
   return (
     <Panel
       title="Trader outcomes"
-      meta="per wallet · FIFO · in ETH · after the 10% buy fee"
+      meta={`per wallet · FIFO · in ${useUsd ? "USD" : "ETH"} · after the 10% buy fee`}
       action={action}
       bodyClassName="p-0"
     >
@@ -146,7 +164,7 @@ export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Stat
           label="Profit earned by winning traders"
-          value={fmtEth(winnersNetEth)}
+          value={winnersValue}
           valueCls="text-[var(--up)]"
           sub="net profit of net-profitable wallets"
           loading={isLoading}

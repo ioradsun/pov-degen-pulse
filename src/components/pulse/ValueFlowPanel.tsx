@@ -1,9 +1,10 @@
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd } from "@/lib/pov/format";
+import { formatUsd, formatEthAmount, type Currency } from "@/lib/pov/format";
 import type { Range } from "@/lib/pov/ranges";
 import { useApiValueFlow } from "@/hooks/pov/useApiPulse";
+
 
 /**
  * The positive lens that is also the true one: on POV, buy fees aren't a
@@ -36,7 +37,15 @@ function Flow({
   );
 }
 
-export function ValueFlowPanel({ range }: { range: Range }) {
+export function ValueFlowPanel({
+  range,
+  currency,
+  ethUsd,
+}: {
+  range: Range;
+  currency: Currency;
+  ethUsd: number | undefined;
+}) {
   const { data, isLoading } = useApiValueFlow(range);
 
   const buys = Number(data?.buy_volume_usd ?? 0);
@@ -47,36 +56,40 @@ export function ValueFlowPanel({ range }: { range: Range }) {
   const buyers = Number(data?.buyers ?? 0);
   const holderPct = buyers > 0 ? Math.round((holders / buyers) * 100) : null;
 
+  const canEth = currency === "eth" && ethUsd && ethUsd > 0;
+  const fmt = (n: number) =>
+    canEth ? formatEthAmount(n / (ethUsd as number)) : formatUsd(n, 0);
+
   return (
     <Panel title="Where the money goes" meta="every buy powers the flywheel" bodyClassName="p-0">
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Flow
           label="Conviction deployed"
-          value={formatUsd(buys, 0)}
+          value={fmt(buys)}
           sub="gross value spent backing beliefs"
           accent="text-[var(--pov)]"
           loading={isLoading}
         />
         <Flow
           label="DEGEN buyback & burn"
-          value={formatUsd(burn, 0)}
+          value={fmt(burn)}
           sub="est. 5% of buys — structural $DEGEN demand"
           accent="text-[var(--degen)]"
           loading={isLoading}
         />
         <Flow
           label="Creators earned"
-          value={formatUsd(creators, 0)}
+          value={fmt(creators)}
           sub="est. 3.33% of buys paid to belief creators"
           loading={isLoading}
         />
         <Flow
           label="Still backing beliefs"
-          value={holderPct == null ? formatUsd(Math.max(net, 0), 0) : `${holderPct}%`}
+          value={holderPct == null ? fmt(Math.max(net, 0)) : `${holderPct}%`}
           sub={
             holderPct == null
               ? "net capital deployed in curves"
-              : `of buyers haven't sold — ${formatUsd(Math.max(net, 0), 0)} net deployed`
+              : `of buyers haven't sold — ${fmt(Math.max(net, 0))} net deployed`
           }
           accent="text-[var(--up)]"
           loading={isLoading}
@@ -90,3 +103,4 @@ export function ValueFlowPanel({ range }: { range: Range }) {
     </Panel>
   );
 }
+
