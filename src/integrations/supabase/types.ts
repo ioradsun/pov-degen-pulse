@@ -409,6 +409,8 @@ export type Database = {
       hourly_activity: {
         Args: { hours_back?: number }
         Returns: {
+          active_traders: number
+          buy_volume_eth: number
           buy_volume_usd: number
           buys: number
           created: number

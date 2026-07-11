@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
@@ -6,8 +6,29 @@ import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
+import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
 type Denom = "usd" | "eth";
+
+function MetricButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left transition-colors hover:bg-[var(--line-dim)]/40 focus:outline-none focus-visible:bg-[var(--line-dim)]/60"
+      aria-label="Show 24h history"
+    >
+      {children}
+    </button>
+  );
+}
+
 
 function pctDelta(cur: number, prev: number | null | undefined): number | null {
   if (prev == null || prev === 0) return null;
@@ -32,6 +53,8 @@ interface StatGridApiProps {
 
 export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const [denom, setDenom] = useState<Denom>("usd");
+  const [openMetric, setOpenMetric] = useState<MetricKey | null>(null);
+
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
 
@@ -115,58 +138,68 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
       bodyClassName="p-0"
     >
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-6">
-        <Metric
-          label="Buy volume"
-          value={
-            isLoading ? (
-              <Skeleton className="h-6 w-20" />
-            ) : (
-              <span className="text-[var(--pov)]">{fmt(vol)}</span>
-            )
-          }
-          delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
-          sub={`all buys · ${unit}`}
-        />
+        <MetricButton onClick={() => setOpenMetric("buy_volume")}>
+          <Metric
+            label="Buy volume"
+            value={
+              isLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <span className="text-[var(--pov)]">{fmt(vol)}</span>
+              )
+            }
+            delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
+            sub={`all buys · ${unit} · view 24h ↗`}
+          />
+        </MetricButton>
 
-        <Metric
-          label="New beliefs"
-          value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
-          delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
-          sub="markets created"
-        />
+        <MetricButton onClick={() => setOpenMetric("new_beliefs")}>
+          <Metric
+            label="New beliefs"
+            value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
+            delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
+            sub="markets created · view 24h ↗"
+          />
+        </MetricButton>
 
-        <Metric
-          label="Active traders"
-          value={
-            isLoading ? (
-              <Skeleton className="h-6 w-14" />
-            ) : (
-              <span className="text-[var(--up)]">{traders}</span>
-            )
-          }
-          delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
-          sub="unique wallets"
-        />
+        <MetricButton onClick={() => setOpenMetric("active_traders")}>
+          <Metric
+            label="Active traders"
+            value={
+              isLoading ? (
+                <Skeleton className="h-6 w-14" />
+              ) : (
+                <span className="text-[var(--up)]">{traders}</span>
+              )
+            }
+            delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
+            sub="unique wallets · view 24h ↗"
+          />
+        </MetricButton>
 
-        <Metric
-          label="Creator revenue"
-          value={isLoading ? <Skeleton className="h-6 w-20" /> : fmt(creatorRev)}
-          delta={<Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />}
-          sub="3.33% of buy volume"
-        />
+        <MetricButton onClick={() => setOpenMetric("creator_revenue")}>
+          <Metric
+            label="Creator revenue"
+            value={isLoading ? <Skeleton className="h-6 w-20" /> : fmt(creatorRev)}
+            delta={<Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />}
+            sub="3.33% of buy volume · view 24h ↗"
+          />
+        </MetricButton>
 
-        <Metric
-          label="DEGEN allocation"
-          value={
-            isLoading ? (
-              <Skeleton className="h-6 w-20" />
-            ) : (
-              <span className="text-[var(--boost)]">{fmt(degenAlloc)}</span>
-            )
-          }
-          delta={<Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />}
-          sub="5% of buy volume"
-        />
+        <MetricButton onClick={() => setOpenMetric("degen_allocation")}>
+          <Metric
+            label="DEGEN allocation"
+            value={
+              isLoading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <span className="text-[var(--boost)]">{fmt(degenAlloc)}</span>
+              )
+            }
+            delta={<Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />}
+            sub="5% of buy volume · view 24h ↗"
+          />
+        </MetricButton>
 
         <Metric
           label="Repeat traders"
@@ -188,6 +221,12 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           }
         />
       </div>
+      <MetricHistoryDialog
+        metric={openMetric}
+        denom={denom}
+        onClose={() => setOpenMetric(null)}
+      />
     </Panel>
   );
+
 }

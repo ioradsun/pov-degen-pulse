@@ -72,10 +72,13 @@ export type GridSort = "ignition" | "volume" | "momentum" | "whale" | "split" | 
 export interface RhythmBucket {
   bucket: string;
   buy_volume_usd: number;
+  buy_volume_eth: number;
   buys: number;
   sells: number;
   created: number;
+  active_traders: number;
 }
+
 
 export interface RetentionMetrics {
   new_wallets: number;
