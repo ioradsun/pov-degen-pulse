@@ -111,10 +111,10 @@ function Pulse() {
             <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <RepeatWalletCard />
             <InsightPanel snapshot={insightSnapshot} ready={ready} />
             <BeliefBoardApi />
           </div>
+
         </div>
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6">
