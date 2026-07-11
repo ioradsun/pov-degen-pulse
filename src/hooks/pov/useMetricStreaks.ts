@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useApiActivityBuckets } from "./useApiPulse";
+import { useApiActivityBuckets, type RhythmBucket } from "./useApiPulse";
 import { computeStreak, type Streak } from "@/lib/pov/streaks";
 import type { MetricKey } from "@/components/pulse/MetricHistoryDialog";
 
