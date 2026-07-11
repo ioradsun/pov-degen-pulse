@@ -25,11 +25,16 @@ const RANGE_TITLE: Record<HeadlineMetrics["range"], string> = {
 export function StatGridApi() {
   const [range, setRange] = useState<HeadlineMetrics["range"]>("24h");
   const { data, isLoading } = useApiHeadline(range);
+  const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
   const vol = Number(data?.buy_volume_usd ?? 0);
   const traders = Number(data?.active_traders ?? 0);
   const created = Number(data?.new_beliefs ?? 0);
   const creatorRev = Number(data?.creator_revenue_usd ?? 0);
   const degenAlloc = Number(data?.degen_allocation_usd ?? 0);
+  const repeatRate = retention?.repeat_rate;
+  const repeatWallets = retention?.repeat_wallets ?? 0;
+  const newWallets = retention?.new_wallets ?? 0;
+
 
   const action = (
     <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
