@@ -42,6 +42,8 @@ export interface HeadlineMetrics {
   buy_volume_eth_prev?: number | null;
   creator_revenue_eth_prev?: number | null;
   degen_allocation_eth_prev?: number | null;
+  transactions?: number;
+  transactions_prev?: number | null;
   computedAt: string;
 }
 
