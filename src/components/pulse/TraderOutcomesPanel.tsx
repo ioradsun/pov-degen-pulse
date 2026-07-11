@@ -6,40 +6,38 @@ import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiPulse";
 
 /**
- * "Are users making money?" — one wallet, one bucket.
+ * "Are users making money?" — one market, one position.
  *
- * Primary: how many wallets are AHEAD vs BEHIND, scored by cash taken out +
- * what they still hold (paper) minus what they put in. Colour is always the
- * outcome: green = up, red = down. Solid = cashed out (real money), outline =
- * still holding (paper, marked at the last trade price).
+ * The unit is a POSITION: one trader's stake in one market side. Every position
+ * is in exactly one of three states, so the counts always reconcile:
+ *   • In profit — closed (sold out) for more than was put in   (real money)
+ *   • In loss   — closed for less than was put in               (real money)
+ *   • On paper  — still open, not settled yet                   (unrealized)
+ *
+ * Headline = win rate of SETTLED positions: in-profit ÷ (in-profit + in-loss).
  */
 
 const GREEN = "var(--up)";
 const RED = "var(--down)";
 
-function Bucket({
+function Stat({
   tone,
-  paper,
   label,
   count,
   desc,
   loading,
 }: {
-  tone: "up" | "down";
-  paper: boolean;
+  tone: "up" | "down" | "neutral";
   label: string;
   count: number;
   desc: string;
   loading?: boolean;
 }) {
-  const color = tone === "up" ? GREEN : RED;
+  const color = tone === "up" ? GREEN : tone === "down" ? RED : "var(--ink-dim)";
   return (
     <div className="flex flex-col gap-1 p-4">
       <span className="flex items-center gap-2 text-[12px] font-medium">
-        <span
-          className="inline-block h-[11px] w-[11px] rounded-full"
-          style={paper ? { border: `2px solid ${color}` } : { background: color }}
-        />
+        <span className="inline-block h-[11px] w-[11px] rounded-full" style={{ background: color }} />
         {label}
       </span>
       <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color }}>
@@ -64,33 +62,34 @@ export function TraderOutcomesPanel({ range }: Props) {
   const prev: OutcomesSnapshot | null = data?.prev ?? null;
   const n = (v: number | null | undefined) => Number(v ?? 0);
 
-  const total = n(now?.wallets_total);
-  const ahead = n(now?.ahead);
-  const behind = n(now?.behind);
-  const banked = n(now?.banked);
-  const paperUp = n(now?.paper_up);
-  const underwater = n(now?.underwater);
-  const lockedLoss = n(now?.locked_loss);
-  const fullyExited = banked + lockedLoss;
-  const realSub =
-    banked > 0
-      ? `${banked.toLocaleString()} of ${fullyExited.toLocaleString()} wallets that fully cashed out came out ahead`
-      : fullyExited > 0
-        ? `nobody has sold out ahead yet — all ${fullyExited.toLocaleString()} who fully exited did so at a loss`
-        : "no wallet has fully cashed out yet";
+  const won = n(now?.won_positions);
+  const lost = n(now?.lost_positions);
+  const open = n(now?.open_positions);
+  const openUp = n(now?.open_up);
+  const openDown = n(now?.open_down);
 
-  // How many more wallets are ahead than one window ago (approximate — paper
-  // is marked at today's price).
-  const aheadDelta = now && prev ? ahead - n(prev.ahead) : null;
+  const settled = won + lost;
+  const total = settled + open;
+  const winPct = settled > 0 ? Math.round((won / settled) * 100) : null;
+
+  // change in win rate over the selected window
+  const prevSettled = prev ? n(prev.won_positions) + n(prev.lost_positions) : 0;
+  const prevWinPct = prevSettled > 0 ? (n(prev?.won_positions) / prevSettled) * 100 : null;
+  const winPctDelta =
+    winPct != null && prevWinPct != null ? Math.round(winPct - prevWinPct) : null;
 
   return (
-    <Panel title="Are users making money?" meta="every wallet · cash + what they still hold" bodyClassName="p-0">
-      {/* HERO — ahead vs behind */}
+    <Panel
+      title="Are users making money?"
+      meta="every position · one trader, one market"
+      bodyClassName="p-0"
+    >
+      {/* HERO — win rate of settled positions */}
       <div className="border-b border-[var(--line-dim)] px-4 py-4">
         {isLoading ? (
           <Skeleton className="h-8 w-56" />
         ) : total === 0 ? (
-          <div className="text-[15px] text-[var(--ink-dim)]">No wallets have traded yet.</div>
+          <div className="text-[15px] text-[var(--ink-dim)]">No positions opened yet.</div>
         ) : (
           <>
             <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
@@ -98,82 +97,73 @@ export function TraderOutcomesPanel({ range }: Props) {
                 <div className="flex items-baseline gap-x-2">
                   <span
                     className="text-[34px] font-semibold leading-none tabular-nums"
-                    style={{ color: banked > 0 ? GREEN : "var(--ink)" }}
+                    style={{ color: winPct != null && winPct >= 50 ? GREEN : "var(--ink)" }}
                   >
-                    {banked.toLocaleString()}
+                    {winPct != null ? `${winPct}%` : "—"}
                   </span>
-                  <span className="text-[15px] text-[var(--ink)]">cashed out a profit</span>
+                  <span className="text-[15px] text-[var(--ink)]">of closed positions made money</span>
                 </div>
-                <div className="mt-1 text-[13px] text-[var(--ink-dim)]">{realSub}</div>
+                <div className="mt-1 text-[13px] text-[var(--ink-dim)]">
+                  {settled > 0
+                    ? `${won.toLocaleString()} won · ${lost.toLocaleString()} lost · ${settled.toLocaleString()} settled`
+                    : "no position has been closed yet"}
+                </div>
               </div>
               <div className="text-[13px] leading-tight text-[var(--ink-dim)]">
-                <span
-                  className="text-[20px] font-semibold tabular-nums"
-                  style={{ color: paperUp > 0 ? GREEN : "var(--ink)" }}
-                >
-                  {paperUp.toLocaleString()}
+                <span className="text-[20px] font-semibold tabular-nums text-[var(--ink)]">
+                  {open.toLocaleString()}
                 </span>{" "}
-                up on paper
-                <div className="text-[11px] text-[var(--ink-faint)]">unrealized · could still drop</div>
+                still open
+                <div className="text-[11px] text-[var(--ink-faint)]">
+                  {openUp.toLocaleString()} up · {openDown.toLocaleString()} down at last price
+                </div>
               </div>
             </div>
 
-            {/* one bar, four segments: solid = real, soft = paper */}
+            {/* settled bar: won (green) vs lost (red) */}
             <div className="mt-3 flex h-[14px] gap-[2px] overflow-hidden rounded-full">
-              <div style={{ flexGrow: banked, background: GREEN }} title={`Cashed out ahead: ${banked}`} />
-              <div style={{ flexGrow: paperUp, background: GREEN, opacity: 0.4 }} title={`Winning on paper: ${paperUp}`} />
-              <div style={{ flexGrow: underwater, background: RED, opacity: 0.4 }} title={`Underwater: ${underwater}`} />
-              <div style={{ flexGrow: lockedLoss, background: RED }} title={`Sold at a loss: ${lockedLoss}`} />
+              <div style={{ flexGrow: won, background: GREEN }} title={`In profit: ${won}`} />
+              <div style={{ flexGrow: lost, background: RED }} title={`In loss: ${lost}`} />
+              {settled === 0 && <div style={{ flexGrow: 1, background: "var(--line-dim)" }} />}
             </div>
             <div className="mt-1 flex justify-between text-[12px] tabular-nums text-[var(--ink-dim)]">
               <span>
-                ▲ {ahead.toLocaleString()} ahead
-                {aheadDelta != null && aheadDelta !== 0 && (
-                  <span className={aheadDelta > 0 ? "text-[var(--up)]" : "text-[var(--down)]"}>
+                ▲ {won.toLocaleString()} in profit
+                {winPctDelta != null && winPctDelta !== 0 && (
+                  <span className={winPctDelta > 0 ? "text-[var(--up)]" : "text-[var(--down)]"}>
                     {" "}
-                    ({aheadDelta > 0 ? "+" : "−"}
-                    {Math.abs(aheadDelta)} in {RANGE_META[range]})
+                    ({winPctDelta > 0 ? "+" : "−"}
+                    {Math.abs(winPctDelta)} pts in {RANGE_META[range]})
                   </span>
                 )}
               </span>
-              <span>{behind.toLocaleString()} behind ▼</span>
+              <span>{lost.toLocaleString()} in loss ▼</span>
             </div>
           </>
         )}
       </div>
 
-      {/* FOUR BUCKETS */}
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)]">
-        <Bucket
+      {/* THREE STATES */}
+      <div className="grid grid-cols-3 divide-x divide-[var(--line-dim)]">
+        <Stat
           tone="up"
-          paper={false}
-          label="Cashed out ahead"
-          count={banked}
-          desc="sold and kept a profit"
+          label="In profit"
+          count={won}
+          desc="closed · sold for more than paid"
           loading={isLoading}
         />
-        <Bucket
+        <Stat
           tone="down"
-          paper={false}
-          label="Sold at a loss"
-          count={lockedLoss}
-          desc="got out for less than they put in"
+          label="In loss"
+          count={lost}
+          desc="closed · sold for less than paid"
           loading={isLoading}
         />
-        <Bucket
-          tone="up"
-          paper
-          label="Winning on paper"
-          count={paperUp}
-          desc="still holding · up at today's price"
-          loading={isLoading}
-        />
-        <Bucket
-          tone="down"
-          paper
-          label="Underwater"
-          count={underwater}
-          desc="still holding · down at today's price"
+        <Stat
+          tone="neutral"
+          label="On paper"
+          count={open}
+          desc="still open · not settled yet"
           loading={isLoading}
         />
       </div>
@@ -187,12 +177,13 @@ export function TraderOutcomesPanel({ range }: Props) {
         </button>
         {showAbout && (
           <p className="pb-2 pt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
-            Each wallet gets one score: cash it took out (sells, FIFO-matched to its buys) plus the
-            value of shares it still holds, minus everything it put in. Ahead means that score is
-            above zero. <strong>Solid</strong> bars/dots are wallets that have cashed out (real
-            money); <strong>outline</strong> ones are still holding, valued at the most recent trade
-            price for that belief and side — an estimate, not a live quote, so paper gains can vanish
-            if everyone tries to sell. Everything is decided in ETH.
+            A <strong>position</strong> is one trader's stake in one market side. A position is
+            counted <strong>settled</strong> once it's fully sold (sells FIFO-matched to its buys);
+            it's <strong>in profit</strong> if the cash out exceeded the cash in, otherwise{" "}
+            <strong>in loss</strong>. Positions still holding tokens are <strong>on paper</strong> —
+            not settled, and shown up/down only as an estimate at the most recent trade price for
+            that market and side, which can move if everyone tries to sell. The headline win rate is
+            in-profit ÷ settled. Everything is decided in ETH.
           </p>
         )}
       </div>

@@ -320,6 +320,12 @@ export interface OutcomesSnapshot {
   // concentration of realized (real) gains
   top3_gain_share: number | null;
   top5_gain_share: number | null;
+  // position ledger — every (wallet, belief, side) position in one state
+  won_positions: number; // closed, came out ahead (real)
+  lost_positions: number; // closed, came out behind (real)
+  open_positions: number; // still open, not settled (paper)
+  open_up: number; // open and up at last trade price (paper)
+  open_down: number; // open and down at last trade price (paper)
 }
 
 export interface TraderOutcomes {
