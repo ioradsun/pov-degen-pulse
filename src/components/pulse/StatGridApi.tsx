@@ -234,6 +234,30 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           />
         </MetricButton>
 
+        <MetricButton onClick={() => setOpenMetric("realized_pnl")}>
+          <Metric
+            label="Realized P&L"
+            value={
+              isLoadingPnl ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <span className={realizedCls}>
+                  {realized >= 0 ? "" : "−"}
+                  {fmt(Math.abs(realized))}
+                </span>
+              )
+            }
+            delta={<Delta pct={realizedDelta} rangeLabel={rangeLabel} />}
+            sub={
+              isLoadingPnl
+                ? "…"
+                : realizedExits === 0
+                  ? "no exits in window · view 24h ↗"
+                  : `${realizedExits.toLocaleString()} exit${realizedExits === 1 ? "" : "s"} · FIFO cost · view 24h ↗`
+            }
+          />
+        </MetricButton>
+
         <Metric
           label="Repeat traders"
           value={
@@ -253,6 +277,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
                 : "No wallets older than 24h yet"
           }
         />
+
       </div>
       <MetricHistoryDialog
         metric={openMetric}
