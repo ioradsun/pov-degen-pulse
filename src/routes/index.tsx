@@ -123,12 +123,8 @@ function Pulse() {
         />
         <StatGridApi range={range} onRangeChange={setRange} currency={currency} />
         <ValueFlowPanel range={range} currency={currency} ethUsd={ethUsd} />
-        <TraderOutcomesPanel
-          range={outcomesRange}
-          onRangeChange={setOutcomesRange}
-          currency={currency}
-          ethUsd={ethUsd}
-        />
+        <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
+
 
 
         {rhythm.isLoading && buckets.length === 0 ? (
