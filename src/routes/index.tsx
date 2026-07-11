@@ -7,6 +7,7 @@ import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
+import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
