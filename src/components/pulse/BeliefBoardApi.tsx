@@ -137,12 +137,39 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                   <span className="tabular-nums text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
                     MC {formatUsd(Number(b.market_cap_usd ?? 0), 0)}
                   </span>
+                  {(() => {
+                    const p = pnlByBelief.get(b.belief_id);
+                    if (!p || p.exits === 0) {
+                      return (
+                        <span className="tabular-nums text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                          no exits
+                        </span>
+                      );
+                    }
+                    const cls =
+                      p.realized > 0
+                        ? "text-[var(--up)]"
+                        : p.realized < 0
+                          ? "text-[var(--down)]"
+                          : "text-[var(--ink-dim)]";
+                    const sign = p.realized < 0 ? "−" : "";
+                    return (
+                      <span
+                        className={`tabular-nums text-[9px] uppercase tracking-[0.14em] ${cls}`}
+                        title={`${p.exits} exit${p.exits === 1 ? "" : "s"}`}
+                      >
+                        P&L {sign}
+                        {formatUsd(Math.abs(p.realized), 0)}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                   {timeAgo(new Date(b.created_at).getTime())}
                 </span>
               </div>
+
             </li>
           ))}
         </ul>
