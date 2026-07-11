@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useApiActivityBuckets } from "./useApiPulse";
+import { useApiActivityBuckets, type RhythmBucket } from "./useApiPulse";
 import { computeStreak, type Streak } from "@/lib/pov/streaks";
 import type { MetricKey } from "@/components/pulse/MetricHistoryDialog";
 
@@ -23,8 +23,8 @@ export function useMetricStreaks(): {
   const streaks = useMemo(() => {
     const buckets = data?.buckets;
     if (!buckets || buckets.length < 2) return null;
-    const dates = buckets.map((b) => b.bucket);
-    const streak = (pick: (b: (typeof buckets)[number]) => number) =>
+    const dates = buckets.map((b: RhythmBucket) => b.bucket);
+    const streak = (pick: (b: RhythmBucket) => number) =>
       computeStreak(buckets.map(pick), dates);
     return {
       buy_volume: streak((b) => b.buy_volume_eth),
