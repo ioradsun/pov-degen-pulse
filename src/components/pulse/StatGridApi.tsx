@@ -85,23 +85,17 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>
             )
           }
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>all buys · USD</span>
-              <Delta pct={volDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
+          sub="all buys · USD"
         />
+
         <Metric
           label="New beliefs"
           value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>markets created</span>
-              <Delta pct={createdDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
+          sub="markets created"
         />
+
         <Metric
           label="Active traders"
           value={
@@ -111,23 +105,17 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--up)]">{traders}</span>
             )
           }
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>unique wallets</span>
-              <Delta pct={tradersDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
+          sub="unique wallets"
         />
+
         <Metric
           label="Creator revenue"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>3.33% of buy volume</span>
-              <Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />}
+          sub="3.33% of buy volume"
         />
+
         <Metric
           label="DEGEN allocation"
           value={
@@ -137,13 +125,10 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>
             )
           }
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>5% of buy volume</span>
-              <Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />}
+          sub="5% of buy volume"
         />
+
         <Metric
           label="Repeat traders"
           value={

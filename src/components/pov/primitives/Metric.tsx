@@ -6,10 +6,11 @@ interface MetricProps {
   value: ReactNode;
   sub?: ReactNode;
   trend?: number; // signed number for color
+  delta?: ReactNode;
   className?: string;
 }
 
-export function Metric({ label, value, sub, trend, className }: MetricProps) {
+export function Metric({ label, value, sub, trend, delta, className }: MetricProps) {
   const trendCls =
     trend == null
       ? "text-[var(--ink-dim)]"
@@ -20,8 +21,9 @@ export function Metric({ label, value, sub, trend, className }: MetricProps) {
           : "text-[var(--ink-dim)]";
   return (
     <div className={clsx("flex flex-col justify-between p-4", className)}>
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-        {label}
+      <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+        <span>{label}</span>
+        {delta != null && <span>{delta}</span>}
       </div>
       <div className="text-[24px] leading-none tabular-nums text-[var(--ink)]">
         {value}
@@ -32,4 +34,5 @@ export function Metric({ label, value, sub, trend, className }: MetricProps) {
     </div>
   );
 }
+
 
