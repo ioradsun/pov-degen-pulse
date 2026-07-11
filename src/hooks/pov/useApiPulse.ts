@@ -35,6 +35,12 @@ export interface HeadlineMetrics {
   new_beliefs_prev?: number | null;
   creator_revenue_usd_prev?: number | null;
   degen_allocation_usd_prev?: number | null;
+  buy_volume_eth?: number;
+  creator_revenue_eth?: number;
+  degen_allocation_eth?: number;
+  buy_volume_eth_prev?: number | null;
+  creator_revenue_eth_prev?: number | null;
+  degen_allocation_eth_prev?: number | null;
   computedAt: string;
 }
 
