@@ -620,22 +620,28 @@ export type Database = {
           holding_value_usd: number
           label: string
           locked_loss: number
+          lost_positions: number
           money_in_eth: number
           money_in_usd: number
           money_out_eth: number
           money_out_usd: number
           net_eth: number
           net_usd: number
+          open_down: number
+          open_positions: number
+          open_up: number
           paper_up: number
           realized_net_eth: number
           realized_net_usd: number
           realized_winners: number
           sellers: number
           top3_gain_share: number
+          top5_gain_share: number
           underwater: number
           unrealized_eth: number
           unrealized_usd: number
           wallets_total: number
+          won_positions: number
         }[]
       }
       trigger_hydrate_titles: { Args: never; Returns: undefined }
