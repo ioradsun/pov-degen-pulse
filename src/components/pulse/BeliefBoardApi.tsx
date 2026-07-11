@@ -51,8 +51,20 @@ interface BeliefBoardApiProps {
 
 export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
   const { data, isLoading } = useApiGrid("volume", range, 12);
+  const { data: pnlData } = useApiPnlByBelief(range, 500);
   const rows = data?.rows ?? [];
   const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? range;
+
+  const pnlByBelief = useMemo(() => {
+    const m = new Map<number, { realized: number; exits: number }>();
+    for (const r of pnlData?.rows ?? []) {
+      m.set(r.belief_id, {
+        realized: Number(r.realized_usd),
+        exits: Number(r.exits),
+      });
+    }
+    return m;
+  }, [pnlData]);
 
   return (
     <Panel
