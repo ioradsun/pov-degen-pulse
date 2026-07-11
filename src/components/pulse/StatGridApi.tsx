@@ -57,6 +57,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
 
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
+  const { data: pnl, isLoading: isLoadingPnl } = useApiPnlHeadline(range);
 
   const fmt = (n: number) => (denom === "usd" ? formatUsd(n, 0) : formatEthAmount(n));
   const unit = denom === "usd" ? "USD" : "ETH";
