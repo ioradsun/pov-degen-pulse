@@ -159,6 +159,21 @@ export function useApiRhythm(range: Range = "24h") {
   });
 }
 
+export type HistoryGranularity = "hour" | "day" | "week" | "month";
+
+export function useApiActivityBuckets(granularity: HistoryGranularity, buckets: number) {
+  return useQuery({
+    queryKey: ["pov", "activity-buckets", granularity, buckets],
+    queryFn: () =>
+      fetchJson<{ granularity: HistoryGranularity; buckets: RhythmBucket[] }>(
+        `/api/public/activity-buckets?granularity=${granularity}&buckets=${buckets}`,
+      ),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+
 /** 7-day repeat wallet rate — an all-time cohort metric, not range-scoped. */
 export function useApiRetention() {
   return useQuery({
