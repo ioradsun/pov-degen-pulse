@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 
 const QuerySchema = z.object({
   granularity: z.enum(["hour", "day", "week", "month"]).default("hour"),
