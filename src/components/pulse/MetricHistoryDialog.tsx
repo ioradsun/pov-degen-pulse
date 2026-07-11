@@ -61,6 +61,8 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
       return b.created;
     case "active_traders":
       return b.active_traders;
+    case "transactions":
+      return b.buys;
     case "creator_revenue": {
       const v = denom === "usd" ? b.buy_volume_usd : b.buy_volume_eth;
       return v * 0.1 * 0.3333;
@@ -73,7 +75,8 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
 }
 
 function fmtValue(v: number, metric: MetricKey, denom: Denom): string {
-  if (metric === "new_beliefs" || metric === "active_traders") return String(Math.round(v));
+  if (metric === "new_beliefs" || metric === "active_traders" || metric === "transactions")
+    return String(Math.round(v));
   return denom === "usd" ? formatUsd(v, 2) : formatEthAmount(v);
 }
 
