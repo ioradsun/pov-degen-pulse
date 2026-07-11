@@ -326,6 +326,11 @@ export interface OutcomesSnapshot {
   open_positions: number; // still open, not settled (paper)
   open_up: number; // open and up at last trade price (paper)
   open_down: number; // open and down at last trade price (paper)
+  // capital-weighted avg ROI per state (fraction; 0.4 = +40%), null if empty
+  won_roi: number | null;
+  lost_roi: number | null;
+  open_up_roi: number | null;
+  open_down_roi: number | null;
 }
 
 export interface TraderOutcomes {

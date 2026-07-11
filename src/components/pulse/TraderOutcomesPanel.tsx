@@ -20,29 +20,46 @@ import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiP
 const GREEN = "var(--up)";
 const RED = "var(--down)";
 
+/** ROI fraction (0.4) → signed percent string ("+40%"). */
+function roiLabel(roi: number | null | undefined): string | null {
+  if (roi == null || !Number.isFinite(roi)) return null;
+  const pct = Math.round(roi * 100);
+  return `${pct > 0 ? "+" : ""}${pct}%`;
+}
+
 function Stat({
   tone,
   label,
   count,
   desc,
+  roi,
   loading,
 }: {
   tone: "up" | "down" | "neutral";
   label: string;
   count: number;
   desc: string;
+  roi?: number | null;
   loading?: boolean;
 }) {
   const color = tone === "up" ? GREEN : tone === "down" ? RED : "var(--ink-dim)";
+  const roiText = roiLabel(roi);
   return (
     <div className="flex flex-col gap-1 p-4">
       <span className="flex items-center gap-2 text-[12px] font-medium">
         <span className="inline-block h-[11px] w-[11px] rounded-full" style={{ background: color }} />
         {label}
       </span>
-      <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color }}>
-        {loading ? <Skeleton className="h-7 w-12" /> : count.toLocaleString()}
-      </span>
+      <div className="flex items-baseline gap-2">
+        <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color }}>
+          {loading ? <Skeleton className="h-7 w-12" /> : count.toLocaleString()}
+        </span>
+        {!loading && roiText && count > 0 && (
+          <span className="text-[13px] font-medium tabular-nums" style={{ color }} title="capital-weighted average ROI">
+            {roiText} avg
+          </span>
+        )}
+      </div>
       <span className="text-[12px] leading-snug text-[var(--ink-dim)]">{desc}</span>
     </div>
   );
@@ -67,6 +84,10 @@ export function TraderOutcomesPanel({ range }: Props) {
   const open = n(now?.open_positions);
   const openUp = n(now?.open_up);
   const openDown = n(now?.open_down);
+  const wonRoi = now?.won_roi ?? null;
+  const lostRoi = now?.lost_roi ?? null;
+  const openUpRoi = now?.open_up_roi ?? null;
+  const openDownRoi = now?.open_down_roi ?? null;
 
   const settled = won + lost;
   const total = settled + open;
@@ -143,12 +164,13 @@ export function TraderOutcomesPanel({ range }: Props) {
         )}
       </div>
 
-      {/* THREE STATES */}
-      <div className="grid grid-cols-3 divide-x divide-[var(--line-dim)]">
+      {/* 2×2 — settled vs. paper × profit vs. loss, each with capital-weighted ROI */}
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)]">
         <Stat
           tone="up"
           label="In profit"
           count={won}
+          roi={wonRoi}
           desc="closed · sold for more than paid"
           loading={isLoading}
         />
@@ -156,14 +178,24 @@ export function TraderOutcomesPanel({ range }: Props) {
           tone="down"
           label="In loss"
           count={lost}
+          roi={lostRoi}
           desc="closed · sold for less than paid"
           loading={isLoading}
         />
         <Stat
-          tone="neutral"
-          label="On paper"
-          count={open}
-          desc="still open · not settled yet"
+          tone="up"
+          label="On paper · profit"
+          count={openUp}
+          roi={openUpRoi}
+          desc="still open · up at last price"
+          loading={isLoading}
+        />
+        <Stat
+          tone="down"
+          label="On paper · loss"
+          count={openDown}
+          roi={openDownRoi}
+          desc="still open · down at last price"
           loading={isLoading}
         />
       </div>
@@ -181,9 +213,11 @@ export function TraderOutcomesPanel({ range }: Props) {
             counted <strong>settled</strong> once it's fully sold (sells FIFO-matched to its buys);
             it's <strong>in profit</strong> if the cash out exceeded the cash in, otherwise{" "}
             <strong>in loss</strong>. Positions still holding tokens are <strong>on paper</strong> —
-            not settled, and shown up/down only as an estimate at the most recent trade price for
+            not settled, and split up/down only as an estimate at the most recent trade price for
             that market and side, which can move if everyone tries to sell. The headline win rate is
-            in-profit ÷ settled. Everything is decided in ETH.
+            in-profit ÷ settled. <strong>Avg</strong> on each tile is the capital-weighted ROI —
+            total profit (or loss) over total cash in for those positions, so a tiny position can't
+            skew it. Everything is decided in ETH.
           </p>
         )}
       </div>
