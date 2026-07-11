@@ -470,12 +470,12 @@ export type Database = {
         }[]
       }
       growth_health: {
-        Args: never
+        Args: { range_key?: string }
         Returns: {
-          belief_fill_rate_7d: number
-          beliefs_created_7d: number
-          beliefs_filled_7d: number
-          degen_burn_all_time_usd: number
+          belief_fill_rate: number
+          beliefs_created: number
+          beliefs_filled: number
+          degen_burn_usd: number
         }[]
       }
       headline_metrics: {
@@ -601,7 +601,7 @@ export type Database = {
       refresh_belief_stats: { Args: never; Returns: undefined }
       refresh_realized_pnl_cache: { Args: never; Returns: undefined }
       repeat_wallet_rate: {
-        Args: never
+        Args: { range_key?: string }
         Returns: {
           new_wallets: number
           repeat_rate: number
@@ -613,13 +613,19 @@ export type Database = {
       value_flow: {
         Args: { range_key: string }
         Returns: {
+          agent_pool_eth: number
           agent_pool_usd: number
+          buy_volume_eth: number
           buy_volume_usd: number
           buyers: number
+          creator_earned_eth: number
           creator_earned_usd: number
+          degen_burn_eth: number
           degen_burn_usd: number
           holders_never_sold: number
+          net_conviction_eth: number
           net_conviction_usd: number
+          sell_proceeds_eth: number
           sell_proceeds_usd: number
         }[]
       }
