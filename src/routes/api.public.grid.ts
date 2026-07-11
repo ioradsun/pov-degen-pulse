@@ -86,6 +86,8 @@ export const Route = createFileRoute("/api/public/grid")({
             lifecycle_stage: row.lifecycle_stage ?? "new",
             unique_wallets_24h: row.unique_wallets_24h ?? 0,
             creator_quality: null,
+            market_cap_usd: Number(row.market_cap_usd ?? 0),
+
           };
         });
         return Response.json({ range, rows });
