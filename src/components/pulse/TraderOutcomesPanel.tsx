@@ -2,8 +2,8 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, formatPct, formatEthAmount, type Currency } from "@/lib/pov/format";
-import { type Range } from "@/lib/pov/ranges";
+import { formatUsd, formatPct, type Currency } from "@/lib/pov/format";
+import { RANGES, type Range } from "@/lib/pov/ranges";
 import { useApiPnlWallets } from "@/hooks/pov/useApiPulse";
 
 
@@ -68,11 +68,12 @@ function Stat({
 
 interface Props {
   range: Range;
+  onRangeChange: (range: Range) => void;
   currency: Currency;
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
+export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: Props) {
 
   const { data, isLoading } = useApiPnlWallets(range);
   const [showAbout, setShowAbout] = useState(false);
@@ -101,6 +102,7 @@ export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
   const positions = Number(data?.positions ?? 0);
   const profitablePositions = Number(data?.profitable_positions ?? 0);
   const medianWin = data?.median_winning_return;
+  const medianAll = data?.median_wallet_return;
 
 
   const rateCls =
@@ -112,7 +114,26 @@ export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
           ? "text-[var(--ink)]"
           : "text-[var(--down)]";
 
-  const action = null;
+  const action = (
+    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
+      {RANGES.map((r) => (
+        <button
+          key={r.key}
+          role="tab"
+          aria-selected={range === r.key}
+          onClick={() => onRangeChange(r.key)}
+          className={clsx(
+            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+            range === r.key
+              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
+              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+          )}
+        >
+          {r.label}
+        </button>
+      ))}
+    </div>
+  );
 
 
   return (
@@ -143,7 +164,7 @@ export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-5">
         <Stat
           label="Profit earned by winning traders"
           value={winnersValue}
@@ -166,6 +187,21 @@ export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
               ? "wallet + market + side · partials may remain open"
               : `${profitablePositions.toLocaleString()} of ${positions.toLocaleString()} · partials may remain open`
           }
+          loading={isLoading}
+        />
+        <Stat
+          label="Median wallet return"
+          value={medianAll == null ? "—" : `${medianAll < 0 ? "−" : "+"}${formatPct(Math.abs(medianAll) * 100, 1).replace("+", "")}`}
+          valueCls={
+            medianAll == null
+              ? "text-[var(--ink-dim)]"
+              : medianAll > 0
+                ? "text-[var(--up)]"
+                : medianAll < 0
+                  ? "text-[var(--down)]"
+                  : "text-[var(--ink)]"
+          }
+          sub="typical return across every wallet that sold"
           loading={isLoading}
         />
         <Stat

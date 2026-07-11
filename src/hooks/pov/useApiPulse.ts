@@ -90,6 +90,10 @@ export interface RetentionMetrics {
   new_wallets: number;
   repeat_wallets: number;
   repeat_rate: number | null;
+  beliefs_created_7d: number;
+  beliefs_filled_7d: number;
+  belief_fill_rate_7d: number | null;
+  degen_burn_all_time_usd: number;
   computedAt: string;
 }
 
@@ -265,6 +269,12 @@ export interface ValueFlow {
   agent_pool_usd: number | null;
   buyers: number | null;
   holders_never_sold: number | null;
+  buy_volume_eth: number | null;
+  sell_proceeds_eth: number | null;
+  net_conviction_eth: number | null;
+  degen_burn_eth: number | null;
+  creator_earned_eth: number | null;
+  agent_pool_eth: number | null;
 }
 
 export function useApiValueFlow(range: Range = "24h") {

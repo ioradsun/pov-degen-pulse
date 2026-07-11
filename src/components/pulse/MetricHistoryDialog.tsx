@@ -11,21 +11,12 @@ import {
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import {
   useApiActivityBuckets,
-  useApiPnlBuckets,
   type HistoryGranularity,
   type RhythmBucket,
-  type PnlBucket,
 } from "@/hooks/pov/useApiPulse";
 import { formatEthAmount, formatUsd } from "@/lib/pov/format";
 
-export type MetricKey =
-  | "buy_volume"
-  | "new_beliefs"
-  | "active_traders"
-  | "transactions"
-  | "creator_revenue"
-  | "degen_allocation"
-  | "realized_pnl";
+export type MetricKey = "buy_volume" | "new_beliefs" | "active_traders" | "transactions";
 
 export type Denom = "usd" | "eth";
 
@@ -40,9 +31,6 @@ const LABELS: Record<MetricKey, string> = {
   new_beliefs: "New beliefs",
   active_traders: "Active wallets",
   transactions: "Transactions",
-  creator_revenue: "Creator revenue",
-  degen_allocation: "DEGEN allocation",
-  realized_pnl: "Realized P&L",
 };
 
 
@@ -68,31 +56,12 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
       return b.active_traders;
     case "transactions":
       return b.buys;
-    case "creator_revenue": {
-      const v = denom === "usd" ? b.buy_volume_usd : b.buy_volume_eth;
-      return v * 0.1 * 0.3333;
-    }
-    case "degen_allocation": {
-      const v = denom === "usd" ? b.buy_volume_usd : b.buy_volume_eth;
-      return v * 0.1 * 0.5;
-    }
-    case "realized_pnl":
-      // Handled via a separate data source; never called for this metric.
-      return 0;
   }
-}
-
-function extractPnl(b: PnlBucket, denom: Denom): number {
-  return denom === "usd" ? b.realized_usd : b.realized_eth;
 }
 
 function fmtValue(v: number, metric: MetricKey, denom: Denom): string {
   if (metric === "new_beliefs" || metric === "active_traders" || metric === "transactions")
     return String(Math.round(v));
-  if (metric === "realized_pnl") {
-    const sign = v < 0 ? "−" : "";
-    return sign + (denom === "usd" ? formatUsd(Math.abs(v), 2) : formatEthAmount(Math.abs(v)));
-  }
   return denom === "usd" ? formatUsd(v, 2) : formatEthAmount(v);
 }
 
@@ -108,19 +77,15 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   const open = metric !== null;
   const [granularity, setGranularity] = useState<HistoryGranularity>("hour");
   const gMeta = GRANULARITIES.find((g) => g.key === granularity)!;
-  const isPnl = metric === "realized_pnl";
   const activity = useApiActivityBuckets(granularity, gMeta.buckets);
-  const pnl = useApiPnlBuckets(granularity, gMeta.buckets);
-  const isLoading = isPnl ? pnl.isLoading : activity.isLoading;
+  const isLoading = activity.isLoading;
 
   const rows = useMemo(() => {
     if (!metric) return [];
-    const raw: Array<{ ts: string; v: number }> = isPnl
-      ? (pnl.data?.buckets ?? []).map((b) => ({ ts: b.bucket, v: extractPnl(b, denom) }))
-      : (activity.data?.buckets ?? []).map((b) => ({
-          ts: b.bucket,
-          v: extract(b, metric, denom),
-        }));
+    const raw: Array<{ ts: string; v: number }> = (activity.data?.buckets ?? []).map((b) => ({
+      ts: b.bucket,
+      v: extract(b, metric, denom),
+    }));
     const lastIdx = raw.length - 1;
     return raw.map(({ ts, v }, i) => {
       const rounded = Number(v.toFixed(4));
@@ -133,7 +98,7 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
         isCurrent,
       };
     });
-  }, [metric, isPnl, pnl.data, activity.data, denom, granularity]);
+  }, [metric, activity.data, denom, granularity]);
 
 
   const total = useMemo(
@@ -142,8 +107,6 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   );
   const peak = useMemo(() => {
     if (rows.length === 0) return 0;
-    // For signed metrics (realized P&L), pick the value with the largest
-    // absolute magnitude so it's meaningful even when everything is negative.
     return rows.reduce((m, r) => {
       const v = r.value ?? r.valuePartial ?? 0;
       return Math.abs(v) > Math.abs(m) ? v : m;

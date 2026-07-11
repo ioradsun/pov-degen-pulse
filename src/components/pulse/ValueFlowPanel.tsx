@@ -1,16 +1,15 @@
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, formatEthAmount, type Currency } from "@/lib/pov/format";
+import { formatEthAmount, formatUsd, type Currency } from "@/lib/pov/format";
 import type { Range } from "@/lib/pov/ranges";
 import { useApiValueFlow } from "@/hooks/pov/useApiPulse";
 
-
 /**
- * The positive lens that is also the true one: on POV, buy fees aren't a
- * cost that disappears — they ARE the product working. Every gross buy
- * splits ~90% into the curve backing the position, 5% into DEGEN buyback
- * & burn, 3.33% to the belief's creator, 1.67% to the AI-agent pool.
+ * Every gross buy splits ~90% into the curve backing the position, 5% into
+ * DEGEN buyback & burn, 3.33% to the belief's creator, 1.67% to the AI-agent
+ * pool. Net flow (buys minus sells) is the one real health number here —
+ * everything else is a protocol-constant estimate of gross buy volume.
  */
 
 function Flow({
@@ -37,36 +36,31 @@ function Flow({
   );
 }
 
-export function ValueFlowPanel({
-  range,
-  currency,
-  ethUsd,
-}: {
-  range: Range;
-  currency: Currency;
-  ethUsd: number | undefined;
-}) {
+export function ValueFlowPanel({ range, currency }: { range: Range; currency: Currency }) {
   const { data, isLoading } = useApiValueFlow(range);
+  const fmt = (n: number) => (currency === "usd" ? formatUsd(n, 0) : formatEthAmount(n));
 
-  const buys = Number(data?.buy_volume_usd ?? 0);
-  const net = Number(data?.net_conviction_usd ?? 0);
-  const burn = Number(data?.degen_burn_usd ?? 0);
-  const creators = Number(data?.creator_earned_usd ?? 0);
+  const buys = Number((currency === "usd" ? data?.buy_volume_usd : data?.buy_volume_eth) ?? 0);
+  const net = Number((currency === "usd" ? data?.net_conviction_usd : data?.net_conviction_eth) ?? 0);
+  const burn = Number((currency === "usd" ? data?.degen_burn_usd : data?.degen_burn_eth) ?? 0);
+  const creators = Number(
+    (currency === "usd" ? data?.creator_earned_usd : data?.creator_earned_eth) ?? 0,
+  );
   const holders = Number(data?.holders_never_sold ?? 0);
   const buyers = Number(data?.buyers ?? 0);
   const holderPct = buyers > 0 ? Math.round((holders / buyers) * 100) : null;
 
-  const canEth = currency === "eth" && ethUsd && ethUsd > 0;
-  const fmt = (n: number) =>
-    canEth ? formatEthAmount(n / (ethUsd as number)) : formatUsd(n, 0);
+  const netCls =
+    net > 0 ? "text-[var(--up)]" : net < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
+  const netText = buys === 0 ? "—" : (net < 0 ? "−" : "") + fmt(Math.abs(net));
 
   return (
     <Panel title="Where the money goes" meta="every buy powers the flywheel" bodyClassName="p-0">
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Flow
-          label="Conviction deployed"
-          value={fmt(buys)}
-          sub="gross value spent backing beliefs"
+          label="Backing beliefs"
+          value={holderPct == null ? "—" : `${holderPct}%`}
+          sub="of buyers haven't sold — conviction still on the curve"
           accent="text-[var(--pov)]"
           loading={isLoading}
         />
@@ -84,14 +78,10 @@ export function ValueFlowPanel({
           loading={isLoading}
         />
         <Flow
-          label="Still backing beliefs"
-          value={holderPct == null ? fmt(Math.max(net, 0)) : `${holderPct}%`}
-          sub={
-            holderPct == null
-              ? "net capital deployed in curves"
-              : `of buyers haven't sold — ${fmt(Math.max(net, 0))} net deployed`
-          }
-          accent="text-[var(--up)]"
+          label="Net flow"
+          value={netText}
+          sub="buys minus sells — capital entering vs leaving"
+          accent={netCls}
           loading={isLoading}
         />
       </div>
@@ -103,4 +93,3 @@ export function ValueFlowPanel({
     </Panel>
   );
 }
-

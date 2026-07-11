@@ -9,6 +9,7 @@ import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
 import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
 import { ValueFlowPanel } from "@/components/pulse/ValueFlowPanel";
+import { GrowthPanel } from "@/components/pulse/GrowthPanel";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/")({
 function Pulse() {
   usePulseRealtime();
   const [range, setRange] = useState<Range>("24h");
-
+  const [outcomesRange, setOutcomesRange] = useState<Range>("all");
   const health = useApiHealth();
   const headline = useApiHeadline(range);
   const grid = useApiGrid("volume", range, 15);
@@ -122,10 +123,14 @@ function Pulse() {
           lastError={health.data?.indexer?.last_error}
         />
         <StatGridApi range={range} onRangeChange={setRange} currency={currency} />
-        <ValueFlowPanel range={range} currency={currency} ethUsd={ethUsd} />
-        <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
-
-
+        <ValueFlowPanel range={range} currency={currency} />
+        <TraderOutcomesPanel
+          range={outcomesRange}
+          onRangeChange={setOutcomesRange}
+          currency={currency}
+          ethUsd={ethUsd}
+        />
+        <GrowthPanel />
 
         {rhythm.isLoading && buckets.length === 0 ? (
           <div className="rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4">
