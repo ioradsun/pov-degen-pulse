@@ -140,7 +140,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
       action={action}
       bodyClassName="p-0"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-7">
         <MetricButton onClick={() => setOpenMetric("buy_volume")}>
           <Metric
             label="Buy volume"
@@ -156,6 +156,40 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           />
         </MetricButton>
 
+        <MetricButton onClick={() => setOpenMetric("active_traders")}>
+          <Metric
+            label="Active wallets"
+            value={
+              isLoading ? (
+                <Skeleton className="h-6 w-14" />
+              ) : (
+                <span className="text-[var(--up)]">{traders}</span>
+              )
+            }
+            delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
+            sub="unique participants · view 24h ↗"
+          />
+        </MetricButton>
+
+        <Metric
+          label="Transactions"
+          value={
+            isLoading ? (
+              <Skeleton className="h-6 w-14" />
+            ) : (
+              <span className="tabular-nums">{transactions.toLocaleString()}</span>
+            )
+          }
+          delta={<Delta pct={transactionsDelta} rangeLabel={rangeLabel} />}
+          sub={
+            isLoading
+              ? "…"
+              : txPerWallet == null
+                ? "buys · repeat behavior"
+                : `${txPerWallet.toFixed(1)} per wallet · repeat behavior`
+          }
+        />
+
         <MetricButton onClick={() => setOpenMetric("new_beliefs")}>
           <Metric
             label="New beliefs"
@@ -165,20 +199,6 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           />
         </MetricButton>
 
-        <MetricButton onClick={() => setOpenMetric("active_traders")}>
-          <Metric
-            label="Active traders"
-            value={
-              isLoading ? (
-                <Skeleton className="h-6 w-14" />
-              ) : (
-                <span className="text-[var(--up)]">{traders}</span>
-              )
-            }
-            delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
-            sub="unique wallets · view 24h ↗"
-          />
-        </MetricButton>
 
         <MetricButton onClick={() => setOpenMetric("creator_revenue")}>
           <Metric
