@@ -44,8 +44,9 @@ export const Route = createFileRoute("/api/public/grid")({
         const { data, error } = await supabase
           .from("belief_stats" as never)
           .select(
-            "belief_id, buy_volume_1h_usd, buy_volume_24h_usd, buy_volume_7d_usd, buy_volume_30d_usd, split_pct, ignition_score, momentum, whale_activity_pct, delta_conviction_1h, distribution_gini, lifecycle_stage, unique_wallets_24h, beliefs!inner(title, creator_address, created_at)",
+            "belief_id, buy_volume_1h_usd, buy_volume_24h_usd, buy_volume_7d_usd, buy_volume_30d_usd, split_pct, ignition_score, momentum, whale_activity_pct, delta_conviction_1h, distribution_gini, lifecycle_stage, unique_wallets_24h, market_cap_usd, beliefs!inner(title, creator_address, created_at)",
           )
+
           .order(orderColumn, { ascending: false, nullsFirst: false })
           .limit(limit);
         if (error) return Response.json({ error: error.message }, { status: 500 });
