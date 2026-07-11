@@ -53,6 +53,8 @@ interface StatGridApiProps {
 
 export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const [denom, setDenom] = useState<Denom>("usd");
+  const [openMetric, setOpenMetric] = useState<MetricKey | null>(null);
+
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
 
