@@ -18,6 +18,7 @@ import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headl
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
+import { Route as ApiPublicPnlHeadlineRouteImport } from './routes/api.public.pnl.headline'
 import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
 import { Route as ApiPublicHooksHydrateTitlesRouteImport } from './routes/api.public.hooks.hydrate-titles'
 import { Route as ApiPublicHooksBackfillTokensRouteImport } from './routes/api.public.hooks.backfill-tokens'
@@ -69,6 +70,11 @@ const ApiPublicActivityBucketsRoute =
     path: '/api/public/activity-buckets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPnlHeadlineRoute = ApiPublicPnlHeadlineRouteImport.update({
+  id: '/api/public/pnl/headline',
+  path: '/api/public/pnl/headline',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksIndexTickRoute = ApiPublicHooksIndexTickRouteImport.update({
   id: '/api/public/hooks/index-tick',
   path: '/api/public/hooks/index-tick',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/headline'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/headline'
   id:
     | '__root__'
     | '/'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/headline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackfillTokensRoute: typeof ApiPublicHooksBackfillTokensRoute
   ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
   ApiPublicHooksIndexTickRoute: typeof ApiPublicHooksIndexTickRoute
+  ApiPublicPnlHeadlineRoute: typeof ApiPublicPnlHeadlineRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicActivityBucketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pnl/headline': {
+      id: '/api/public/pnl/headline'
+      path: '/api/public/pnl/headline'
+      fullPath: '/api/public/pnl/headline'
+      preLoaderRoute: typeof ApiPublicPnlHeadlineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/index-tick': {
       id: '/api/public/hooks/index-tick'
       path: '/api/public/hooks/index-tick'
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackfillTokensRoute: ApiPublicHooksBackfillTokensRoute,
   ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
   ApiPublicHooksIndexTickRoute: ApiPublicHooksIndexTickRoute,
+  ApiPublicPnlHeadlineRoute: ApiPublicPnlHeadlineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
