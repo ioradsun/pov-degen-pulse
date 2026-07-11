@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 
 const QuerySchema = z.object({
   granularity: z.enum(["hour", "day", "week", "month"]).default("hour"),
@@ -16,14 +16,14 @@ export const Route = createFileRoute("/api/public/activity-buckets")({
         if (!parsed.success) {
           return Response.json({ error: parsed.error.flatten() }, { status: 400 });
         }
-        const supabase = getPublicSupabase();
+        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabase.rpc("activity_buckets", {
           granularity: parsed.data.granularity,
           buckets_back: parsed.data.buckets,
         });
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
-        const buckets = (data ?? []).map((r) => ({
+        const buckets = (data ?? []).map((r: Record<string, unknown>) => ({
           bucket: r.bucket,
           buy_volume_usd: Number(r.buy_volume_usd ?? 0),
           buy_volume_eth: Number(r.buy_volume_eth ?? 0),

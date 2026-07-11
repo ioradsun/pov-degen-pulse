@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 
 export const Route = createFileRoute("/api/public/retention")({
   server: {
     handlers: {
       GET: async () => {
-        const supabase = getPublicSupabase();
+        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
         const [{ data, error }, { data: growthData, error: growthError }] = await Promise.all([
           supabase.rpc("repeat_wallet_rate" as never, {} as never),
           supabase.rpc("growth_health" as never, {} as never),
