@@ -136,7 +136,7 @@ export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: 
   return (
     <Panel
       title="Trader outcomes"
-      meta="per wallet · FIFO · in ETH · after the 10% buy fee"
+      meta={`per wallet · FIFO · in ${useUsd ? "USD" : "ETH"} · after the 10% buy fee`}
       action={action}
       bodyClassName="p-0"
     >
