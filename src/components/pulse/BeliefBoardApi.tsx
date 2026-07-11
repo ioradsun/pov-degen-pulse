@@ -109,9 +109,15 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                 </div>
               </div>
               <div className="flex items-baseline gap-3 pl-6 sm:pl-0">
-                <span className="tabular-nums text-[13px] text-[var(--pov)]">
-                  {formatUsd(Number(b.buy_volume_usd ?? 0), 0)}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="tabular-nums text-[13px] text-[var(--pov)]">
+                    {formatUsd(Number(b.buy_volume_usd ?? 0), 0)}
+                  </span>
+                  <span className="tabular-nums text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                    MC {formatUsd(Number(b.market_cap_usd ?? 0), 0)}
+                  </span>
+                </div>
+
                 <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                   {timeAgo(new Date(b.created_at).getTime())}
                 </span>
