@@ -32,9 +32,23 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
       bodyClassName="p-0"
     >
       {rows.length === 0 ? (
-        <div className="p-6 text-center text-xs text-[var(--ink-dim)]">
-          {isLoading ? "Loading beliefs…" : "No belief activity in this timeframe yet."}
-        </div>
+        isLoading ? (
+          <ul className="divide-y divide-[var(--line-dim)]">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-2 w-1/3" />
+                </div>
+                <Skeleton className="h-3 w-16" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="p-6 text-center text-xs text-[var(--ink-dim)]">
+            No belief activity in this timeframe yet.
+          </div>
+        )
       ) : (
         <ul className="divide-y divide-[var(--line-dim)]">
           {rows.map((b, i) => (
