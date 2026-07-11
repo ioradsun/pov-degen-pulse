@@ -121,9 +121,15 @@ function Pulse() {
           writerStatus={writerStatus}
           lastError={health.data?.indexer?.last_error}
         />
-        <StatGridApi range={range} onRangeChange={setRange} />
-        <ValueFlowPanel range={range} />
-        <TraderOutcomesPanel range={outcomesRange} onRangeChange={setOutcomesRange} />
+        <StatGridApi range={range} onRangeChange={setRange} currency={currency} />
+        <ValueFlowPanel range={range} currency={currency} ethUsd={ethUsd} />
+        <TraderOutcomesPanel
+          range={outcomesRange}
+          onRangeChange={setOutcomesRange}
+          currency={currency}
+          ethUsd={ethUsd}
+        />
+
 
         {rhythm.isLoading && buckets.length === 0 ? (
           <div className="rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4">
