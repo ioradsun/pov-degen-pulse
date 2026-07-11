@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 
 const QuerySchema = z.object({
   range: z.enum(["1h", "24h", "7d", "30d", "all"]).default("24h"),
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/rhythm")({
           "30d": 24 * 30,
           all: 24 * 30,
         };
-        const supabase = getPublicSupabase();
+        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabase.rpc("hourly_activity", {
           hours_back: hoursByRange[parsed.data.range] ?? 24,
         });

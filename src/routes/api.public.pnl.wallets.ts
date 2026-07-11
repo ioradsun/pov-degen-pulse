@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 
 const RangeSchema = z.enum(["1h", "24h", "7d", "30d", "all"]);
 
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/pnl/wallets")({
         if (!parsed.success) {
           return Response.json({ error: "invalid range" }, { status: 400 });
         }
-        const supabase = getPublicSupabase();
+        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabase.rpc(
           "pnl_wallet_summary" as never,
           { range_key: parsed.data } as never,
