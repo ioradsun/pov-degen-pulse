@@ -86,6 +86,15 @@ function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
           </span>
           <span aria-hidden>·</span>
           <span className="tabular-nums">{ts ? `${timeAgo(ts)} ago` : "just now"}</span>
+          {marketCap != null && marketCap > 0 && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="tabular-nums" title="Current market cap">
+                MC {formatUsd(marketCap, 0)}
+              </span>
+            </>
+          )}
+
           <a
             href={BASESCAN_TX(e.tx_hash)}
             target="_blank"
