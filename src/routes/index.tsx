@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
 function Pulse() {
   usePulseRealtime();
   const [range, setRange] = useState<Range>("24h");
-  const [outcomesRange, setOutcomesRange] = useState<Range>("all");
+
   const health = useApiHealth();
   const headline = useApiHeadline(range);
   const grid = useApiGrid("volume", range, 15);
