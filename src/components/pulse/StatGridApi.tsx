@@ -4,7 +4,7 @@ import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd, type Currency } from "@/lib/pov/format";
-import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
+import { RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline } from "@/hooks/pov/useApiPulse";
 import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
@@ -20,7 +20,7 @@ function MetricButton({
       type="button"
       onClick={onClick}
       className="group text-left transition-colors hover:bg-[var(--line-dim)]/40 focus:outline-none focus-visible:bg-[var(--line-dim)]/60"
-      aria-label="Show 24h history"
+      aria-label="Show full history"
     >
       {children}
     </button>
@@ -45,12 +45,11 @@ function Delta({ pct, rangeLabel }: { pct: number | null; rangeLabel: string }) 
 
 interface StatGridApiProps {
   range: Range;
-  onRangeChange: (range: Range) => void;
   currency: Currency;
 }
 
-/** Section 1 — "what's happening": pure activity, one range, one currency. */
-export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps) {
+/** Section 1 — "what's happening": pure activity, driven by the global timeframe. */
+export function StatGridApi({ range, currency }: StatGridApiProps) {
   const [openMetric, setOpenMetric] = useState<MetricKey | null>(null);
 
 
@@ -73,33 +72,10 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
   const createdDelta = pctDelta(created, data?.new_beliefs_prev);
   const transactionsDelta = pctDelta(transactions, data?.transactions_prev);
 
-  const action = (
-    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-      {RANGES.map((r) => (
-        <button
-          key={r.key}
-          role="tab"
-          aria-selected={range === r.key}
-          onClick={() => onRangeChange(r.key)}
-          className={clsx(
-            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-            range === r.key
-              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-          )}
-        >
-          {r.label}
-        </button>
-      ))}
-    </div>
-  );
-
-
   return (
     <Panel
       title={RANGE_TITLE[range]}
       meta={isLoading ? "loading…" : "what's happening"}
-      action={action}
       bodyClassName="p-0"
     >
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
@@ -114,7 +90,7 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
               )
             }
             delta={<Delta pct={volDelta} rangeLabel={rangeLabel} />}
-            sub={`all buys · ${unit} · view 24h ↗`}
+            sub={`all buys · ${unit} · view history ↗`}
           />
         </MetricButton>
 
@@ -129,7 +105,7 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
               )
             }
             delta={<Delta pct={tradersDelta} rangeLabel={rangeLabel} />}
-            sub="unique participants · view 24h ↗"
+            sub="unique participants · view history ↗"
           />
         </MetricButton>
 
@@ -148,8 +124,8 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
               isLoading
                 ? "…"
                 : txPerWallet == null
-                  ? "buys · view 24h ↗"
-                  : `${txPerWallet.toFixed(1)} per wallet · view 24h ↗`
+                  ? "buys · view history ↗"
+                  : `${txPerWallet.toFixed(1)} per wallet · view history ↗`
             }
           />
         </MetricButton>
@@ -159,7 +135,7 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
             label="New beliefs"
             value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
             delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
-            sub="markets created · view 24h ↗"
+            sub="markets created · view history ↗"
           />
         </MetricButton>
       </div>

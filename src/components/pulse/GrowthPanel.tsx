@@ -1,13 +1,14 @@
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd } from "@/lib/pov/format";
+import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiRetention } from "@/hooks/pov/useApiPulse";
 
 /**
- * "Are people coming back?" — retention and supply-side health, deliberately
- * separate from the raw activity grid. Repeat rate and new wallets are a
- * rolling 7-day cohort (not the header range); DEGEN burn here is all-time,
- * the platform's cumulative thesis number.
+ * "Are people coming back?" — retention and supply-side health for the
+ * selected timeframe. Repeat rate measures wallets that had the full window to
+ * return and did; belief fill rate and DEGEN burn are scoped to the same
+ * window. All three follow the global timeframe control.
  */
 
 function Health({
@@ -34,19 +35,26 @@ function Health({
   );
 }
 
-export function GrowthPanel() {
-  const { data, isLoading } = useApiRetention();
+export function GrowthPanel({ range }: { range: Range }) {
+  const { data, isLoading } = useApiRetention(range);
+  const window = RANGE_META[range];
 
   const repeatRate = data?.repeat_rate;
   const repeatWallets = data?.repeat_wallets ?? 0;
   const newWallets = data?.new_wallets ?? 0;
-  const fillRate = data?.belief_fill_rate_7d;
-  const beliefsCreated = data?.beliefs_created_7d ?? 0;
-  const beliefsFilled = data?.beliefs_filled_7d ?? 0;
-  const degenBurn = Number(data?.degen_burn_all_time_usd ?? 0);
+  const fillRate = data?.belief_fill_rate;
+  const beliefsCreated = data?.beliefs_created ?? 0;
+  const beliefsFilled = data?.beliefs_filled ?? 0;
+  const degenBurn = Number(data?.degen_burn_usd ?? 0);
+
+  const returnWindow = range === "all" ? "at any point after" : `within ${window}`;
 
   return (
-    <Panel title="Are people coming back?" meta="7d rolling · DEGEN burn all-time" bodyClassName="p-0">
+    <Panel
+      title="Are people coming back?"
+      meta={`retention & supply health · ${window}`}
+      bodyClassName="p-0"
+    >
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Health
           label="Repeat trader rate"
@@ -54,15 +62,19 @@ export function GrowthPanel() {
           accent="text-[var(--pov)]"
           sub={
             newWallets > 0
-              ? `${repeatWallets} of ${newWallets} returned within 7 days`
-              : "no wallets older than 24h yet"
+              ? `${repeatWallets} of ${newWallets} bought again ${returnWindow}`
+              : "no wallets have had the full window to return yet"
           }
           loading={isLoading}
         />
         <Health
-          label="New wallets"
+          label="Wallets eligible to return"
           value={newWallets.toLocaleString()}
-          sub="first buy 7+ days ago, eligible for repeat"
+          sub={
+            range === "all"
+              ? "every wallet that has ever bought"
+              : `first buy ${window} ago or more`
+          }
           loading={isLoading}
         />
         <Health
@@ -71,16 +83,16 @@ export function GrowthPanel() {
           accent="text-[var(--up)]"
           sub={
             beliefsCreated === 0
-              ? "no beliefs created in the last 7 days"
+              ? `no beliefs created in the ${window}`
               : `${beliefsFilled} of ${beliefsCreated} beliefs found ≥3 buyers`
           }
           loading={isLoading}
         />
         <Health
-          label="Cumulative DEGEN burn"
+          label="DEGEN buyback & burn"
           value={formatUsd(degenBurn, 0)}
           accent="text-[var(--degen)]"
-          sub="est. 5% of all-time buy volume"
+          sub={`est. 5% of buy volume · ${window}`}
           loading={isLoading}
         />
       </div>

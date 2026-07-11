@@ -87,13 +87,14 @@ export interface RhythmBucket {
 }
 
 export interface RetentionMetrics {
+  range: Range;
   new_wallets: number;
   repeat_wallets: number;
   repeat_rate: number | null;
-  beliefs_created_7d: number;
-  beliefs_filled_7d: number;
-  belief_fill_rate_7d: number | null;
-  degen_burn_all_time_usd: number;
+  beliefs_created: number;
+  beliefs_filled: number;
+  belief_fill_rate: number | null;
+  degen_burn_usd: number;
   computedAt: string;
 }
 
@@ -195,11 +196,11 @@ export function useApiActivityBuckets(granularity: HistoryGranularity, buckets: 
   });
 }
 
-/** 7-day repeat wallet rate — an all-time cohort metric, not range-scoped. */
-export function useApiRetention() {
+/** Repeat-wallet & growth health, scoped to the global timeframe. */
+export function useApiRetention(range: Range = "24h") {
   return useQuery({
-    queryKey: ["pov", "retention"],
-    queryFn: () => fetchJson<RetentionMetrics>("/api/public/retention"),
+    queryKey: ["pov", "retention", range],
+    queryFn: () => fetchJson<RetentionMetrics>(`/api/public/retention?range=${range}`),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });

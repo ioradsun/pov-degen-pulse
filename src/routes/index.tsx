@@ -7,6 +7,7 @@ import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
+import { TimeframeControl } from "@/components/pulse/TimeframeControl";
 import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
 import { ValueFlowPanel } from "@/components/pulse/ValueFlowPanel";
 import { GrowthPanel } from "@/components/pulse/GrowthPanel";
@@ -36,12 +37,11 @@ export const Route = createFileRoute("/")({
 function Pulse() {
   usePulseRealtime();
   const [range, setRange] = useState<Range>("24h");
-  const [outcomesRange, setOutcomesRange] = useState<Range>("all");
   const health = useApiHealth();
   const headline = useApiHeadline(range);
   const grid = useApiGrid("volume", range, 15);
   const rhythm = useApiRhythm(range);
-  const retention = useApiRetention();
+  const retention = useApiRetention(range);
   const { snapshot: degen } = useDegenPrice();
   const { bars: ohlc } = useDegenOhlc(OHLC_HOURS_FOR_RANGE[range]);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
@@ -122,15 +122,11 @@ function Pulse() {
           writerStatus={writerStatus}
           lastError={health.data?.indexer?.last_error}
         />
-        <StatGridApi range={range} onRangeChange={setRange} currency={currency} />
+        <TimeframeControl range={range} onRangeChange={setRange} />
+        <StatGridApi range={range} currency={currency} />
         <ValueFlowPanel range={range} currency={currency} />
-        <TraderOutcomesPanel
-          range={outcomesRange}
-          onRangeChange={setOutcomesRange}
-          currency={currency}
-          ethUsd={ethUsd}
-        />
-        <GrowthPanel />
+        <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
+        <GrowthPanel range={range} />
 
         {rhythm.isLoading && buckets.length === 0 ? (
           <div className="rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4">

@@ -2,7 +2,7 @@ import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatUsd, type Currency } from "@/lib/pov/format";
-import type { Range } from "@/lib/pov/ranges";
+import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiValueFlow } from "@/hooks/pov/useApiPulse";
 
 /**
@@ -55,7 +55,11 @@ export function ValueFlowPanel({ range, currency }: { range: Range; currency: Cu
   const netText = buys === 0 ? "—" : (net < 0 ? "−" : "") + fmt(Math.abs(net));
 
   return (
-    <Panel title="Where the money goes" meta="every buy powers the flywheel" bodyClassName="p-0">
+    <Panel
+      title="Where the money goes"
+      meta={`every buy powers the flywheel · ${RANGE_META[range]}`}
+      bodyClassName="p-0"
+    >
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Flow
           label="Backing beliefs"

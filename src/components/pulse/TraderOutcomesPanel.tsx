@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd, formatPct, type Currency } from "@/lib/pov/format";
-import { RANGES, type Range } from "@/lib/pov/ranges";
+import { type Range } from "@/lib/pov/ranges";
 import { useApiPnlWallets } from "@/hooks/pov/useApiPulse";
 
 
@@ -68,12 +68,11 @@ function Stat({
 
 interface Props {
   range: Range;
-  onRangeChange: (range: Range) => void;
   currency: Currency;
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: Props) {
+export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
 
   const { data, isLoading } = useApiPnlWallets(range);
   const [showAbout, setShowAbout] = useState(false);
@@ -114,33 +113,10 @@ export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: 
           ? "text-[var(--ink)]"
           : "text-[var(--down)]";
 
-  const action = (
-    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-      {RANGES.map((r) => (
-        <button
-          key={r.key}
-          role="tab"
-          aria-selected={range === r.key}
-          onClick={() => onRangeChange(r.key)}
-          className={clsx(
-            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-            range === r.key
-              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-          )}
-        >
-          {r.label}
-        </button>
-      ))}
-    </div>
-  );
-
-
   return (
     <Panel
       title="Trader outcomes"
       meta={`per wallet · FIFO · in ${useUsd ? "USD" : "ETH"} · after the 10% buy fee`}
-      action={action}
       bodyClassName="p-0"
     >
       {/* PRIMARY: the headline — traders who made money */}
