@@ -96,20 +96,36 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
 
   const rows = useMemo(() => {
     if (!metric || !data) return [];
-    return data.buckets.map((b) => ({
-      ts: b.bucket,
-      label: bucketLabel(b.bucket, granularity),
-      value: Number(extract(b, metric, denom).toFixed(4)),
-    }));
+    const lastIdx = data.buckets.length - 1;
+    return data.buckets.map((b, i) => {
+      const v = Number(extract(b, metric, denom).toFixed(4));
+      const isCurrent = i === lastIdx;
+      return {
+        ts: b.bucket,
+        label: bucketLabel(b.bucket, granularity),
+        // Solid line stops one point early so the dashed segment can start there.
+        value: isCurrent ? null : v,
+        // Dashed segment covers only the last two points (previous → current).
+        valuePartial: isCurrent || i === lastIdx - 1 ? v : null,
+        isCurrent,
+      };
+    });
   }, [data, metric, denom, granularity]);
 
-  const total = useMemo(() => rows.reduce((s, r) => s + r.value, 0), [rows]);
-  const peak = useMemo(() => rows.reduce((m, r) => Math.max(m, r.value), 0), [rows]);
+  const total = useMemo(
+    () => rows.reduce((s, r) => s + (r.value ?? r.valuePartial ?? 0), 0),
+    [rows],
+  );
+  const peak = useMemo(
+    () => rows.reduce((m, r) => Math.max(m, r.value ?? r.valuePartial ?? 0), 0),
+    [rows],
+  );
   const trendLabel = useMemo(() => {
     if (rows.length < 2) return null;
-    const half = Math.floor(rows.length / 2);
-    const first = rows.slice(0, half).reduce((s, r) => s + r.value, 0);
-    const second = rows.slice(half).reduce((s, r) => s + r.value, 0);
+    const vals = rows.map((r) => r.value ?? r.valuePartial ?? 0);
+    const half = Math.floor(vals.length / 2);
+    const first = vals.slice(0, half).reduce((s, v) => s + v, 0);
+    const second = vals.slice(half).reduce((s, v) => s + v, 0);
     if (first === 0) return second > 0 ? "rising" : "flat";
     const pct = ((second - first) / first) * 100;
     if (Math.abs(pct) < 5) return "flat";
@@ -204,7 +220,15 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
                     color: "var(--ink)",
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => (metric ? fmtValue(v, metric, denom) : v)}
+                  formatter={(v: number, _name, item) => {
+                    if (v == null) return ["—", ""];
+                    const label = metric ? fmtValue(v, metric, denom) : String(v);
+                    const suffix =
+                      item && (item.payload as { isCurrent?: boolean })?.isCurrent
+                        ? ` · ${granularity} in progress`
+                        : "";
+                    return [label + suffix, ""];
+                  }}
                   labelFormatter={(l) => String(l)}
                 />
                 <Area
@@ -213,11 +237,36 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
                   stroke="var(--pov)"
                   strokeWidth={2}
                   fill="url(#metricFill)"
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="valuePartial"
+                  stroke="var(--pov)"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.85}
+                  fill="url(#metricFill)"
+                  fillOpacity={0.35}
+                  connectNulls={false}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
+        <p className="mt-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
+          <span
+            aria-hidden
+            className="inline-block h-[2px] w-4"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(to right, var(--pov) 0 4px, transparent 4px 8px)",
+            }}
+          />
+          Dashed = current {granularity} in progress
+        </p>
       </DialogContent>
     </Dialog>
   );
