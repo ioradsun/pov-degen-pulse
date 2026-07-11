@@ -395,6 +395,16 @@ export type Database = {
           new_beliefs: number
         }[]
       }
+      hourly_activity: {
+        Args: { hours_back?: number }
+        Returns: {
+          buy_volume_usd: number
+          buys: number
+          created: number
+          hour: string
+          sells: number
+        }[]
+      }
       refresh_belief_stats: { Args: never; Returns: undefined }
       update_lifecycle_stages: { Args: never; Returns: undefined }
     }
