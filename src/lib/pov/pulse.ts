@@ -29,18 +29,30 @@ export function buildPulse(
   ohlc: OhlcBar[],
   granularity: "hour" | "day",
 ): PulseBucket[] {
+  // Source rows aren't guaranteed to already match the target granularity
+  // (e.g. an hourly feed backing a "daily" chart) — accumulate into each
+  // bucket rather than overwrite, so multiple rows landing on the same
+  // bucket sum instead of only the last one surviving.
   const buckets = new Map<number, PulseBucket>();
   for (const r of rows) {
     const ts = floor(Math.floor(new Date(r.bucket).getTime() / 1000), granularity);
-    buckets.set(ts, {
-      ts,
-      buyVolumeUsd: Number(r.buy_volume_usd),
-      buys: r.buys,
-      sells: r.sells,
-      created: r.created,
-      degenPriceUsd: null,
-      degenVolumeUsd: null,
-    });
+    const existing = buckets.get(ts);
+    if (existing) {
+      existing.buyVolumeUsd += Number(r.buy_volume_usd);
+      existing.buys += r.buys;
+      existing.sells += r.sells;
+      existing.created += r.created;
+    } else {
+      buckets.set(ts, {
+        ts,
+        buyVolumeUsd: Number(r.buy_volume_usd),
+        buys: r.buys,
+        sells: r.sells,
+        created: r.created,
+        degenPriceUsd: null,
+        degenVolumeUsd: null,
+      });
+    }
   }
 
   let lastPrice: number | null = null;
