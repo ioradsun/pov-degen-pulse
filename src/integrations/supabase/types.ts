@@ -224,6 +224,57 @@ export type Database = {
         }
         Relationships: []
       }
+      realized_pnl_events_cache: {
+        Row: {
+          avg_hold_seconds: number | null
+          belief_id: number
+          cost_eth: number
+          cost_usd: number
+          event_id: string
+          is_full_exit: boolean
+          proceeds_eth: number
+          proceeds_usd: number
+          realized_eth: number
+          realized_usd: number
+          sell_ts: string
+          side: string
+          tokens_sold: number
+          wallet_address: string
+        }
+        Insert: {
+          avg_hold_seconds?: number | null
+          belief_id: number
+          cost_eth: number
+          cost_usd: number
+          event_id: string
+          is_full_exit: boolean
+          proceeds_eth: number
+          proceeds_usd: number
+          realized_eth: number
+          realized_usd: number
+          sell_ts: string
+          side: string
+          tokens_sold: number
+          wallet_address: string
+        }
+        Update: {
+          avg_hold_seconds?: number | null
+          belief_id?: number
+          cost_eth?: number
+          cost_usd?: number
+          event_id?: string
+          is_full_exit?: boolean
+          proceeds_eth?: number
+          proceeds_usd?: number
+          realized_eth?: number
+          realized_usd?: number
+          sell_ts?: string
+          side?: string
+          tokens_sold?: number
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           action: string
@@ -516,6 +567,7 @@ export type Database = {
         }[]
       }
       refresh_belief_stats: { Args: never; Returns: undefined }
+      refresh_realized_pnl_cache: { Args: never; Returns: undefined }
       repeat_wallet_rate: {
         Args: never
         Returns: {
