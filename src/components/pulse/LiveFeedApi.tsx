@@ -96,8 +96,19 @@ function Row({ e }: { e: FeedEvent }) {
 
 export function LiveFeedApi() {
   const [largeOnly, setLargeOnly] = useState(false);
-  const { data, isLoading, error } = useApiFeed({ largeOnly, limit: 150 });
+  const { data, isLoading, isFetching, error, dataUpdatedAt } = useApiFeed({
+    largeOnly,
+    limit: 150,
+  });
+  const { data: health } = useApiHealth();
   const events = useMemo(() => data?.events ?? [], [data]);
+
+  // Re-render every second so "Xs ago" ticks smoothly.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const meta = isLoading
     ? "loading…"
@@ -126,8 +137,78 @@ export function LiveFeedApi() {
     </label>
   );
 
+  const pollingActive = !error;
+  const now = Date.now();
+  void tick; // keep dep for re-render
+  const refreshSec = dataUpdatedAt ? Math.max(0, Math.floor((now - dataUpdatedAt) / 1000)) : null;
+  const nextRefreshSec =
+    dataUpdatedAt && pollingActive
+      ? Math.max(0, Math.ceil((dataUpdatedAt + POLL_INTERVAL_MS - now) / 1000))
+      : null;
+  const indexSec = health?.indexer?.seconds_since_last_index ?? null;
+  const indexerOk = indexSec != null && indexSec <= 30;
+
   return (
     <Panel title="Live activity" meta={meta} action={action} bodyClassName="p-0">
+      <div
+        className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--line-dim)] bg-[var(--surface-2)]/40 px-4 py-2 text-[10px] uppercase tracking-[0.14em] text-[var(--ink-dim)]"
+        aria-label="Feed status"
+      >
+        <span className="flex items-center gap-1.5" title="Polling status">
+          <span
+            className={clsx(
+              "inline-block h-1.5 w-1.5 rounded-full",
+              pollingActive
+                ? isFetching
+                  ? "animate-pulse bg-[var(--up)]"
+                  : "bg-[var(--up)]"
+                : "bg-[var(--down)]",
+            )}
+          />
+          <span className="text-[var(--ink)]">
+            {pollingActive ? (isFetching ? "Fetching" : "Polling") : "Paused"}
+          </span>
+          {pollingActive && (
+            <span className="normal-case tracking-normal text-[var(--ink-faint)]">
+              · every {POLL_INTERVAL_MS / 1000}s
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-1.5" title="Last successful feed refresh">
+          <span className="text-[var(--ink-faint)]">Refresh</span>
+          <span className="tabular-nums normal-case tracking-normal text-[var(--ink)]">
+            {refreshSec == null ? "—" : `${refreshSec}s ago`}
+          </span>
+          {nextRefreshSec != null && (
+            <span className="normal-case tracking-normal text-[var(--ink-faint)]">
+              · next {nextRefreshSec}s
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-1.5" title="Onchain indexer last tick">
+          <span
+            className={clsx(
+              "inline-block h-1.5 w-1.5 rounded-full",
+              indexSec == null
+                ? "bg-[var(--ink-faint)]"
+                : indexerOk
+                  ? "bg-[var(--up)]"
+                  : indexSec <= 60
+                    ? "bg-[var(--boost)]"
+                    : "bg-[var(--down)]",
+            )}
+          />
+          <span className="text-[var(--ink-faint)]">Indexed</span>
+          <span className="tabular-nums normal-case tracking-normal text-[var(--ink)]">
+            {indexSec == null ? "—" : `${indexSec}s ago`}
+          </span>
+          {health?.indexer?.last_indexed_block != null && (
+            <span className="normal-case tracking-normal text-[var(--ink-faint)]">
+              · blk {health.indexer.last_indexed_block.toLocaleString()}
+            </span>
+          )}
+        </span>
+      </div>
       <div className="max-h-[640px] min-h-[500px] overflow-y-auto" aria-live="polite">
         {error ? (
           <div className="p-8 text-center text-xs text-[var(--down)]">
