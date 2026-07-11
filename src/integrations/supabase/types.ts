@@ -611,23 +611,31 @@ export type Database = {
       trader_outcomes: {
         Args: { range_key: string }
         Returns: {
+          ahead: number
+          banked: number
+          behind: number
           holder_winners: number
           holders: number
           holding_value_eth: number
           holding_value_usd: number
           label: string
+          locked_loss: number
           money_in_eth: number
           money_in_usd: number
           money_out_eth: number
           money_out_usd: number
           net_eth: number
           net_usd: number
+          paper_up: number
           realized_net_eth: number
           realized_net_usd: number
           realized_winners: number
           sellers: number
+          top3_gain_share: number
+          underwater: number
           unrealized_eth: number
           unrealized_usd: number
+          wallets_total: number
         }[]
       }
       trigger_hydrate_titles: { Args: never; Returns: undefined }
