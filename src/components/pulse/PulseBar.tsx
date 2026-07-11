@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { clsx } from "clsx";
 import {
   formatCompact,
@@ -15,6 +16,9 @@ interface PulseBarProps {
   degen: DegenSnapshot | null;
   currency: Currency;
   onCurrencyChange: (c: Currency) => void;
+  /** Current ETH/USD rate, for the standalone converter (distinct from the
+   *  currency toggle above, which only affects DEGEN's own price display). */
+  ethUsd?: number;
 }
 
 const STATUS_LABEL: Record<WriterStatus, string> = {
@@ -24,12 +28,35 @@ const STATUS_LABEL: Record<WriterStatus, string> = {
   "no writer connected": "no writer connected",
 };
 
+function EthUsdConverter({ ethUsd }: { ethUsd?: number }) {
+  const [raw, setRaw] = useState("1");
+  const eth = Number(raw);
+  const usd = ethUsd && Number.isFinite(eth) ? eth * ethUsd : null;
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      <input
+        value={raw}
+        onChange={(e) => setRaw(e.target.value.replace(/[^0-9.]/g, ""))}
+        inputMode="decimal"
+        aria-label="ETH amount"
+        className="w-14 border border-[var(--line)] bg-[var(--surface)] px-1.5 py-0.5 text-right tabular-nums text-[var(--ink)] focus:border-[var(--pov)] focus:outline-none"
+      />
+      <span className="text-[var(--ink-faint)]">Ξ =</span>
+      <span className="tabular-nums text-[var(--ink)]">
+        {usd != null ? formatUsd(usd, usd >= 1 ? 2 : 4) : "—"}
+      </span>
+    </div>
+  );
+}
+
 export function PulseBar({
   writerStatus,
   lastIndexedBlock,
   degen,
   currency,
   onCurrencyChange,
+  ethUsd,
 }: PulseBarProps) {
   const live = writerStatus === "ok";
 
@@ -56,6 +83,8 @@ export function PulseBar({
                 : STATUS_LABEL[writerStatus]}
           </span>
         </div>
+
+        <EthUsdConverter ethUsd={ethUsd} />
 
         {degen && (
           <div className="flex items-baseline gap-4 tabular-nums">

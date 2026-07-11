@@ -174,10 +174,39 @@ and confirmed NOT to work, so implementation deliberately avoids them:
   under `onChainMarketId":"59"`, `"403"`, and others. Not a per-market
   content id at all.
 
-Implementation: `src/lib/pov/povSite.functions.ts` (server fn) fetches
-pov.co's homepage, regex-extracts every `(title, onChainMarketId)` pair
-from the embedded JSON, and caches the map server-side (60s TTL on
-refetch) so every viewer shares one scrape. One request currently
-resolves ~59 markets. Coverage is biased toward recently-active markets
-(older ones may fall off the homepage listing and stay unresolved,
-showing "Belief #NNN" honestly rather than nothing).
+Implementation (current): `src/routes/api.public.hooks.hydrate-titles.ts`
+— a server-side hook using this same `onChainMarketId` join, scraping
+pov.co's homepage and persisting `title`/`slug`/`creator_display_name`
+into the `beliefs` table permanently (also grabs the creator's display
+name to link out to their pov.co profile — pov.co never exposes a real
+X/Twitter handle, checked directly). This is strictly better than an
+in-memory/TTL cache: results survive restarts and accumulate across
+runs. One caveat — as of this writing no pg_cron job or other scheduler
+was found calling this endpoint automatically (pg_cron only schedules
+`refresh-belief-stats` and `update-lifecycle-stages`); confirm it's
+wired to run repeatedly, or coverage won't improve past whatever's on
+the homepage the moment it's manually triggered.
+
+One request currently resolves ~59-68 markets (whatever's on the
+homepage at fetch time). Coverage is biased toward recently-active
+markets (older ones may fall off the homepage listing). If the hook
+does run repeatedly over time, cumulative coverage should grow as
+different markets rotate onto the homepage; if it only ever ran once,
+coverage is frozen at that snapshot.
+
+### Extending coverage beyond the homepage: three things that don't work
+
+Tried by hand against the live site, confirmed NOT to work — worth
+recording so nobody re-discovers these dead ends later:
+- `pov.co/markets/{numericId}` (e.g. `/markets/246`) returns HTTP 200 but
+  is a generic fallback shell — no `onChainMarketId` anywhere in it, not
+  a real market page.
+- No `/markets`, `/browse`, `/all`, or `/sitemap.xml` listing exists
+  (all 404) to page through the full market set.
+- The homepage's search box filters data already loaded at page load —
+  confirmed via live network inspection that typing a search term issues
+  no separate API request. There's no query-by-id/term endpoint to call.
+
+Without a real API from the pov.co/iorad side, resolving the long tail of
+older/low-volume beliefs beyond what's on the current homepage isn't
+possible from outside.

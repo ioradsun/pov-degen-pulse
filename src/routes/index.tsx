@@ -111,6 +111,7 @@ function Pulse() {
         degen={degen}
         currency={currency}
         onCurrencyChange={setCurrency}
+        ethUsd={ethUsd}
       />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         <IndexerStatusBanner
