@@ -406,6 +406,14 @@ export type Database = {
         }[]
       }
       refresh_belief_stats: { Args: never; Returns: undefined }
+      repeat_wallet_rate: {
+        Args: never
+        Returns: {
+          new_wallets: number
+          repeat_rate: number
+          repeat_wallets: number
+        }[]
+      }
       update_lifecycle_stages: { Args: never; Returns: undefined }
     }
     Enums: {
