@@ -26,6 +26,7 @@ export function useMetricStreaks(): {
     const dates = buckets.map((b) => b.bucket);
     const streak = (pick: (b: (typeof buckets)[number]) => number) =>
       computeStreak(buckets.map(pick), dates);
+    void streak;
     return {
       buy_volume: streak((b) => b.buy_volume_eth),
       active_traders: streak((b) => b.active_traders),
