@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { type Currency } from "@/lib/pov/format";
+import { formatUsd, type Currency } from "@/lib/pov/format";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiPulse";
 
@@ -16,6 +16,13 @@ import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiP
 
 const GREEN = "var(--up)";
 const RED = "var(--down)";
+
+function fmtEth(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  const a = Math.abs(n);
+  const d = a >= 10 ? 1 : a >= 0.1 ? 2 : 3;
+  return `${a.toFixed(d)} Ξ`;
+}
 
 function Bucket({
   tone,
@@ -56,9 +63,11 @@ interface Props {
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range }: Props) {
+export function TraderOutcomesPanel({ range, currency }: Props) {
   const { data, isLoading } = useApiTraderOutcomes(range);
   const [showAbout, setShowAbout] = useState(false);
+  const useUsd = currency === "usd";
+  const money = (v: number) => (useUsd ? formatUsd(Math.abs(v), Math.abs(v) >= 100 ? 0 : 2) : fmtEth(v));
 
   const now: OutcomesSnapshot | null = data?.now ?? null;
   const prev: OutcomesSnapshot | null = data?.prev ?? null;
@@ -78,6 +87,14 @@ export function TraderOutcomesPanel({ range }: Props) {
       : fullyExited > 0
         ? `nobody has sold out ahead yet — all ${fullyExited.toLocaleString()} who fully exited did so at a loss`
         : "no wallet has fully cashed out yet";
+
+  // One-line cash reality (reconciles — real money only, no paper mark).
+  const moneyIn = useUsd ? n(now?.money_in_usd) : n(now?.money_in_eth);
+  const moneyOut = useUsd ? n(now?.money_out_usd) : n(now?.money_out_eth);
+  const cashBack = moneyIn > 0 ? Math.round((moneyOut / moneyIn) * 100) : null;
+  const top3 = now?.top3_gain_share ?? null;
+  const winners = n(now?.realized_winners);
+  const topWalletsN = Math.min(winners, 3);
 
   // How many more wallets are ahead than one window ago (approximate — paper
   // is marked at today's price).
@@ -177,6 +194,23 @@ export function TraderOutcomesPanel({ range }: Props) {
           loading={isLoading}
         />
       </div>
+
+      {/* one-line cash reality: real money only, so it always reconciles */}
+      {!isLoading && total > 0 && cashBack != null && (
+        <div className="border-t border-[var(--line-dim)] bg-[var(--surface-2)] px-4 py-3 text-[12px] leading-relaxed text-[var(--ink-dim)]">
+          Real cash: <span className="text-[var(--ink)]">{money(moneyIn)}</span> in,{" "}
+          <span className="text-[var(--ink)]">{money(moneyOut)}</span> back out — only{" "}
+          <span className="font-medium text-[var(--ink)]">{cashBack}%</span> has come back out.
+          {top3 != null && winners > 0 && (
+            <>
+              {" "}
+              <span className="font-medium text-[var(--ink)]">{Math.round(top3 * 100)}%</span> of the
+              cashed-out profit went to just {topWalletsN.toLocaleString()}
+              {topWalletsN === 1 ? " wallet" : " wallets"}.
+            </>
+          )}
+        </div>
+      )}
 
       <div className="border-t border-[var(--line-dim)] px-4 py-2">
         <button
