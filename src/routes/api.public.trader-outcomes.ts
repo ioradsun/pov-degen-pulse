@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 const RangeSchema = z.enum(["1h", "24h", "7d", "30d", "all"]);
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/api/public/trader-outcomes")({
         if (!parsed.success) {
           return Response.json({ error: "invalid range" }, { status: 400 });
         }
-        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
+        const supabase = getPublicSupabase();
         const { data, error } = await supabase.rpc(
           "trader_outcomes" as never,
           { range_key: parsed.data } as never,

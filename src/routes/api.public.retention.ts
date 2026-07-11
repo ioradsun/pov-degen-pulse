@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 const RangeSchema = z.enum(["1h", "24h", "7d", "30d", "all"]);
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/api/public/retention")({
           return Response.json({ error: "invalid range" }, { status: 400 });
         }
         const rangeKey = parsed.data;
-        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
+        const supabase = getPublicSupabase();
         const [{ data, error }, { data: growthData, error: growthError }] = await Promise.all([
           supabase.rpc("repeat_wallet_rate" as never, { range_key: rangeKey } as never),
           supabase.rpc("growth_health" as never, { range_key: rangeKey } as never),
