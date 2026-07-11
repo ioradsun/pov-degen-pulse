@@ -7,9 +7,10 @@ interface MetricProps {
   sub?: ReactNode;
   trend?: number; // signed number for color
   className?: string;
+  children?: ReactNode;
 }
 
-export function Metric({ label, value, sub, trend, className }: MetricProps) {
+export function Metric({ label, value, sub, trend, className, children }: MetricProps) {
   const trendCls =
     trend == null
       ? "text-[var(--ink-dim)]"
@@ -29,6 +30,8 @@ export function Metric({ label, value, sub, trend, className }: MetricProps) {
       {sub != null && (
         <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
       )}
+      {children}
     </div>
   );
 }
+

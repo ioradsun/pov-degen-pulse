@@ -7,8 +7,8 @@ import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
-import { RepeatWalletCard } from "@/components/pulse/RepeatWalletCard";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
+
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
 import { formatUsd, type Currency } from "@/lib/pov/format";
@@ -111,10 +111,10 @@ function Pulse() {
             <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <RepeatWalletCard />
             <InsightPanel snapshot={insightSnapshot} ready={ready} />
             <BeliefBoardApi />
           </div>
+
         </div>
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6">
