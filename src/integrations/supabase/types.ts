@@ -442,6 +442,7 @@ export type Database = {
           repeat_wallets: number
         }[]
       }
+      trigger_hydrate_titles: { Args: never; Returns: undefined }
       update_lifecycle_stages: { Args: never; Returns: undefined }
     }
     Enums: {
