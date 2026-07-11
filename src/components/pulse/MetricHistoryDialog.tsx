@@ -20,6 +20,7 @@ export type MetricKey =
   | "buy_volume"
   | "new_beliefs"
   | "active_traders"
+  | "transactions"
   | "creator_revenue"
   | "degen_allocation";
 
@@ -34,7 +35,8 @@ interface Props {
 const LABELS: Record<MetricKey, string> = {
   buy_volume: "Buy volume",
   new_beliefs: "New beliefs",
-  active_traders: "Active traders",
+  active_traders: "Active wallets",
+  transactions: "Transactions",
   creator_revenue: "Creator revenue",
   degen_allocation: "DEGEN allocation",
 };
@@ -59,6 +61,8 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
       return b.created;
     case "active_traders":
       return b.active_traders;
+    case "transactions":
+      return b.buys;
     case "creator_revenue": {
       const v = denom === "usd" ? b.buy_volume_usd : b.buy_volume_eth;
       return v * 0.1 * 0.3333;
@@ -71,7 +75,8 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
 }
 
 function fmtValue(v: number, metric: MetricKey, denom: Denom): string {
-  if (metric === "new_beliefs" || metric === "active_traders") return String(Math.round(v));
+  if (metric === "new_beliefs" || metric === "active_traders" || metric === "transactions")
+    return String(Math.round(v));
   return denom === "usd" ? formatUsd(v, 2) : formatEthAmount(v);
 }
 
@@ -87,16 +92,21 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   const open = metric !== null;
   const [granularity, setGranularity] = useState<HistoryGranularity>("hour");
   const gMeta = GRANULARITIES.find((g) => g.key === granularity)!;
-  const { data, isLoading } = useApiActivityBuckets(granularity, gMeta.buckets);
+  // For day/week/month, fetch one extra bucket so we can drop the current
+  // in-progress period and always end on a completed bucket.
+  const dropPartial = granularity !== "hour";
+  const fetchBuckets = gMeta.buckets + (dropPartial ? 1 : 0);
+  const { data, isLoading } = useApiActivityBuckets(granularity, fetchBuckets);
 
   const rows = useMemo(() => {
     if (!metric || !data) return [];
-    return data.buckets.map((b) => ({
+    const source = dropPartial ? data.buckets.slice(0, -1) : data.buckets;
+    return source.map((b) => ({
       ts: b.bucket,
       label: bucketLabel(b.bucket, granularity),
       value: Number(extract(b, metric, denom).toFixed(4)),
     }));
-  }, [data, metric, denom, granularity]);
+  }, [data, metric, denom, granularity, dropPartial]);
 
   const total = useMemo(() => rows.reduce((s, r) => s + r.value, 0), [rows]);
   const peak = useMemo(() => rows.reduce((m, r) => Math.max(m, r.value), 0), [rows]);
