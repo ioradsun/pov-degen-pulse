@@ -24,9 +24,16 @@ export interface Streak {
   endDate: string | null;
   /** the down/flat day that reset the streak (ISO), or null if history is all-up */
   brokeAfter: string | null;
+  /**
+   * Today's still-open bucket — NOT counted in `current` until the day closes.
+   * `beatsYesterday` is true once today's running total has already passed
+   * yesterday's final (for these monotonic daily counts, once it's ahead it
+   * stays ahead, so the streak will extend when the day closes).
+   */
+  inProgress: { beatsYesterday: boolean; date: string } | null;
 }
 
-const EMPTY: Streak = {
+const EMPTY: Omit<Streak, "inProgress"> = {
   current: 0,
   record: 0,
   isRecord: false,
@@ -48,10 +55,19 @@ export function computeStreak(
   const excludeLast = opts.excludeLast ?? true;
   const stripLen = opts.stripLen ?? 10;
 
+  // today's in-progress bucket (the excluded last point) vs. the last completed day
+  const inProgress =
+    excludeLast && values.length >= 2
+      ? {
+          beatsYesterday: values[values.length - 1] > values[values.length - 2],
+          date: dates[dates.length - 1],
+        }
+      : null;
+
   const end = excludeLast ? values.length - 1 : values.length;
   const vals = values.slice(0, Math.max(end, 0));
   const ds = dates.slice(0, Math.max(end, 0));
-  if (vals.length < 2) return EMPTY;
+  if (vals.length < 2) return { ...EMPTY, inProgress };
 
   // one transition per completed day (from day 2 onward): did it beat the day before?
   const ups: { up: boolean; date: string }[] = [];
@@ -83,6 +99,7 @@ export function computeStreak(
     startDate: current > 0 ? ups[runStartIdx].date : null,
     endDate: current > 0 ? ups[ups.length - 1].date : null,
     brokeAfter: breakIdx >= 0 ? ups[breakIdx].date : null,
+    inProgress,
   };
 }
 

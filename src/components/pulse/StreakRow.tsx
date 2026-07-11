@@ -29,8 +29,9 @@ export function StreakRow({
   if (!streak || streak.days.length === 0) return null;
 
   const active = streak.current >= 2;
+  const ip = streak.inProgress;
 
-  const tip = active ? (
+  const base = active ? (
     <>
       <span style={{ color: GREEN }}>Rising {streak.current} days straight</span> —{" "}
       {shortDate(streak.startDate)} → {shortDate(streak.endDate)}. Each day beat the last.
@@ -45,6 +46,27 @@ export function StreakRow({
     </>
   ) : (
     <>No rising streak yet.</>
+  );
+
+  const todayLine = ip ? (
+    <>
+      <br />
+      <span style={{ color: "var(--ink-faint)" }}>
+        Today isn't counted until it closes.{" "}
+        {ip.beatsYesterday
+          ? active
+            ? `Already ahead of yesterday — on track for ${streak.current + 1}.`
+            : "Already ahead of yesterday — a new run starts if it holds."
+          : "Behind yesterday so far."}
+      </span>
+    </>
+  ) : null;
+
+  const tip = (
+    <>
+      {base}
+      {todayLine}
+    </>
   );
 
   return (
@@ -84,6 +106,21 @@ export function StreakRow({
                   />
                 );
               })}
+              {ip && (
+                <span
+                  className="animate-pulse"
+                  title="Today — in progress, not counted yet"
+                  style={{
+                    display: "block",
+                    flex: 1,
+                    height: 12,
+                    borderRadius: 1,
+                    border: "1px dashed var(--line)",
+                    background: ip.beatsYesterday ? GREEN : "transparent",
+                    opacity: ip.beatsYesterday ? 0.5 : 1,
+                  }}
+                />
+              )}
             </span>
           </div>
         </TooltipTrigger>
