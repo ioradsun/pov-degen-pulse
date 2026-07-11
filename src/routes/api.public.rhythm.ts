@@ -15,17 +15,29 @@ export const Route = createFileRoute("/api/public/rhythm")({
         if (!parsed.success) {
           return Response.json({ error: parsed.error.flatten() }, { status: 400 });
         }
+        const hoursByRange: Record<string, number> = {
+          "1h": 1,
+          "24h": 24,
+          "7d": 24 * 7,
+          "30d": 24 * 30,
+          all: 24 * 30,
+        };
         const supabase = getPublicSupabase();
-        const { data, error } = await supabase.rpc(
-          "activity_series" as never,
-          {
-            range_key: parsed.data.range,
-          } as never,
-        );
+        const { data, error } = await supabase.rpc("hourly_activity", {
+          hours_back: hoursByRange[parsed.data.range] ?? 24,
+        });
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
+        const buckets = (data ?? []).map((r) => ({
+          bucket: r.hour,
+          buy_volume_usd: Number(r.buy_volume_usd ?? 0),
+          buys: r.buys ?? 0,
+          sells: r.sells ?? 0,
+          created: r.created ?? 0,
+        }));
+
         return Response.json(
-          { range: parsed.data.range, buckets: data ?? [] },
+          { range: parsed.data.range, buckets },
           { headers: { "Cache-Control": "public, s-maxage=30" } },
         );
       },
