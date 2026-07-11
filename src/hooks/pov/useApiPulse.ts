@@ -152,6 +152,15 @@ export function useApiGrid(sort: GridSort = "ignition", range: Range = "24h", li
   });
 }
 
+export function useApiMarketCaps() {
+  return useQuery({
+    queryKey: ["pov", "market-caps"],
+    queryFn: () => fetchJson<{ caps: Record<string, number> }>("/api/public/market-caps"),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+
+
 export function useApiRhythm(range: Range = "24h") {
   return useQuery({
     queryKey: ["pov", "rhythm", range],
