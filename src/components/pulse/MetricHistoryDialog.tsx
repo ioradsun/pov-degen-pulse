@@ -92,16 +92,21 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   const open = metric !== null;
   const [granularity, setGranularity] = useState<HistoryGranularity>("hour");
   const gMeta = GRANULARITIES.find((g) => g.key === granularity)!;
-  const { data, isLoading } = useApiActivityBuckets(granularity, gMeta.buckets);
+  // For day/week/month, fetch one extra bucket so we can drop the current
+  // in-progress period and always end on a completed bucket.
+  const dropPartial = granularity !== "hour";
+  const fetchBuckets = gMeta.buckets + (dropPartial ? 1 : 0);
+  const { data, isLoading } = useApiActivityBuckets(granularity, fetchBuckets);
 
   const rows = useMemo(() => {
     if (!metric || !data) return [];
-    return data.buckets.map((b) => ({
+    const source = dropPartial ? data.buckets.slice(0, -1) : data.buckets;
+    return source.map((b) => ({
       ts: b.bucket,
       label: bucketLabel(b.bucket, granularity),
       value: Number(extract(b, metric, denom).toFixed(4)),
     }));
-  }, [data, metric, denom, granularity]);
+  }, [data, metric, denom, granularity, dropPartial]);
 
   const total = useMemo(() => rows.reduce((s, r) => s + r.value, 0), [rows]);
   const peak = useMemo(() => rows.reduce((m, r) => Math.max(m, r.value), 0), [rows]);
