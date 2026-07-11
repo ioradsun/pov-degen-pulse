@@ -92,13 +92,10 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
         <Metric
           label="New beliefs"
           value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>markets created</span>
-              <Delta pct={createdDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={createdDelta} rangeLabel={rangeLabel} />}
+          sub="markets created"
         />
+
         <Metric
           label="Active traders"
           value={
