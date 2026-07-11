@@ -39,7 +39,7 @@ export function formatUsd(n: number, digits = 2): string {
   })}`;
 }
 
-export function formatEth(n: number, digits = 3): string {
+export function formatEthAmount(n: number, digits = 3): string {
   if (!Number.isFinite(n)) return "0 Ξ";
   if (Math.abs(n) >= 1_000) return `${(n / 1e3).toFixed(2)}K Ξ`;
   if (Math.abs(n) >= 1) return `${n.toFixed(Math.max(2, digits))} Ξ`;
