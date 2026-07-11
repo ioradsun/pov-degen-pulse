@@ -64,7 +64,7 @@ export function StatGridApi() {
       action={action}
       bodyClassName="p-0"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-6">
         <Metric
           label="Buy volume"
           value={<span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>}
@@ -75,22 +75,7 @@ export function StatGridApi() {
           label="Active traders"
           value={<span className="text-[var(--up)]">{traders}</span>}
           sub="unique wallets"
-        >
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-            Repeat traders
-          </div>
-          <div className="text-[18px] leading-none tabular-nums text-[var(--pov)]">
-            {isLoadingRetention || repeatRate == null
-              ? "—"
-              : `${Math.round(repeatRate * 100)}%`}
-          </div>
-          <div className="text-[11px] text-[var(--ink-dim)]">
-            {newWallets > 0
-              ? `${repeatWallets} of ${newWallets} new wallets returned`
-              : "Not enough wallet history yet"}
-          </div>
-        </Metric>
-
+        />
         <Metric
           label="Creator revenue"
           value={formatUsd(creatorRev, 0)}
@@ -100,6 +85,21 @@ export function StatGridApi() {
           label="DEGEN allocation"
           value={<span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>}
           sub="5% of buy volume"
+        />
+        <Metric
+          label="Repeat traders"
+          value={
+            <span className="text-[var(--pov)]">
+              {isLoadingRetention || repeatRate == null
+                ? "—"
+                : `${Math.round(repeatRate * 100)}%`}
+            </span>
+          }
+          sub={
+            newWallets > 0
+              ? `${repeatWallets} of ${newWallets} new wallets returned`
+              : "Not enough wallet history yet"
+          }
         />
       </div>
     </Panel>

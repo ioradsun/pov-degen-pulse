@@ -7,10 +7,9 @@ interface MetricProps {
   sub?: ReactNode;
   trend?: number; // signed number for color
   className?: string;
-  children?: ReactNode;
 }
 
-export function Metric({ label, value, sub, trend, className, children }: MetricProps) {
+export function Metric({ label, value, sub, trend, className }: MetricProps) {
   const trendCls =
     trend == null
       ? "text-[var(--ink-dim)]"
@@ -20,22 +19,15 @@ export function Metric({ label, value, sub, trend, className, children }: Metric
           ? "text-[var(--down)]"
           : "text-[var(--ink-dim)]";
   return (
-    <div className={clsx("flex flex-col p-4", className)}>
-      <div className="flex flex-col gap-1">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          {label}
-        </div>
-        <div className="text-[24px] leading-none tabular-nums text-[var(--ink)]">
-          {value}
-        </div>
-        {sub != null && (
-          <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
-        )}
+    <div className={clsx("flex flex-col justify-between p-4", className)}>
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+        {label}
       </div>
-      {children != null && (
-        <div className="mt-auto border-t border-[var(--line-dim)] pt-2">
-          {children}
-        </div>
+      <div className="text-[24px] leading-none tabular-nums text-[var(--ink)]">
+        {value}
+      </div>
+      {sub != null && (
+        <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
       )}
     </div>
   );
