@@ -93,6 +93,13 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const creatorRevDelta = pctDelta(creatorRev, creatorRevPrev);
   const degenAllocDelta = pctDelta(degenAlloc, degenAllocPrev);
 
+  const realized = Number((denom === "usd" ? pnl?.realized_usd : pnl?.realized_eth) ?? 0);
+  const realizedPrev = denom === "usd" ? pnl?.realized_usd_prev : pnl?.realized_eth_prev;
+  const realizedDelta = pctDelta(realized, realizedPrev);
+  const realizedExits = Number(pnl?.exits ?? 0);
+  const realizedCls =
+    realized > 0 ? "text-[var(--up)]" : realized < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
+
   const action = (
     <div className="flex items-center gap-2">
       <div role="tablist" aria-label="Denomination" className="flex items-center gap-1">
