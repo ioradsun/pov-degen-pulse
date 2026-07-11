@@ -118,13 +118,28 @@ function Pulse() {
           lastError={health.data?.indexer?.last_error}
         />
         <StatGridApi range={range} onRangeChange={setRange} />
-        <RhythmChart
-          buckets={buckets}
-          currency={currency}
-          ethUsd={ethUsd}
-          granularity={granularity}
-          rangeLabel={RANGE_META[range]}
-        />
+        {rhythm.isLoading && buckets.length === 0 ? (
+          <div className="rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4">
+            <div className="mb-3 h-3 w-24 animate-pulse rounded-sm bg-[var(--surface-2)]" />
+            <div className="flex h-[280px] items-end gap-1">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-1 animate-pulse rounded-sm bg-[var(--surface-2)]"
+                  style={{ height: `${20 + ((i * 37) % 70)}%` }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <RhythmChart
+            buckets={buckets}
+            currency={currency}
+            ethUsd={ethUsd}
+            granularity={granularity}
+            rangeLabel={RANGE_META[range]}
+          />
+        )}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <LiveFeedApi />
