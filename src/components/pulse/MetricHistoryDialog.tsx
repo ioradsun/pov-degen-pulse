@@ -220,7 +220,15 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
                     color: "var(--ink)",
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => (metric ? fmtValue(v, metric, denom) : v)}
+                  formatter={(v: number, _name, item) => {
+                    if (v == null) return ["—", ""];
+                    const label = metric ? fmtValue(v, metric, denom) : String(v);
+                    const suffix =
+                      item && (item.payload as { isCurrent?: boolean })?.isCurrent
+                        ? ` · ${granularity} in progress`
+                        : "";
+                    return [label + suffix, ""];
+                  }}
                   labelFormatter={(l) => String(l)}
                 />
                 <Area
@@ -229,6 +237,20 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
                   stroke="var(--pov)"
                   strokeWidth={2}
                   fill="url(#metricFill)"
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="valuePartial"
+                  stroke="var(--pov)"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.85}
+                  fill="url(#metricFill)"
+                  fillOpacity={0.35}
+                  connectNulls={false}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
