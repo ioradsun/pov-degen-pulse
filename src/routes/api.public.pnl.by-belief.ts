@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/api/public/pnl/by-belief")({
         if (!rangeP.success || !limitP.success) {
           return Response.json({ error: "invalid params" }, { status: 400 });
         }
-        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
+        const supabase = getPublicSupabase();
         const { data, error } = await supabase.rpc(
           "pnl_by_belief" as never,
           { range_key: rangeP.data, top_n: limitP.data } as never,

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/api/public/activity-buckets")({
         if (!parsed.success) {
           return Response.json({ error: parsed.error.flatten() }, { status: 400 });
         }
-        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
+        const supabase = getPublicSupabase();
         const { data, error } = await supabase.rpc("activity_buckets", {
           granularity: parsed.data.granularity,
           buckets_back: parsed.data.buckets,

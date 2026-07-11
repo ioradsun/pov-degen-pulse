@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/api/public/pnl/buckets")({
         if (!gP.success || !bP.success) {
           return Response.json({ error: "invalid params" }, { status: 400 });
         }
-        const { supabaseAdmin: supabase } = await import("@/integrations/supabase/client.server");
+        const supabase = getPublicSupabase();
         const { data, error } = await supabase.rpc(
           "pnl_buckets" as never,
           { granularity: gP.data, buckets_back: bP.data } as never,
