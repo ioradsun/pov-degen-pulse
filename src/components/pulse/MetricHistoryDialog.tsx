@@ -111,18 +111,21 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
       };
     });
   }, [data, metric, denom, granularity]);
-      label: bucketLabel(b.bucket, granularity),
-      value: Number(extract(b, metric, denom).toFixed(4)),
-    }));
-  }, [data, metric, denom, granularity]);
 
-  const total = useMemo(() => rows.reduce((s, r) => s + r.value, 0), [rows]);
-  const peak = useMemo(() => rows.reduce((m, r) => Math.max(m, r.value), 0), [rows]);
+  const total = useMemo(
+    () => rows.reduce((s, r) => s + (r.value ?? r.valuePartial ?? 0), 0),
+    [rows],
+  );
+  const peak = useMemo(
+    () => rows.reduce((m, r) => Math.max(m, r.value ?? r.valuePartial ?? 0), 0),
+    [rows],
+  );
   const trendLabel = useMemo(() => {
     if (rows.length < 2) return null;
-    const half = Math.floor(rows.length / 2);
-    const first = rows.slice(0, half).reduce((s, r) => s + r.value, 0);
-    const second = rows.slice(half).reduce((s, r) => s + r.value, 0);
+    const vals = rows.map((r) => r.value ?? r.valuePartial ?? 0);
+    const half = Math.floor(vals.length / 2);
+    const first = vals.slice(0, half).reduce((s, v) => s + v, 0);
+    const second = vals.slice(half).reduce((s, v) => s + v, 0);
     if (first === 0) return second > 0 ? "rising" : "flat";
     const pct = ((second - first) / first) * 100;
     if (Math.abs(pct) < 5) return "flat";
