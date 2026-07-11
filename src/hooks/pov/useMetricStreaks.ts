@@ -23,10 +23,9 @@ export function useMetricStreaks(): {
   const streaks = useMemo(() => {
     const buckets = data?.buckets;
     if (!buckets || buckets.length < 2) return null;
-    const dates = buckets.map((b) => b.bucket);
-    const streak = (pick: (b: (typeof buckets)[number]) => number) =>
+    const dates = buckets.map((b: RhythmBucket) => b.bucket);
+    const streak = (pick: (b: RhythmBucket) => number) =>
       computeStreak(buckets.map(pick), dates);
-    void streak;
     return {
       buy_volume: streak((b) => b.buy_volume_eth),
       active_traders: streak((b) => b.active_traders),
