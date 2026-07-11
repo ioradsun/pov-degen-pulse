@@ -390,10 +390,16 @@ export type Database = {
         Returns: {
           active_traders: number
           active_traders_prev: number
+          buy_volume_eth: number
+          buy_volume_eth_prev: number
           buy_volume_usd: number
           buy_volume_usd_prev: number
+          creator_revenue_eth: number
+          creator_revenue_eth_prev: number
           creator_revenue_usd: number
           creator_revenue_usd_prev: number
+          degen_allocation_eth: number
+          degen_allocation_eth_prev: number
           degen_allocation_usd: number
           degen_allocation_usd_prev: number
           new_beliefs: number
