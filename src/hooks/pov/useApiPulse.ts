@@ -227,7 +227,9 @@ export function usePulseRealtime() {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "belief_stats" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "grid"] });
+        qc.invalidateQueries({ queryKey: ["pov", "market-caps"] });
       })
+
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
