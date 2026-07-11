@@ -76,20 +76,18 @@ export function StatGridApi() {
           value={<span className="text-[var(--up)]">{traders}</span>}
           sub="unique wallets"
         >
-          <div className="mt-2 border-t border-[var(--line-dim)] pt-2">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-              Repeat traders
-            </div>
-            <div className="text-[18px] leading-none tabular-nums text-[var(--pov)]">
-              {isLoadingRetention || repeatRate == null
-                ? "—"
-                : `${Math.round(repeatRate * 100)}%`}
-            </div>
-            <div className="text-[11px] text-[var(--ink-dim)]">
-              {newWallets > 0
-                ? `${repeatWallets} of ${newWallets} new wallets returned`
-                : "Not enough wallet history yet"}
-            </div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+            Repeat traders
+          </div>
+          <div className="text-[18px] leading-none tabular-nums text-[var(--pov)]">
+            {isLoadingRetention || repeatRate == null
+              ? "—"
+              : `${Math.round(repeatRate * 100)}%`}
+          </div>
+          <div className="text-[11px] text-[var(--ink-dim)]">
+            {newWallets > 0
+              ? `${repeatWallets} of ${newWallets} new wallets returned`
+              : "Not enough wallet history yet"}
           </div>
         </Metric>
 
