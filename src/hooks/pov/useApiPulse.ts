@@ -307,6 +307,10 @@ export function usePulseRealtime() {
         qc.invalidateQueries({ queryKey: ["pov", "retention"] });
         qc.invalidateQueries({ queryKey: ["pov", "rhythm"] });
         qc.invalidateQueries({ queryKey: ["pov", "grid"] });
+        qc.invalidateQueries({ queryKey: ["pov", "pnl-headline"] });
+        qc.invalidateQueries({ queryKey: ["pov", "pnl-outcomes"] });
+        qc.invalidateQueries({ queryKey: ["pov", "pnl-buckets"] });
+        qc.invalidateQueries({ queryKey: ["pov", "pnl-by-belief"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "beliefs" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });
