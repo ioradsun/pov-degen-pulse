@@ -103,45 +103,26 @@ export function StatGridApi({ range, onRangeChange, currency }: StatGridApiProps
     realized > 0 ? "text-[var(--up)]" : realized < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
 
   const action = (
-    <div className="flex items-center gap-2">
-      <div role="tablist" aria-label="Denomination" className="flex items-center gap-1">
-        {(["usd", "eth"] as const).map((d) => (
-          <button
-            key={d}
-            role="tab"
-            aria-selected={denom === d}
-            onClick={() => setDenom(d)}
-            className={clsx(
-              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-              denom === d
-                ? "border-[var(--boost)]/60 bg-[var(--boost)]/10 text-[var(--boost)]"
-                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-            )}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-      <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-        {RANGES.map((r) => (
-          <button
-            key={r.key}
-            role="tab"
-            aria-selected={range === r.key}
-            onClick={() => onRangeChange(r.key)}
-            className={clsx(
-              "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-              range === r.key
-                ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-                : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-            )}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
+    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
+      {RANGES.map((r) => (
+        <button
+          key={r.key}
+          role="tab"
+          aria-selected={range === r.key}
+          onClick={() => onRangeChange(r.key)}
+          className={clsx(
+            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
+            range === r.key
+              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
+              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
+          )}
+        >
+          {r.label}
+        </button>
+      ))}
     </div>
   );
+
 
   return (
     <Panel
