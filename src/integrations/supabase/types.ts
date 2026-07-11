@@ -470,12 +470,12 @@ export type Database = {
         }[]
       }
       growth_health: {
-        Args: { range_key?: string }
+        Args: never
         Returns: {
-          belief_fill_rate: number
-          beliefs_created: number
-          beliefs_filled: number
-          degen_burn_usd: number
+          belief_fill_rate_7d: number
+          beliefs_created_7d: number
+          beliefs_filled_7d: number
+          degen_burn_all_time_usd: number
         }[]
       }
       headline_metrics: {
@@ -601,7 +601,7 @@ export type Database = {
       refresh_belief_stats: { Args: never; Returns: undefined }
       refresh_realized_pnl_cache: { Args: never; Returns: undefined }
       repeat_wallet_rate: {
-        Args: { range_key?: string }
+        Args: never
         Returns: {
           new_wallets: number
           repeat_rate: number
