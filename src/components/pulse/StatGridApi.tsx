@@ -54,36 +54,64 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-6">
         <Metric
           label="Buy volume"
-          value={<span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>}
+          value={
+            isLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>
+            )
+          }
           sub="all buys · USD"
         />
-        <Metric label="New beliefs" value={created} sub="markets created" />
+        <Metric
+          label="New beliefs"
+          value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
+          sub="markets created"
+        />
         <Metric
           label="Active traders"
-          value={<span className="text-[var(--up)]">{traders}</span>}
+          value={
+            isLoading ? (
+              <Skeleton className="h-6 w-14" />
+            ) : (
+              <span className="text-[var(--up)]">{traders}</span>
+            )
+          }
           sub="unique wallets"
         />
         <Metric
           label="Creator revenue"
-          value={formatUsd(creatorRev, 0)}
+          value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
           sub="3.33% of buy volume"
         />
         <Metric
           label="DEGEN allocation"
-          value={<span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>}
+          value={
+            isLoading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>
+            )
+          }
           sub="5% of buy volume"
         />
         <Metric
           label="Repeat traders"
           value={
-            <span className="text-[var(--pov)]">
-              {isLoadingRetention || repeatRate == null ? "—" : `${Math.round(repeatRate * 100)}%`}
-            </span>
+            isLoadingRetention ? (
+              <Skeleton className="h-6 w-14" />
+            ) : (
+              <span className="text-[var(--pov)]">
+                {repeatRate == null ? "—" : `${Math.round(repeatRate * 100)}%`}
+              </span>
+            )
           }
           sub={
-            newWallets > 0
-              ? `${repeatWallets} of ${newWallets} new wallets returned`
-              : "Not enough wallet history yet"
+            isLoadingRetention
+              ? "loading wallet history…"
+              : newWallets > 0
+                ? `${repeatWallets} of ${newWallets} new wallets returned`
+                : "Not enough wallet history yet"
           }
         />
       </div>
