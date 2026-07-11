@@ -398,6 +398,14 @@ export type Database = {
       }
     }
     Functions: {
+      _pnl_range_bounds: {
+        Args: { range_key: string }
+        Returns: {
+          cur_end: string
+          cur_start: string
+          win: string
+        }[]
+      }
       activity_buckets: {
         Args: { buckets_back?: number; granularity?: string }
         Returns: {
@@ -443,6 +451,68 @@ export type Database = {
           created: number
           hour: string
           sells: number
+        }[]
+      }
+      pnl_buckets: {
+        Args: { buckets_back?: number; granularity?: string }
+        Returns: {
+          bucket: string
+          exits: number
+          realized_eth: number
+          realized_usd: number
+        }[]
+      }
+      pnl_by_belief: {
+        Args: { range_key: string; top_n?: number }
+        Returns: {
+          belief_id: number
+          exits: number
+          profitable_exits: number
+          realized_eth: number
+          realized_usd: number
+        }[]
+      }
+      pnl_headline: {
+        Args: { range_key: string }
+        Returns: {
+          exits: number
+          exits_prev: number
+          realized_eth: number
+          realized_eth_prev: number
+          realized_usd: number
+          realized_usd_prev: number
+          tokens_sold: number
+        }[]
+      }
+      pnl_outcomes: {
+        Args: { range_key: string }
+        Returns: {
+          avg_return: number
+          full_exits: number
+          median_hold_seconds: number
+          profitable_exit_rate: number
+          profitable_sells: number
+          realized_usd: number
+          total_sells: number
+        }[]
+      }
+      realized_pnl_events: {
+        Args: never
+        Returns: {
+          avg_hold_seconds: number
+          belief_id: number
+          cost_eth: number
+          cost_usd: number
+          event_id: string
+          is_full_exit: boolean
+          proceeds_eth: number
+          proceeds_usd: number
+          realized_eth: number
+          realized_usd: number
+          sell_ts: string
+          side: string
+          tokens_sold: number
+          wallet_address: string
         }[]
       }
       refresh_belief_stats: { Args: never; Returns: undefined }
