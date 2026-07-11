@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
@@ -6,8 +6,29 @@ import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
+import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
 type Denom = "usd" | "eth";
+
+function MetricButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left transition-colors hover:bg-[var(--line-dim)]/40 focus:outline-none focus-visible:bg-[var(--line-dim)]/60"
+      aria-label="Show 24h history"
+    >
+      {children}
+    </button>
+  );
+}
+
 
 function pctDelta(cur: number, prev: number | null | undefined): number | null {
   if (prev == null || prev === 0) return null;
