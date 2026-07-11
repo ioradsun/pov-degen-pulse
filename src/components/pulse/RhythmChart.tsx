@@ -8,6 +8,8 @@ interface RhythmChartProps {
   buckets: PulseBucket[];
   currency: Currency;
   ethUsd?: number;
+  granularity: "hour" | "day";
+  rangeLabel: string;
 }
 
 interface Row {
@@ -18,32 +20,39 @@ interface Row {
   degen: number | null;
 }
 
-function hourLabel(ts: number): string {
-  return new Date(ts * 1000).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function bucketLabel(ts: number, granularity: "hour" | "day"): string {
+  const d = new Date(ts * 1000);
+  return granularity === "hour"
+    ? d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
+export function RhythmChart({
+  buckets,
+  currency,
+  ethUsd,
+  granularity,
+  rangeLabel,
+}: RhythmChartProps) {
   const rows = useMemo<Row[]>(
     () =>
       buckets.map((b) => ({
-        label: hourLabel(b.hour),
+        label: bucketLabel(b.ts, granularity),
         buyVolumeUsd: Number(b.buyVolumeUsd.toFixed(2)),
         trades: b.buys + b.sells,
         created: b.created,
         degen: currency === "eth" ? usdToEthPrice(b.degenPriceUsd, ethUsd) : b.degenPriceUsd,
       })),
-    [buckets, currency, ethUsd],
+    [buckets, currency, ethUsd, granularity],
   );
 
   const hasDegen = rows.some((r) => r.degen != null);
+  const tickInterval = Math.max(0, Math.ceil(rows.length / 8) - 1);
 
   return (
     <Panel
       title="The pulse"
-      meta="hourly · last 24h"
+      meta={`${granularity === "hour" ? "hourly" : "daily"} · ${rangeLabel}`}
       action={
         <span className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
@@ -65,7 +74,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
               tick={{ fill: "var(--ink-faint)", fontSize: 10 }}
               tickLine={false}
               axisLine={{ stroke: "var(--line)" }}
-              interval={3}
+              interval={tickInterval}
             />
             <YAxis
               yAxisId="pov"
@@ -126,9 +135,9 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
         </ResponsiveContainer>
       </div>
       <p className="px-2 pb-1 pt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
-        Purple bars are USD buy volume moving through POV beliefs each hour; blue slivers are new
-        beliefs. The gold line is DEGEN's price — POV trading fees buy and burn DEGEN, so sustained
-        purple should eventually pull gold up.
+        Purple bars are USD buy volume moving through POV beliefs each {granularity}; blue slivers
+        are new beliefs. The gold line is DEGEN's price — POV trading fees buy and burn DEGEN, so
+        sustained purple should eventually pull gold up.
       </p>
     </Panel>
   );

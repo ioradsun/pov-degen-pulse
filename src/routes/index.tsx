@@ -8,10 +8,15 @@ import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
-
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
 import { formatUsd, type Currency } from "@/lib/pov/format";
+import {
+  RANGE_META,
+  granularityForRange,
+  OHLC_HOURS_FOR_RANGE,
+  type Range,
+} from "@/lib/pov/ranges";
 import {
   useApiGrid,
   useApiHeadline,
@@ -27,17 +32,22 @@ export const Route = createFileRoute("/")({
 
 function Pulse() {
   usePulseRealtime();
+  const [range, setRange] = useState<Range>("24h");
   const health = useApiHealth();
-  const headline = useApiHeadline("24h");
-  const grid = useApiGrid("volume_24h", 15);
-  const rhythm = useApiRhythm(24);
+  const headline = useApiHeadline(range);
+  const grid = useApiGrid("volume", range, 15);
+  const rhythm = useApiRhythm(range);
   const retention = useApiRetention();
   const { snapshot: degen } = useDegenPrice();
-  const { bars: ohlc } = useDegenOhlc(24);
+  const { bars: ohlc } = useDegenOhlc(OHLC_HOURS_FOR_RANGE[range]);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [currency, setCurrency] = useState<Currency>("usd");
 
-  const buckets = useMemo(() => buildPulse(rhythm.data?.buckets ?? [], ohlc), [rhythm.data, ohlc]);
+  const granularity = granularityForRange(range);
+  const buckets = useMemo(
+    () => buildPulse(rhythm.data?.buckets ?? [], ohlc, granularity),
+    [rhythm.data, ohlc, granularity],
+  );
 
   const writerStatus = health.data?.writer_status ?? null;
   const ready = writerStatus === "ok" && !!headline.data;
@@ -45,7 +55,7 @@ function Pulse() {
   const insightSnapshot = useMemo(() => {
     const h = headline.data;
     return JSON.stringify({
-      window: "24h",
+      window: range,
       pov: {
         buyVolumeUsd: Number(h?.buy_volume_usd ?? 0),
         beliefsCreated: Number(h?.new_beliefs ?? 0),
@@ -65,13 +75,16 @@ function Pulse() {
         : null,
       topBeliefs: (grid.data?.rows ?? []).slice(0, 15).map((b) => ({
         belief: b.title ?? `Belief #${b.belief_id}`,
-        buyVolume24hUsd: formatUsd(Number(b.buy_volume_24h_usd ?? 0), 0),
+        buyVolumeUsd: formatUsd(Number(b.buy_volume_usd ?? 0), 0),
         splitPct: b.split_pct,
         wallets: b.unique_wallets_24h,
         lifecycleStage: b.lifecycle_stage,
       })),
-      hourly: buckets.map((b) => ({
-        h: new Date(b.hour * 1000).toISOString().slice(11, 16),
+      series: buckets.map((b) => ({
+        t:
+          granularity === "hour"
+            ? new Date(b.ts * 1000).toISOString().slice(11, 16)
+            : new Date(b.ts * 1000).toISOString().slice(0, 10),
         buyVolumeUsd: Number(b.buyVolumeUsd.toFixed(2)),
         trades: b.buys + b.sells,
         created: b.created,
@@ -88,7 +101,7 @@ function Pulse() {
           }
         : null,
     });
-  }, [headline.data, retention.data, grid.data, buckets, degen]);
+  }, [range, headline.data, retention.data, grid.data, buckets, granularity, degen]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
@@ -104,17 +117,22 @@ function Pulse() {
           writerStatus={writerStatus}
           lastError={health.data?.indexer?.last_error}
         />
-        <StatGridApi />
-        <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
+        <StatGridApi range={range} onRangeChange={setRange} />
+        <RhythmChart
+          buckets={buckets}
+          currency={currency}
+          ethUsd={ethUsd}
+          granularity={granularity}
+          rangeLabel={RANGE_META[range]}
+        />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
             <InsightPanel snapshot={insightSnapshot} ready={ready} />
-            <BeliefBoardApi />
+            <BeliefBoardApi range={range} />
           </div>
-
         </div>
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6">

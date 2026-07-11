@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 
 const QuerySchema = z.object({
-  hours: z.coerce.number().int().min(1).max(168).default(24),
+  range: z.enum(["1h", "24h", "7d", "30d", "all"]).default("24h"),
 });
 
 export const Route = createFileRoute("/api/public/rhythm")({
@@ -17,15 +17,15 @@ export const Route = createFileRoute("/api/public/rhythm")({
         }
         const supabase = getPublicSupabase();
         const { data, error } = await supabase.rpc(
-          "hourly_activity" as never,
+          "activity_series" as never,
           {
-            hours_back: parsed.data.hours,
+            range_key: parsed.data.range,
           } as never,
         );
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
         return Response.json(
-          { hours: parsed.data.hours, buckets: data ?? [] },
+          { range: parsed.data.range, buckets: data ?? [] },
           { headers: { "Cache-Control": "public, s-maxage=30" } },
         );
       },

@@ -1,29 +1,16 @@
-import { useState } from "react";
 import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { formatUsd } from "@/lib/pov/format";
-import { useApiHeadline, useApiRetention, type HeadlineMetrics } from "@/hooks/pov/useApiPulse";
+import { RANGES, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
+import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
 
+interface StatGridApiProps {
+  range: Range;
+  onRangeChange: (range: Range) => void;
+}
 
-const RANGES: { key: HeadlineMetrics["range"]; label: string }[] = [
-  { key: "1h", label: "1H" },
-  { key: "24h", label: "1D" },
-  { key: "7d", label: "1W" },
-  { key: "30d", label: "1M" },
-  { key: "all", label: "ALL" },
-];
-
-const RANGE_TITLE: Record<HeadlineMetrics["range"], string> = {
-  "1h": "POV · last hour",
-  "24h": "POV · last 24 hours",
-  "7d": "POV · last 7 days",
-  "30d": "POV · last 30 days",
-  all: "POV · all time",
-};
-
-export function StatGridApi() {
-  const [range, setRange] = useState<HeadlineMetrics["range"]>("24h");
+export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
   const vol = Number(data?.buy_volume_usd ?? 0);
@@ -35,7 +22,6 @@ export function StatGridApi() {
   const repeatWallets = retention?.repeat_wallets ?? 0;
   const newWallets = retention?.new_wallets ?? 0;
 
-
   const action = (
     <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
       {RANGES.map((r) => (
@@ -43,7 +29,7 @@ export function StatGridApi() {
           key={r.key}
           role="tab"
           aria-selected={range === r.key}
-          onClick={() => setRange(r.key)}
+          onClick={() => onRangeChange(r.key)}
           className={clsx(
             "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
             range === r.key
@@ -90,9 +76,7 @@ export function StatGridApi() {
           label="Repeat traders"
           value={
             <span className="text-[var(--pov)]">
-              {isLoadingRetention || repeatRate == null
-                ? "—"
-                : `${Math.round(repeatRate * 100)}%`}
+              {isLoadingRetention || repeatRate == null ? "—" : `${Math.round(repeatRate * 100)}%`}
             </span>
           }
           sub={

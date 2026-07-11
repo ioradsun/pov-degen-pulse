@@ -2,32 +2,38 @@ import type { OhlcBar } from "./geckoterminal";
 import type { RhythmBucket } from "@/hooks/pov/useApiPulse";
 
 const HOUR = 3600;
+const DAY = 86_400;
 
 export interface PulseBucket {
-  hour: number; // unix seconds, hour-floored
-  buyVolumeUsd: number; // POV buy volume this hour (indexer-reported, USD)
+  ts: number; // unix seconds, floored to the active granularity
+  buyVolumeUsd: number; // POV buy volume this bucket (indexer-reported, USD)
   buys: number;
   sells: number;
-  created: number; // beliefs created this hour
-  degenPriceUsd: number | null; // real hourly close from OHLC
+  created: number; // beliefs created this bucket
+  degenPriceUsd: number | null; // real close from OHLC
   degenVolumeUsd: number | null;
 }
 
-function floorHour(ts: number): number {
-  return Math.floor(ts / HOUR) * HOUR;
+function floor(ts: number, granularity: "hour" | "day"): number {
+  const size = granularity === "hour" ? HOUR : DAY;
+  return Math.floor(ts / size) * size;
 }
 
 /**
- * Aligns the indexer's hourly POV activity buckets with DEGEN's real hourly
- * OHLC into one series — the direct "product activity vs token price"
- * comparison.
+ * Aligns the indexer's bucketed POV activity with DEGEN's real OHLC into
+ * one series — the direct "product activity vs token price" comparison.
+ * Granularity (hourly vs daily bars) follows the selected timeframe.
  */
-export function buildPulse(rows: RhythmBucket[], ohlc: OhlcBar[]): PulseBucket[] {
+export function buildPulse(
+  rows: RhythmBucket[],
+  ohlc: OhlcBar[],
+  granularity: "hour" | "day",
+): PulseBucket[] {
   const buckets = new Map<number, PulseBucket>();
   for (const r of rows) {
-    const hour = floorHour(Math.floor(new Date(r.hour).getTime() / 1000));
-    buckets.set(hour, {
-      hour,
+    const ts = floor(Math.floor(new Date(r.bucket).getTime() / 1000), granularity);
+    buckets.set(ts, {
+      ts,
       buyVolumeUsd: Number(r.buy_volume_usd),
       buys: r.buys,
       sells: r.sells,
@@ -40,14 +46,14 @@ export function buildPulse(rows: RhythmBucket[], ohlc: OhlcBar[]): PulseBucket[]
   let lastPrice: number | null = null;
   const sorted = [...ohlc].sort((a, b) => a.ts - b.ts);
   for (const bar of sorted) {
-    const b = buckets.get(floorHour(bar.ts));
+    const b = buckets.get(floor(bar.ts, granularity));
     if (b) {
       b.degenPriceUsd = bar.close;
       b.degenVolumeUsd = bar.volumeUsd;
     }
   }
   // Forward-fill price gaps so the line doesn't break.
-  const ordered = [...buckets.values()].sort((a, z) => a.hour - z.hour);
+  const ordered = [...buckets.values()].sort((a, z) => a.ts - z.ts);
   for (const b of ordered) {
     if (b.degenPriceUsd == null) b.degenPriceUsd = lastPrice;
     else lastPrice = b.degenPriceUsd;

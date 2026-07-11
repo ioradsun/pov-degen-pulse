@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Range } from "@/lib/pov/ranges";
 
 export interface FeedEvent {
   event_id: string;
@@ -22,7 +23,7 @@ export interface FeedEvent {
 }
 
 export interface HeadlineMetrics {
-  range: "1h" | "24h" | "7d" | "30d" | "all";
+  range: Range;
   buy_volume_usd?: number;
   active_traders?: number;
   new_beliefs?: number;
@@ -36,7 +37,13 @@ export interface GridRow {
   title: string | null;
   creator_address: string;
   created_at: string;
+  /** Buy volume for the range the grid was queried with. */
+  buy_volume_usd: number;
+  buy_volume_1h_usd: number;
   buy_volume_24h_usd: number;
+  buy_volume_7d_usd: number;
+  buy_volume_30d_usd: number;
+  buy_volume_all_usd: number;
   split_pct: number | null;
   ignition_score: number | null;
   momentum: number | null;
@@ -48,8 +55,10 @@ export interface GridRow {
   creator_quality: number | null;
 }
 
+export type GridSort = "ignition" | "volume" | "momentum" | "whale" | "split" | "delta_conviction";
+
 export interface RhythmBucket {
-  hour: string;
+  bucket: string;
   buy_volume_usd: number;
   buys: number;
   sells: number;
@@ -104,7 +113,7 @@ export function useApiFeed(opts: { largeOnly?: boolean; limit?: number } = {}) {
   });
 }
 
-export function useApiHeadline(range: HeadlineMetrics["range"] = "24h") {
+export function useApiHeadline(range: Range = "24h") {
   return useQuery({
     queryKey: ["pov", "headline", range],
     queryFn: () => fetchJson<HeadlineMetrics>(`/api/public/headline?range=${range}`),
@@ -113,20 +122,23 @@ export function useApiHeadline(range: HeadlineMetrics["range"] = "24h") {
   });
 }
 
-export function useApiGrid(sort = "ignition", limit = 12) {
+export function useApiGrid(sort: GridSort = "ignition", range: Range = "24h", limit = 12) {
   return useQuery({
-    queryKey: ["pov", "grid", sort, limit],
-    queryFn: () => fetchJson<{ rows: GridRow[] }>(`/api/public/grid?sort=${sort}&limit=${limit}`),
+    queryKey: ["pov", "grid", sort, range, limit],
+    queryFn: () =>
+      fetchJson<{ range: Range; rows: GridRow[] }>(
+        `/api/public/grid?sort=${sort}&range=${range}&limit=${limit}`,
+      ),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
 }
 
-export function useApiRhythm(hours = 24) {
+export function useApiRhythm(range: Range = "24h") {
   return useQuery({
-    queryKey: ["pov", "rhythm", hours],
+    queryKey: ["pov", "rhythm", range],
     queryFn: () =>
-      fetchJson<{ hours: number; buckets: RhythmBucket[] }>(`/api/public/rhythm?hours=${hours}`),
+      fetchJson<{ range: Range; buckets: RhythmBucket[] }>(`/api/public/rhythm?range=${range}`),
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
@@ -162,6 +174,8 @@ export function usePulseRealtime() {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });
         qc.invalidateQueries({ queryKey: ["pov", "headline"] });
         qc.invalidateQueries({ queryKey: ["pov", "retention"] });
+        qc.invalidateQueries({ queryKey: ["pov", "rhythm"] });
+        qc.invalidateQueries({ queryKey: ["pov", "grid"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "beliefs" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 
-const RangeSchema = z.enum(["1h", "24h", "7d", "30d"]);
+const RangeSchema = z.enum(["1h", "24h", "7d", "30d", "all"]);
 
 export const Route = createFileRoute("/api/public/headline")({
   server: {
@@ -14,9 +14,12 @@ export const Route = createFileRoute("/api/public/headline")({
           return Response.json({ error: "invalid range" }, { status: 400 });
         }
         const supabase = getPublicSupabase();
-        const { data, error } = await supabase.rpc("headline_metrics" as never, {
-          range_key: parsed.data,
-        } as never);
+        const { data, error } = await supabase.rpc(
+          "headline_metrics" as never,
+          {
+            range_key: parsed.data,
+          } as never,
+        );
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
         const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
