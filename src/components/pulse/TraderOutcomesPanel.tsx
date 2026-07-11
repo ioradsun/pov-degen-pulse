@@ -164,7 +164,7 @@ export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: 
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Stat
           label="Profit earned by winning traders"
-          value={fmtEth(winnersNetEth)}
+          value={winnersValue}
           valueCls="text-[var(--up)]"
           sub="net profit of net-profitable wallets"
           loading={isLoading}
