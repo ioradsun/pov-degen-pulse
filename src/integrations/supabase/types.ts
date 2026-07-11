@@ -613,13 +613,19 @@ export type Database = {
       value_flow: {
         Args: { range_key: string }
         Returns: {
+          agent_pool_eth: number
           agent_pool_usd: number
+          buy_volume_eth: number
           buy_volume_usd: number
           buyers: number
+          creator_earned_eth: number
           creator_earned_usd: number
+          degen_burn_eth: number
           degen_burn_usd: number
           holders_never_sold: number
+          net_conviction_eth: number
           net_conviction_usd: number
+          sell_proceeds_eth: number
           sell_proceeds_usd: number
         }[]
       }
