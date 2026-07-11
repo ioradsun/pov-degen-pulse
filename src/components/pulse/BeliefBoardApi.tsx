@@ -4,21 +4,15 @@ import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
 import { useApiGrid, type GridRow } from "@/hooks/pov/useApiPulse";
 
-const POV_MARKET_URL = (slug: string) => `https://pov.co/markets/${slug}`;
+const POV_MARKET_URL = (slugOrId: string | number) => `https://pov.co/markets/${slugOrId}`;
 const POV_PROFILE_URL = (walletAddress: string) => `https://pov.co/${walletAddress}`;
 
 function BeliefTitle({ belief }: { belief: GridRow }) {
   const label = belief.title ?? `Belief #${belief.belief_id}`;
-  if (!belief.slug) {
-    return (
-      <span className="truncate text-[13px] text-[var(--ink)]" title={belief.title ?? undefined}>
-        {label}
-      </span>
-    );
-  }
+  const href = POV_MARKET_URL(belief.slug ?? belief.belief_id);
   return (
     <a
-      href={POV_MARKET_URL(belief.slug)}
+      href={href}
       target="_blank"
       rel="noreferrer"
       className="truncate text-[13px] text-[var(--ink)] hover:text-[var(--pov)] hover:underline"
@@ -28,6 +22,7 @@ function BeliefTitle({ belief }: { belief: GridRow }) {
     </a>
   );
 }
+
 
 function ConvictionBar({ splitPct }: { splitPct: number | null }) {
   const pct = splitPct != null ? Math.max(0, Math.min(1, splitPct)) * 100 : 50;
