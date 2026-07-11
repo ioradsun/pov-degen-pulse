@@ -31,10 +31,13 @@ export const Route = createFileRoute("/api/public/rhythm")({
         const buckets = (data ?? []).map((r) => ({
           bucket: r.hour,
           buy_volume_usd: Number(r.buy_volume_usd ?? 0),
+          buy_volume_eth: Number((r as { buy_volume_eth?: number }).buy_volume_eth ?? 0),
           buys: r.buys ?? 0,
           sells: r.sells ?? 0,
           created: r.created ?? 0,
+          active_traders: (r as { active_traders?: number }).active_traders ?? 0,
         }));
+
 
         return Response.json(
           { range: parsed.data.range, buckets },
