@@ -20,17 +20,23 @@ export function Metric({ label, value, sub, trend, className, children }: Metric
           ? "text-[var(--down)]"
           : "text-[var(--ink-dim)]";
   return (
-    <div className={clsx("flex flex-col gap-1 p-4", className)}>
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-        {label}
+    <div className={clsx("flex flex-col p-4", className)}>
+      <div className="flex flex-col gap-1">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+          {label}
+        </div>
+        <div className="text-[24px] leading-none tabular-nums text-[var(--ink)]">
+          {value}
+        </div>
+        {sub != null && (
+          <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
+        )}
       </div>
-      <div className="text-[24px] leading-none tabular-nums text-[var(--ink)]">
-        {value}
-      </div>
-      {sub != null && (
-        <div className={clsx("text-[11px] tabular-nums", trendCls)}>{sub}</div>
+      {children != null && (
+        <div className="mt-auto border-t border-[var(--line-dim)] pt-2">
+          {children}
+        </div>
       )}
-      {children}
     </div>
   );
 }
