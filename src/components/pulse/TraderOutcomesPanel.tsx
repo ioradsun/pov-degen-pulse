@@ -68,12 +68,12 @@ function Stat({
 
 interface Props {
   range: Range;
-  onRangeChange: (range: Range) => void;
   currency: Currency;
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, onRangeChange, currency, ethUsd }: Props) {
+export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
+
   const { data, isLoading } = useApiPnlWallets(range);
   const [showAbout, setShowAbout] = useState(false);
 
