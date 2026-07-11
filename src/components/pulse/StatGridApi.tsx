@@ -171,24 +171,26 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           />
         </MetricButton>
 
-        <Metric
-          label="Transactions"
-          value={
-            isLoading ? (
-              <Skeleton className="h-6 w-14" />
-            ) : (
-              <span className="tabular-nums">{transactions.toLocaleString()}</span>
-            )
-          }
-          delta={<Delta pct={transactionsDelta} rangeLabel={rangeLabel} />}
-          sub={
-            isLoading
-              ? "…"
-              : txPerWallet == null
-                ? "buys · repeat behavior"
-                : `${txPerWallet.toFixed(1)} per wallet · repeat behavior`
-          }
-        />
+        <MetricButton onClick={() => setOpenMetric("transactions")}>
+          <Metric
+            label="Transactions"
+            value={
+              isLoading ? (
+                <Skeleton className="h-6 w-14" />
+              ) : (
+                <span className="tabular-nums">{transactions.toLocaleString()}</span>
+              )
+            }
+            delta={<Delta pct={transactionsDelta} rangeLabel={rangeLabel} />}
+            sub={
+              isLoading
+                ? "…"
+                : txPerWallet == null
+                  ? "buys · view 24h ↗"
+                  : `${txPerWallet.toFixed(1)} per wallet · view 24h ↗`
+            }
+          />
+        </MetricButton>
 
         <MetricButton onClick={() => setOpenMetric("new_beliefs")}>
           <Metric
