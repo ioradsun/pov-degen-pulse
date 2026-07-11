@@ -256,6 +256,17 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
             </ResponsiveContainer>
           )}
         </div>
+        <p className="mt-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[var(--ink-faint)]">
+          <span
+            aria-hidden
+            className="inline-block h-[2px] w-4"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(to right, var(--pov) 0 4px, transparent 4px 8px)",
+            }}
+          />
+          Dashed = current {granularity} in progress
+        </p>
       </DialogContent>
     </Dialog>
   );
