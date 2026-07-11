@@ -1,4 +1,5 @@
 import { Panel } from "@/components/pov/primitives/Panel";
+import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd, timeAgo } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
 import { useApiGrid } from "@/hooks/pov/useApiPulse";
