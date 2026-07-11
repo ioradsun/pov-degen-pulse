@@ -112,26 +112,8 @@ export function TraderOutcomesPanel({ range, currency, ethUsd }: Props) {
           ? "text-[var(--ink)]"
           : "text-[var(--down)]";
 
-  const action = (
-    <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
-      {RANGES.map((r) => (
-        <button
-          key={r.key}
-          role="tab"
-          aria-selected={range === r.key}
-          onClick={() => onRangeChange(r.key)}
-          className={clsx(
-            "rounded-sm border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] transition-colors",
-            range === r.key
-              ? "border-[var(--pov)]/60 bg-[var(--pov)]/10 text-[var(--pov)]"
-              : "border-[var(--line)] text-[var(--ink-dim)] hover:text-[var(--ink)]",
-          )}
-        >
-          {r.label}
-        </button>
-      ))}
-    </div>
-  );
+  const action = null;
+
 
   return (
     <Panel
