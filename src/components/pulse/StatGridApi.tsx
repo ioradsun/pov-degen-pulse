@@ -112,13 +112,10 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
         <Metric
           label="Creator revenue"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>3.33% of buy volume</span>
-              <Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />}
+          sub="3.33% of buy volume"
         />
+
         <Metric
           label="DEGEN allocation"
           value={
