@@ -117,7 +117,10 @@ export function LiveFeedApi() {
     limit: 150,
   });
   const { data: health } = useApiHealth();
+  const { data: mcData } = useApiMarketCaps();
+  const caps = mcData?.caps ?? {};
   const events = useMemo(() => data?.events ?? [], [data]);
+
 
   // Re-render every second so "Xs ago" ticks smoothly.
   const [tick, setTick] = useState(0);
