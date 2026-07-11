@@ -60,43 +60,44 @@ export const fetchInsight = createServerFn({ method: "POST" })
       return cached.result;
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
         ok: false,
-        error:
-          "AI insights are off. Add ANTHROPIC_API_KEY to the server environment to turn them on.",
+        error: "AI insights are off. LOVABLE_API_KEY is not configured on the server.",
       };
     }
 
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "Lovable-API-Key": apiKey,
         },
         body: JSON.stringify({
-          model: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
-          max_tokens: 800,
-          system: SYSTEM,
-          messages: [{ role: "user", content: data.snapshot }],
+          model: process.env.LOVABLE_AI_MODEL ?? "openai/gpt-5.5",
+          messages: [
+            { role: "system", content: SYSTEM },
+            { role: "user", content: data.snapshot },
+          ],
+          response_format: { type: "json_object" },
         }),
       });
       if (!r.ok) {
         const body = await r.text();
-        throw new Error(`API ${r.status}: ${body.slice(0, 200)}`);
+        if (r.status === 429) throw new Error("Rate limit hit — please retry in a moment.");
+        if (r.status === 402)
+          throw new Error("Lovable AI credits exhausted. Add credits in workspace billing.");
+        throw new Error(`AI ${r.status}: ${body.slice(0, 200)}`);
       }
       const j = (await r.json()) as {
-        content?: Array<{ type: string; text?: string }>;
+        choices?: Array<{ message?: { content?: string } }>;
       };
-      const text = (j.content ?? [])
-        .filter((c) => c.type === "text" && c.text)
-        .map((c) => c.text)
-        .join("\n");
+      const text = j.choices?.[0]?.message?.content ?? "";
       const clean = text.replace(/```json|```/g, "").trim();
       const insight = JSON.parse(clean) as PulseInsight;
+
 
       const result: InsightResult = {
         ok: true,
