@@ -7,6 +7,7 @@ import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
+import { RepeatWalletCard } from "@/components/pulse/RepeatWalletCard";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
@@ -15,6 +16,7 @@ import {
   useApiGrid,
   useApiHeadline,
   useApiHealth,
+  useApiRetention,
   useApiRhythm,
   usePulseRealtime,
 } from "@/hooks/pov/useApiPulse";
@@ -29,6 +31,7 @@ function Pulse() {
   const headline = useApiHeadline("24h");
   const grid = useApiGrid("volume_24h", 15);
   const rhythm = useApiRhythm(24);
+  const retention = useApiRetention();
   const { snapshot: degen } = useDegenPrice();
   const { bars: ohlc } = useDegenOhlc(24);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
@@ -50,6 +53,16 @@ function Pulse() {
         creatorRevenueUsd: Number(h?.creator_revenue_usd ?? 0),
         degenAllocationUsd: Number(h?.degen_allocation_usd ?? 0),
       },
+      retention: retention.data
+        ? {
+            newWallets: retention.data.new_wallets,
+            repeatWallets: retention.data.repeat_wallets,
+            repeatRatePct:
+              retention.data.repeat_rate == null
+                ? null
+                : Math.round(retention.data.repeat_rate * 1000) / 10,
+          }
+        : null,
       topBeliefs: (grid.data?.rows ?? []).slice(0, 15).map((b) => ({
         belief: b.title ?? `Belief #${b.belief_id}`,
         buyVolume24hUsd: formatUsd(Number(b.buy_volume_24h_usd ?? 0), 0),
@@ -75,7 +88,7 @@ function Pulse() {
           }
         : null,
     });
-  }, [headline.data, grid.data, buckets, degen]);
+  }, [headline.data, retention.data, grid.data, buckets, degen]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
@@ -98,6 +111,7 @@ function Pulse() {
             <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
+            <RepeatWalletCard />
             <InsightPanel snapshot={insightSnapshot} ready={ready} />
             <BeliefBoardApi />
           </div>

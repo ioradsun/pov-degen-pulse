@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRhythmRouteImport } from './routes/api.public.rhythm'
+import { Route as ApiPublicRetentionRouteImport } from './routes/api.public.retention'
 import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiPublicRhythmRoute = ApiPublicRhythmRouteImport.update({
   id: '/api/public/rhythm',
   path: '/api/public/rhythm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRetentionRoute = ApiPublicRetentionRouteImport.update({
+  id: '/api/public/retention',
+  path: '/api/public/retention',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
     | '/api/public/hooks/hydrate-titles'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
     | '/api/public/hooks/hydrate-titles'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
     | '/api/public/hooks/hydrate-titles'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   ApiPublicGridRoute: typeof ApiPublicGridRoute
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicRetentionRoute: typeof ApiPublicRetentionRoute
   ApiPublicRhythmRoute: typeof ApiPublicRhythmRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
   ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/rhythm'
       fullPath: '/api/public/rhythm'
       preLoaderRoute: typeof ApiPublicRhythmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/retention': {
+      id: '/api/public/retention'
+      path: '/api/public/retention'
+      fullPath: '/api/public/retention'
+      preLoaderRoute: typeof ApiPublicRetentionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/health': {
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGridRoute: ApiPublicGridRoute,
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicRetentionRoute: ApiPublicRetentionRoute,
   ApiPublicRhythmRoute: ApiPublicRhythmRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
   ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
@@ -230,3 +251,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

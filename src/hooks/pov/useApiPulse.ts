@@ -56,6 +56,13 @@ export interface RhythmBucket {
   created: number;
 }
 
+export interface RetentionMetrics {
+  new_wallets: number;
+  repeat_wallets: number;
+  repeat_rate: number | null;
+  computedAt: string;
+}
+
 export type WriterStatus = "ok" | "stalled" | "starting" | "no writer connected";
 
 export interface HealthResponse {
@@ -125,6 +132,16 @@ export function useApiRhythm(hours = 24) {
   });
 }
 
+/** 7-day repeat wallet rate — an all-time cohort metric, not range-scoped. */
+export function useApiRetention() {
+  return useQuery({
+    queryKey: ["pov", "retention"],
+    queryFn: () => fetchJson<RetentionMetrics>("/api/public/retention"),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
 /** Indexer/writer health — drives the header's live/stalled status. */
 export function useApiHealth() {
   return useQuery({
@@ -144,6 +161,7 @@ export function usePulseRealtime() {
       .on("postgres_changes", { event: "*", schema: "public", table: "trades" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });
         qc.invalidateQueries({ queryKey: ["pov", "headline"] });
+        qc.invalidateQueries({ queryKey: ["pov", "retention"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "beliefs" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });
