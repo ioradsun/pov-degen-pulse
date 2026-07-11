@@ -20,6 +20,7 @@ export type MetricKey =
   | "buy_volume"
   | "new_beliefs"
   | "active_traders"
+  | "transactions"
   | "creator_revenue"
   | "degen_allocation";
 
@@ -34,7 +35,8 @@ interface Props {
 const LABELS: Record<MetricKey, string> = {
   buy_volume: "Buy volume",
   new_beliefs: "New beliefs",
-  active_traders: "Active traders",
+  active_traders: "Active wallets",
+  transactions: "Transactions",
   creator_revenue: "Creator revenue",
   degen_allocation: "DEGEN allocation",
 };
