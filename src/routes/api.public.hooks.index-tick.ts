@@ -217,6 +217,21 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           const tradesToInsert: Array<Record<string, unknown>> = [];
           const creatorsToUpsert = new Map<string, { at: number }>();
 
+          // Gross ETH on a buy is the transaction's `value`, not an event field
+          // (see VERIFICATION.md). If a single tx emits multiple TokensBought
+          // logs, splitting tx.value across them proportional to tokens minted
+          // avoids counting the full tx.value once per buy (which would inflate
+          // cost basis and buy volume). Single-buy txs get the full value.
+          const buyTokensByTx = new Map<string, bigint>();
+          for (const l of povLogs) {
+            if ((l.topics?.[0] ?? "").toLowerCase() === POV_CORE_SIGS.buy.toLowerCase()) {
+              const w = words(l.data);
+              const tk = w[2] ? toBigInt(w[2]) : 0n;
+              const h = l.transactionHash!.toLowerCase();
+              buyTokensByTx.set(h, (buyTokensByTx.get(h) ?? 0n) + tk);
+            }
+          }
+
           for (const l of povLogs) {
             const topic0 = (l.topics?.[0] ?? "").toLowerCase();
             const beliefId = l.topics?.[1] ? toBigInt(l.topics[1]).toString() : null;
@@ -250,17 +265,23 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             if (!isBuy && !isSell) continue;
 
             const side = ws[1] && toBigInt(ws[1]) === 1n ? "yes" : "no";
-            const grossWei = isBuy
-              ? (txValueMap.get(l.transactionHash!.toLowerCase()) ?? 0n)
-              : ws[3]
-                ? toBigInt(ws[3])
-                : 0n;
-            const grossEth = Number(grossWei) / 1e18;
-            const grossUsd = ethUsd ? grossEth * ethUsd : null;
             // word2 = belief-token amount (18 dec), confirmed for both
             // TokensBought (minted to buyer) and TokensSold (burned from
             // seller). See VERIFICATION.md.
             const tokensDeltaWei = ws[2] ? toBigInt(ws[2]) : 0n;
+            const txHashLc = l.transactionHash!.toLowerCase();
+            let grossWei: bigint;
+            if (isBuy) {
+              // Split the tx's ETH value across its buy logs by token share.
+              const txTotal = txValueMap.get(txHashLc) ?? 0n;
+              const sumTk = buyTokensByTx.get(txHashLc) ?? 0n;
+              grossWei = sumTk > 0n ? (txTotal * tokensDeltaWei) / sumTk : txTotal;
+            } else {
+              // Sell: word3 = gross ETH proceeds, present in the event.
+              grossWei = ws[3] ? toBigInt(ws[3]) : 0n;
+            }
+            const grossEth = Number(grossWei) / 1e18;
+            const grossUsd = ethUsd ? grossEth * ethUsd : null;
 
             tradesToInsert.push({
               event_id: eventId,

@@ -1,14 +1,13 @@
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd } from "@/lib/pov/format";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiRetention } from "@/hooks/pov/useApiPulse";
 
 /**
  * "Are people coming back?" — retention and supply-side health for the
  * selected timeframe. Repeat rate measures wallets that had the full window to
- * return and did; belief fill rate and DEGEN burn are scoped to the same
- * window. All three follow the global timeframe control.
+ * return and did; belief fill rate is scoped to the same window. All follow
+ * the global timeframe control.
  */
 
 function Health({
@@ -45,7 +44,6 @@ export function GrowthPanel({ range }: { range: Range }) {
   const fillRate = data?.belief_fill_rate;
   const beliefsCreated = data?.beliefs_created ?? 0;
   const beliefsFilled = data?.beliefs_filled ?? 0;
-  const degenBurn = Number(data?.degen_burn_usd ?? 0);
 
   const returnWindow = range === "all" ? "at any point after" : `within ${window}`;
 
@@ -55,7 +53,7 @@ export function GrowthPanel({ range }: { range: Range }) {
       meta={`retention & supply health · ${window}`}
       bodyClassName="p-0"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
+      <div className="grid grid-cols-1 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3">
         <Health
           label="Repeat trader rate"
           value={repeatRate == null ? "—" : `${Math.round(repeatRate * 100)}%`}
@@ -86,13 +84,6 @@ export function GrowthPanel({ range }: { range: Range }) {
               ? `no beliefs created in the ${window}`
               : `${beliefsFilled} of ${beliefsCreated} beliefs found ≥3 buyers`
           }
-          loading={isLoading}
-        />
-        <Health
-          label="DEGEN buyback & burn"
-          value={formatUsd(degenBurn, 0)}
-          accent="text-[var(--degen)]"
-          sub={`est. 5% of buy volume · ${window}`}
           loading={isLoading}
         />
       </div>

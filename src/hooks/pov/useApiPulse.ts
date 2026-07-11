@@ -260,33 +260,6 @@ export function useApiPnlHeadline(range: Range = "24h") {
   });
 }
 
-export interface ValueFlow {
-  range: string;
-  buy_volume_usd: number | null;
-  sell_proceeds_usd: number | null;
-  net_conviction_usd: number | null;
-  degen_burn_usd: number | null;
-  creator_earned_usd: number | null;
-  agent_pool_usd: number | null;
-  buyers: number | null;
-  holders_never_sold: number | null;
-  buy_volume_eth: number | null;
-  sell_proceeds_eth: number | null;
-  net_conviction_eth: number | null;
-  degen_burn_eth: number | null;
-  creator_earned_eth: number | null;
-  agent_pool_eth: number | null;
-}
-
-export function useApiValueFlow(range: Range = "24h") {
-  return useQuery({
-    queryKey: ["pov", "value-flow", range],
-    queryFn: () => fetchJson<ValueFlow>(`/api/public/valueflow?range=${range}`),
-    refetchInterval: 60_000,
-    staleTime: 30_000,
-  });
-}
-
 export interface PnlWalletSummary {
   range: string;
   sellers: number | null;
@@ -309,6 +282,50 @@ export function useApiPnlWallets(range: Range = "24h") {
   return useQuery({
     queryKey: ["pov", "pnl-wallets", range],
     queryFn: () => fetchJson<PnlWalletSummary>(`/api/public/pnl/wallets?range=${range}`),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+/** One cumulative snapshot of trader outcomes as of a point in time. */
+export interface OutcomesSnapshot {
+  label: "now" | "prev";
+  // sold (realized)
+  sellers: number;
+  realized_winners: number;
+  realized_net_eth: number;
+  realized_net_usd: number;
+  // holding (unrealized / paper)
+  holders: number;
+  holder_winners: number;
+  unrealized_eth: number;
+  unrealized_usd: number;
+  holding_value_eth: number;
+  holding_value_usd: number;
+  // all-in cash view
+  money_in_eth: number;
+  money_in_usd: number;
+  money_out_eth: number;
+  money_out_usd: number;
+  net_eth: number;
+  net_usd: number;
+}
+
+export interface TraderOutcomes {
+  range: Range;
+  now: OutcomesSnapshot | null;
+  prev: OutcomesSnapshot | null;
+  computedAt: string;
+}
+
+/**
+ * Cumulative trader outcomes (sold + holding + net), with a `prev` snapshot
+ * one window back so the UI can show the change over the selected timeframe.
+ */
+export function useApiTraderOutcomes(range: Range = "24h") {
+  return useQuery({
+    queryKey: ["pov", "trader-outcomes", range],
+    queryFn: () => fetchJson<TraderOutcomes>(`/api/public/trader-outcomes?range=${range}`),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -374,6 +391,7 @@ export function usePulseRealtime() {
         qc.invalidateQueries({ queryKey: ["pov", "pnl-outcomes"] });
         qc.invalidateQueries({ queryKey: ["pov", "pnl-buckets"] });
         qc.invalidateQueries({ queryKey: ["pov", "pnl-by-belief"] });
+        qc.invalidateQueries({ queryKey: ["pov", "trader-outcomes"] });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "beliefs" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "feed"] });

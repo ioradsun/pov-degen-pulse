@@ -9,7 +9,6 @@ import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
 import { TimeframeControl } from "@/components/pulse/TimeframeControl";
 import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
-import { ValueFlowPanel } from "@/components/pulse/ValueFlowPanel";
 import { GrowthPanel } from "@/components/pulse/GrowthPanel";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
@@ -64,8 +63,6 @@ function Pulse() {
         buyVolumeUsd: Number(h?.buy_volume_usd ?? 0),
         beliefsCreated: Number(h?.new_beliefs ?? 0),
         activeTraders: Number(h?.active_traders ?? 0),
-        creatorRevenueUsd: Number(h?.creator_revenue_usd ?? 0),
-        degenAllocationUsd: Number(h?.degen_allocation_usd ?? 0),
       },
       retention: retention.data
         ? {
@@ -124,7 +121,6 @@ function Pulse() {
         />
         <TimeframeControl range={range} onRangeChange={setRange} />
         <StatGridApi range={range} currency={currency} />
-        <ValueFlowPanel range={range} currency={currency} />
         <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
         <GrowthPanel range={range} />
 
@@ -162,7 +158,7 @@ function Pulse() {
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6">
         <p className="border-t border-[var(--line)] pt-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          Read-only · Base · POV activity vs $DEGEN · fees burn DEGEN
+          Read-only · Base · POV on-chain activity
         </p>
       </footer>
     </div>
