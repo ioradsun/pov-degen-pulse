@@ -11,8 +11,10 @@ import {
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import {
   useApiActivityBuckets,
+  useApiPnlBuckets,
   type HistoryGranularity,
   type RhythmBucket,
+  type PnlBucket,
 } from "@/hooks/pov/useApiPulse";
 import { formatEthAmount, formatUsd } from "@/lib/pov/format";
 
@@ -22,7 +24,8 @@ export type MetricKey =
   | "active_traders"
   | "transactions"
   | "creator_revenue"
-  | "degen_allocation";
+  | "degen_allocation"
+  | "realized_pnl";
 
 export type Denom = "usd" | "eth";
 
@@ -39,7 +42,9 @@ const LABELS: Record<MetricKey, string> = {
   transactions: "Transactions",
   creator_revenue: "Creator revenue",
   degen_allocation: "DEGEN allocation",
+  realized_pnl: "Realized P&L",
 };
+
 
 const GRANULARITIES: Array<{
   key: HistoryGranularity;
@@ -71,12 +76,23 @@ function extract(b: RhythmBucket, metric: MetricKey, denom: Denom): number {
       const v = denom === "usd" ? b.buy_volume_usd : b.buy_volume_eth;
       return v * 0.1 * 0.5;
     }
+    case "realized_pnl":
+      // Handled via a separate data source; never called for this metric.
+      return 0;
   }
+}
+
+function extractPnl(b: PnlBucket, denom: Denom): number {
+  return denom === "usd" ? b.realized_usd : b.realized_eth;
 }
 
 function fmtValue(v: number, metric: MetricKey, denom: Denom): string {
   if (metric === "new_beliefs" || metric === "active_traders" || metric === "transactions")
     return String(Math.round(v));
+  if (metric === "realized_pnl") {
+    const sign = v < 0 ? "−" : "";
+    return sign + (denom === "usd" ? formatUsd(Math.abs(v), 2) : formatEthAmount(Math.abs(v)));
+  }
   return denom === "usd" ? formatUsd(v, 2) : formatEthAmount(v);
 }
 
@@ -92,34 +108,47 @@ export function MetricHistoryDialog({ metric, denom, onClose }: Props) {
   const open = metric !== null;
   const [granularity, setGranularity] = useState<HistoryGranularity>("hour");
   const gMeta = GRANULARITIES.find((g) => g.key === granularity)!;
-  const { data, isLoading } = useApiActivityBuckets(granularity, gMeta.buckets);
+  const isPnl = metric === "realized_pnl";
+  const activity = useApiActivityBuckets(granularity, gMeta.buckets);
+  const pnl = useApiPnlBuckets(granularity, gMeta.buckets);
+  const isLoading = isPnl ? pnl.isLoading : activity.isLoading;
 
   const rows = useMemo(() => {
-    if (!metric || !data) return [];
-    const lastIdx = data.buckets.length - 1;
-    return data.buckets.map((b, i) => {
-      const v = Number(extract(b, metric, denom).toFixed(4));
+    if (!metric) return [];
+    const raw: Array<{ ts: string; v: number }> = isPnl
+      ? (pnl.data?.buckets ?? []).map((b) => ({ ts: b.bucket, v: extractPnl(b, denom) }))
+      : (activity.data?.buckets ?? []).map((b) => ({
+          ts: b.bucket,
+          v: extract(b, metric, denom),
+        }));
+    const lastIdx = raw.length - 1;
+    return raw.map(({ ts, v }, i) => {
+      const rounded = Number(v.toFixed(4));
       const isCurrent = i === lastIdx;
       return {
-        ts: b.bucket,
-        label: bucketLabel(b.bucket, granularity),
-        // Solid line stops one point early so the dashed segment can start there.
-        value: isCurrent ? null : v,
-        // Dashed segment covers only the last two points (previous → current).
-        valuePartial: isCurrent || i === lastIdx - 1 ? v : null,
+        ts,
+        label: bucketLabel(ts, granularity),
+        value: isCurrent ? null : rounded,
+        valuePartial: isCurrent || i === lastIdx - 1 ? rounded : null,
         isCurrent,
       };
     });
-  }, [data, metric, denom, granularity]);
+  }, [metric, isPnl, pnl.data, activity.data, denom, granularity]);
+
 
   const total = useMemo(
     () => rows.reduce((s, r) => s + (r.value ?? r.valuePartial ?? 0), 0),
     [rows],
   );
-  const peak = useMemo(
-    () => rows.reduce((m, r) => Math.max(m, r.value ?? r.valuePartial ?? 0), 0),
-    [rows],
-  );
+  const peak = useMemo(() => {
+    if (rows.length === 0) return 0;
+    // For signed metrics (realized P&L), pick the value with the largest
+    // absolute magnitude so it's meaningful even when everything is negative.
+    return rows.reduce((m, r) => {
+      const v = r.value ?? r.valuePartial ?? 0;
+      return Math.abs(v) > Math.abs(m) ? v : m;
+    }, 0);
+  }, [rows]);
   const trendLabel = useMemo(() => {
     if (rows.length < 2) return null;
     const vals = rows.map((r) => r.value ?? r.valuePartial ?? 0);

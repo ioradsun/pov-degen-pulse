@@ -1,8 +1,9 @@
+import { useMemo } from "react";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
-import { useApiGrid, type GridRow } from "@/hooks/pov/useApiPulse";
+import { useApiGrid, useApiPnlByBelief, type GridRow } from "@/hooks/pov/useApiPulse";
 
 const POV_MARKET_URL = (slug: string) => `https://pov.co/markets/${slug}`;
 const POV_PROFILE_URL = (walletAddress: string) => `https://pov.co/${walletAddress}`;
@@ -50,8 +51,20 @@ interface BeliefBoardApiProps {
 
 export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
   const { data, isLoading } = useApiGrid("volume", range, 12);
+  const { data: pnlData } = useApiPnlByBelief(range, 500);
   const rows = data?.rows ?? [];
   const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? range;
+
+  const pnlByBelief = useMemo(() => {
+    const m = new Map<number, { realized: number; exits: number }>();
+    for (const r of pnlData?.rows ?? []) {
+      m.set(r.belief_id, {
+        realized: Number(r.realized_usd),
+        exits: Number(r.exits),
+      });
+    }
+    return m;
+  }, [pnlData]);
 
   return (
     <Panel
@@ -124,12 +137,39 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                   <span className="tabular-nums text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
                     MC {formatUsd(Number(b.market_cap_usd ?? 0), 0)}
                   </span>
+                  {(() => {
+                    const p = pnlByBelief.get(b.belief_id);
+                    if (!p || p.exits === 0) {
+                      return (
+                        <span className="tabular-nums text-[9px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                          no exits
+                        </span>
+                      );
+                    }
+                    const cls =
+                      p.realized > 0
+                        ? "text-[var(--up)]"
+                        : p.realized < 0
+                          ? "text-[var(--down)]"
+                          : "text-[var(--ink-dim)]";
+                    const sign = p.realized < 0 ? "−" : "";
+                    return (
+                      <span
+                        className={`tabular-nums text-[9px] uppercase tracking-[0.14em] ${cls}`}
+                        title={`${p.exits} exit${p.exits === 1 ? "" : "s"}`}
+                      >
+                        P&L {sign}
+                        {formatUsd(Math.abs(p.realized), 0)}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <span className="tabular-nums text-[10px] text-[var(--ink-faint)]">
                   {timeAgo(new Date(b.created_at).getTime())}
                 </span>
               </div>
+
             </li>
           ))}
         </ul>

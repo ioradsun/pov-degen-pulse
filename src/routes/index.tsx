@@ -7,6 +7,7 @@ import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
 import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
+import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
@@ -119,6 +120,8 @@ function Pulse() {
           lastError={health.data?.indexer?.last_error}
         />
         <StatGridApi range={range} onRangeChange={setRange} />
+        <TraderOutcomesPanel range={range} onRangeChange={setRange} />
+
         {rhythm.isLoading && buckets.length === 0 ? (
           <div className="rounded-sm border border-[var(--line)] bg-[var(--surface)] p-4">
             <div className="mb-3 h-3 w-24 animate-pulse rounded-sm bg-[var(--surface-2)]" />

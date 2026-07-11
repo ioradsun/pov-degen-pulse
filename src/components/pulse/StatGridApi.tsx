@@ -5,7 +5,7 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
-import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
+import { useApiHeadline, useApiRetention, useApiPnlHeadline } from "@/hooks/pov/useApiPulse";
 import { MetricHistoryDialog, type MetricKey } from "./MetricHistoryDialog";
 
 type Denom = "usd" | "eth";
@@ -57,6 +57,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
 
   const { data, isLoading } = useApiHeadline(range);
   const { data: retention, isLoading: isLoadingRetention } = useApiRetention();
+  const { data: pnl, isLoading: isLoadingPnl } = useApiPnlHeadline(range);
 
   const fmt = (n: number) => (denom === "usd" ? formatUsd(n, 0) : formatEthAmount(n));
   const unit = denom === "usd" ? "USD" : "ETH";
@@ -91,6 +92,13 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const transactionsDelta = pctDelta(transactions, data?.transactions_prev);
   const creatorRevDelta = pctDelta(creatorRev, creatorRevPrev);
   const degenAllocDelta = pctDelta(degenAlloc, degenAllocPrev);
+
+  const realized = Number((denom === "usd" ? pnl?.realized_usd : pnl?.realized_eth) ?? 0);
+  const realizedPrev = denom === "usd" ? pnl?.realized_usd_prev : pnl?.realized_eth_prev;
+  const realizedDelta = pctDelta(realized, realizedPrev);
+  const realizedExits = Number(pnl?.exits ?? 0);
+  const realizedCls =
+    realized > 0 ? "text-[var(--up)]" : realized < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
 
   const action = (
     <div className="flex items-center gap-2">
@@ -140,7 +148,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
       action={action}
       bodyClassName="p-0"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3 lg:grid-cols-7">
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4 lg:grid-cols-8">
         <MetricButton onClick={() => setOpenMetric("buy_volume")}>
           <Metric
             label="Buy volume"
@@ -226,6 +234,30 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
           />
         </MetricButton>
 
+        <MetricButton onClick={() => setOpenMetric("realized_pnl")}>
+          <Metric
+            label="Realized P&L"
+            value={
+              isLoadingPnl ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                <span className={realizedCls}>
+                  {realized >= 0 ? "" : "−"}
+                  {fmt(Math.abs(realized))}
+                </span>
+              )
+            }
+            delta={<Delta pct={realizedDelta} rangeLabel={rangeLabel} />}
+            sub={
+              isLoadingPnl
+                ? "…"
+                : realizedExits === 0
+                  ? "no exits in window · view 24h ↗"
+                  : `${realizedExits.toLocaleString()} exit${realizedExits === 1 ? "" : "s"} · FIFO cost · view 24h ↗`
+            }
+          />
+        </MetricButton>
+
         <Metric
           label="Repeat traders"
           value={
@@ -245,6 +277,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
                 : "No wallets older than 24h yet"
           }
         />
+
       </div>
       <MetricHistoryDialog
         metric={openMetric}
