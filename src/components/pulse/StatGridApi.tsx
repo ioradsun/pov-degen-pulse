@@ -125,13 +125,10 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>
             )
           }
-          sub={
-            <span className="flex items-center gap-1.5">
-              <span>5% of buy volume</span>
-              <Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />
-            </span>
-          }
+          delta={<Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />}
+          sub="5% of buy volume"
         />
+
         <Metric
           label="Repeat traders"
           value={
