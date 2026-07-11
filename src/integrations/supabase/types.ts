@@ -240,6 +240,7 @@ export type Database = {
           payment_token: string
           payment_token_symbol: string
           side: string
+          tokens_delta: number | null
           tx_hash: string
           wallet_address: string
         }
@@ -258,6 +259,7 @@ export type Database = {
           payment_token: string
           payment_token_symbol: string
           side: string
+          tokens_delta?: number | null
           tx_hash: string
           wallet_address: string
         }
@@ -276,6 +278,7 @@ export type Database = {
           payment_token?: string
           payment_token_symbol?: string
           side?: string
+          tokens_delta?: number | null
           tx_hash?: string
           wallet_address?: string
         }
