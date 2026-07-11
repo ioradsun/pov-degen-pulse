@@ -4,22 +4,35 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatUsd, formatPct } from "@/lib/pov/format";
 import { RANGES, type Range } from "@/lib/pov/ranges";
-import { useApiPnlOutcomes } from "@/hooks/pov/useApiPulse";
+import { useApiPnlWallets } from "@/hooks/pov/useApiPulse";
 
-function formatHold(seconds: number | null | undefined): string {
-  if (seconds == null || !Number.isFinite(seconds)) return "—";
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  const m = seconds / 60;
-  if (m < 60) return `${Math.round(m)}m`;
-  const h = m / 60;
-  if (h < 24) return `${h.toFixed(1)}h`;
-  return `${(h / 24).toFixed(1)}d`;
+/**
+ * Wallet-first outcome hierarchy:
+ *   PRIMARY   wallet    — did this person make money on POV?
+ *   SECONDARY position  — where did they win? (wallet + market + side)
+ *   (per-sell numbers remain available via /api/public/pnl/outcomes as a
+ *    diagnostic, but are no longer the headline — one scaled exit is one
+ *    outcome, not five. Wins and returns are decided in ETH, not USD —
+ *    historical USD conversion isn't consistently timestamped yet.
+ *    Ranges are rolling windows ending now.)
+ */
+
+function fmtEth(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  const a = Math.abs(n);
+  const digits = a >= 10 ? 1 : a >= 0.1 ? 3 : 4;
+  return `${a.toFixed(digits)} Ξ`;
+}
+
+function signedEth(n: number): { text: string; cls: string } {
+  if (!Number.isFinite(n)) return { text: "—", cls: "text-[var(--ink-dim)]" };
+  const cls = n > 0 ? "text-[var(--up)]" : n < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
+  return { text: (n < 0 ? "−" : "") + fmtEth(n), cls };
 }
 
 function signedUsd(n: number): { text: string; cls: string } {
   if (!Number.isFinite(n)) return { text: "—", cls: "text-[var(--ink-dim)]" };
-  const cls =
-    n > 0 ? "text-[var(--up)]" : n < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
+  const cls = n > 0 ? "text-[var(--up)]" : n < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
   const text = (n < 0 ? "−" : "") + formatUsd(Math.abs(n), 0);
   return { text, cls };
 }
@@ -39,14 +52,14 @@ function Stat({
 }) {
   return (
     <div className="flex flex-col justify-between gap-2 p-4">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-        {label}
-      </div>
-      <div className={clsx("text-[22px] leading-none tabular-nums", valueCls ?? "text-[var(--ink)]")}>
+      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">{label}</div>
+      <div
+        className={clsx("text-[22px] leading-none tabular-nums", valueCls ?? "text-[var(--ink)]")}
+      >
         {loading ? <Skeleton className="h-6 w-24" /> : value}
       </div>
       {sub != null && (
-        <div className="text-[11px] tabular-nums text-[var(--ink-dim)]">{sub}</div>
+        <div className="text-[11px] leading-snug tabular-nums text-[var(--ink-dim)]">{sub}</div>
       )}
     </div>
   );
@@ -58,34 +71,26 @@ interface Props {
 }
 
 export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
-  const { data, isLoading } = useApiPnlOutcomes(range);
-  // FIFO-cost coverage summary — median hold time uses full exits only.
+  const { data, isLoading } = useApiPnlWallets(range);
   const [showAbout, setShowAbout] = useState(false);
 
-  const realized = Number(data?.realized_usd ?? 0);
-  const realizedFmt = signedUsd(realized);
-  const rate = data?.profitable_exit_rate;
-  const avgRet = data?.avg_return;
-  const median = data?.median_hold_seconds;
-  const totalSells = Number(data?.total_sells ?? 0);
-  const profitable = Number(data?.profitable_sells ?? 0);
-  const fullExits = Number(data?.full_exits ?? 0);
-
-  const avgRetCls =
-    avgRet == null
-      ? "text-[var(--ink-dim)]"
-      : avgRet > 0
-        ? "text-[var(--up)]"
-        : avgRet < 0
-          ? "text-[var(--down)]"
-          : "text-[var(--ink)]";
+  const sellers = Number(data?.sellers ?? 0);
+  const winners = Number(data?.profitable_wallets ?? 0);
+  const walletRate = data?.profitable_wallet_rate;
+  const winnersNetEth = Number(data?.winners_net_eth ?? 0);
+  const net = Number(data?.net_realized_eth ?? NaN);
+  const netFmt = signedEth(net);
+  const posRate = data?.profitable_position_rate;
+  const positions = Number(data?.positions ?? 0);
+  const profitablePositions = Number(data?.profitable_positions ?? 0);
+  const medianWin = data?.median_winning_return;
 
   const rateCls =
-    rate == null
+    walletRate == null
       ? "text-[var(--ink-dim)]"
-      : rate >= 0.5
+      : walletRate >= 0.5
         ? "text-[var(--up)]"
-        : rate >= 0.3
+        : walletRate >= 0.3
           ? "text-[var(--ink)]"
           : "text-[var(--down)]";
 
@@ -113,62 +118,81 @@ export function TraderOutcomesPanel({ range, onRangeChange }: Props) {
   return (
     <Panel
       title="Trader outcomes"
-      meta="FIFO realized P&L · fees excluded"
+      meta="per wallet · FIFO · in ETH · after the 10% buy fee"
       action={action}
       bodyClassName="p-0"
     >
+      {/* PRIMARY: the headline — traders who made money */}
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-[var(--line-dim)] px-4 py-4">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+          {range === "all" ? "Traders who made money" : "Traders who made money in this period"}
+        </span>
+        {isLoading ? (
+          <Skeleton className="h-8 w-40" />
+        ) : (
+          <>
+            <span className={clsx("text-[32px] leading-none tabular-nums", rateCls)}>
+              {walletRate == null ? "—" : `${Math.round(walletRate * 100)}%`}
+            </span>
+            <span className="text-[13px] tabular-nums text-[var(--ink-dim)]">
+              {sellers === 0
+                ? "no wallets have sold in this window"
+                : `${winners.toLocaleString()} of ${sellers.toLocaleString()} wallets that sold`}
+            </span>
+          </>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
         <Stat
-          label="Realized profit"
-          value={realizedFmt.text}
-          valueCls={realizedFmt.cls}
-          sub={totalSells === 0 ? "no exits in window" : `${totalSells.toLocaleString()} sells`}
+          label="Profit earned by winning traders"
+          value={fmtEth(winnersNetEth)}
+          valueCls="text-[var(--up)]"
+          sub="net profit of net-profitable wallets"
           loading={isLoading}
         />
         <Stat
-          label="Profitable exits"
-          value={rate == null ? "—" : `${Math.round(rate * 100)}%`}
-          valueCls={rateCls}
+          label="Net realized P&L"
+          value={netFmt.text}
+          valueCls={netFmt.cls}
+          sub="all wallets combined, all-in"
+          loading={isLoading}
+        />
+        <Stat
+          label="Positions with realized profit"
+          value={posRate == null ? "—" : `${Math.round(posRate * 100)}%`}
           sub={
-            totalSells === 0
-              ? "—"
-              : `${profitable.toLocaleString()} of ${totalSells.toLocaleString()} sells`
+            positions === 0
+              ? "wallet + market + side · partials may remain open"
+              : `${profitablePositions.toLocaleString()} of ${positions.toLocaleString()} · partials may remain open`
           }
           loading={isLoading}
         />
         <Stat
-          label="Avg return"
-          value={avgRet == null ? "—" : formatPct(avgRet * 100, 1)}
-          valueCls={avgRetCls}
-          sub="cost-weighted · gross of fees"
-          loading={isLoading}
-        />
-        <Stat
-          label="Median hold"
-          value={formatHold(median)}
-          sub={
-            fullExits === 0
-              ? "no fully-closed positions"
-              : `${fullExits.toLocaleString()} full exit${fullExits === 1 ? "" : "s"}`
-          }
+          label="Median winning-wallet return"
+          value={medianWin == null ? "—" : `+${formatPct(medianWin * 100, 1).replace("+", "")}`}
+          valueCls="text-[var(--up)]"
+          sub="typical return of a profitable wallet"
           loading={isLoading}
         />
       </div>
+
       <div className="border-t border-[var(--line-dim)] px-4 py-2">
         <button
-          type="button"
           onClick={() => setShowAbout((s) => !s)}
-          className="text-[10px] uppercase tracking-[0.16em] text-[var(--ink-faint)] hover:text-[var(--ink-dim)]"
+          className="text-[10px] uppercase tracking-[0.16em] text-[var(--ink-faint)] hover:text-[var(--ink)]"
         >
           {showAbout ? "hide method" : "how this is computed"}
         </button>
         {showAbout && (
-          <p className="mt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
-            Each sale is matched against the wallet's earlier buys on the same
-            market and side using FIFO cost basis. Realized profit = sale
-            proceeds − matched cost. Partial sales still count toward realized
-            profit but only fully-closed positions contribute to median hold
-            time. Protocol fees, referral fees, and gas are excluded from V1.
+          <p className="pb-2 pt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
+            Wallet is the unit of success: every sell is FIFO-matched to that wallet's prior buys
+            per market and side, then summed to one number per wallet — so scaling out of one
+            position in five clips is one outcome, not five. Costs are gross of POV's 10% buy fee,
+            meaning a flat-price round trip shows about −10% by design; that fee is what buys &amp;
+            burns DEGEN and pays creators (see "Where the money goes"). Positions are wallet +
+            market + side. Wallets that only bought and never sold aren't counted here — unexited
+            conviction is neither a win nor a loss yet.
           </p>
         )}
       </div>

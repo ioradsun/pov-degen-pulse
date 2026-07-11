@@ -17,7 +17,9 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
+import { Route as ApiPublicValueflowRouteImport } from './routes/api.public.valueflow'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
+import { Route as ApiPublicPnlWalletsRouteImport } from './routes/api.public.pnl.wallets'
 import { Route as ApiPublicPnlOutcomesRouteImport } from './routes/api.public.pnl.outcomes'
 import { Route as ApiPublicPnlHeadlineRouteImport } from './routes/api.public.pnl.headline'
 import { Route as ApiPublicPnlByBeliefRouteImport } from './routes/api.public.pnl.by-belief'
@@ -67,12 +69,22 @@ const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
   path: '/api/public/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicValueflowRoute = ApiPublicValueflowRouteImport.update({
+  id: '/api/public/valueflow',
+  path: '/api/public/valueflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicActivityBucketsRoute =
   ApiPublicActivityBucketsRouteImport.update({
     id: '/api/public/activity-buckets',
     path: '/api/public/activity-buckets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPnlWalletsRoute = ApiPublicPnlWalletsRouteImport.update({
+  id: '/api/public/pnl/wallets',
+  path: '/api/public/pnl/wallets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPnlOutcomesRoute = ApiPublicPnlOutcomesRouteImport.update({
   id: '/api/public/pnl/outcomes',
   path: '/api/public/pnl/outcomes',
@@ -126,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -134,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
+  '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -145,6 +159,7 @@ export interface FileRoutesByTo {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -153,6 +168,7 @@ export interface FileRoutesByTo {
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
+  '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,6 +181,7 @@ export interface FileRoutesById {
   '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
+  '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
@@ -173,6 +190,7 @@ export interface FileRoutesById {
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
+  '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -186,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
@@ -194,6 +213,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
+    | '/api/public/pnl/wallets'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,6 +225,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
@@ -213,6 +234,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
+    | '/api/public/pnl/wallets'
   id:
     | '__root__'
     | '/'
@@ -224,6 +246,7 @@ export interface FileRouteTypes {
     | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
+    | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
@@ -232,6 +255,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
+    | '/api/public/pnl/wallets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +268,7 @@ export interface RootRouteChildren {
   ApiPublicMarketCapsRoute: typeof ApiPublicMarketCapsRoute
   ApiPublicRetentionRoute: typeof ApiPublicRetentionRoute
   ApiPublicRhythmRoute: typeof ApiPublicRhythmRoute
+  ApiPublicValueflowRoute: typeof ApiPublicValueflowRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
   ApiPublicHooksBackfillTokensRoute: typeof ApiPublicHooksBackfillTokensRoute
   ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
@@ -252,6 +277,7 @@ export interface RootRouteChildren {
   ApiPublicPnlByBeliefRoute: typeof ApiPublicPnlByBeliefRoute
   ApiPublicPnlHeadlineRoute: typeof ApiPublicPnlHeadlineRoute
   ApiPublicPnlOutcomesRoute: typeof ApiPublicPnlOutcomesRoute
+  ApiPublicPnlWalletsRoute: typeof ApiPublicPnlWalletsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -268,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/rhythm'
       fullPath: '/api/public/rhythm'
       preLoaderRoute: typeof ApiPublicRhythmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/valueflow': {
+      id: '/api/public/valueflow'
+      path: '/api/public/valueflow'
+      fullPath: '/api/public/valueflow'
+      preLoaderRoute: typeof ApiPublicValueflowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/retention': {
@@ -324,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/pnl/outcomes'
       fullPath: '/api/public/pnl/outcomes'
       preLoaderRoute: typeof ApiPublicPnlOutcomesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pnl/wallets': {
+      id: '/api/public/pnl/wallets'
+      path: '/api/public/pnl/wallets'
+      fullPath: '/api/public/pnl/wallets'
+      preLoaderRoute: typeof ApiPublicPnlWalletsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/pnl/headline': {
@@ -388,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMarketCapsRoute: ApiPublicMarketCapsRoute,
   ApiPublicRetentionRoute: ApiPublicRetentionRoute,
   ApiPublicRhythmRoute: ApiPublicRhythmRoute,
+  ApiPublicValueflowRoute: ApiPublicValueflowRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
   ApiPublicHooksBackfillTokensRoute: ApiPublicHooksBackfillTokensRoute,
   ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
@@ -396,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPnlByBeliefRoute: ApiPublicPnlByBeliefRoute,
   ApiPublicPnlHeadlineRoute: ApiPublicPnlHeadlineRoute,
   ApiPublicPnlOutcomesRoute: ApiPublicPnlOutcomesRoute,
+  ApiPublicPnlWalletsRoute: ApiPublicPnlWalletsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

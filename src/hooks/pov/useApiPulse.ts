@@ -225,6 +225,10 @@ export interface PnlOutcomes {
   full_exits: number;
   median_hold_seconds: number | null;
   computedAt: string;
+  price_pnl_usd?: number | null;
+  price_profitable_sells?: number | null;
+  price_profitable_rate?: number | null;
+  price_avg_return?: number | null;
 }
 
 export interface PnlBucket {
@@ -248,6 +252,54 @@ export function useApiPnlHeadline(range: Range = "24h") {
     queryFn: () => fetchJson<PnlHeadline>(`/api/public/pnl/headline?range=${range}`),
     refetchInterval: 30_000,
     staleTime: 15_000,
+  });
+}
+
+export interface ValueFlow {
+  range: string;
+  buy_volume_usd: number | null;
+  sell_proceeds_usd: number | null;
+  net_conviction_usd: number | null;
+  degen_burn_usd: number | null;
+  creator_earned_usd: number | null;
+  agent_pool_usd: number | null;
+  buyers: number | null;
+  holders_never_sold: number | null;
+}
+
+export function useApiValueFlow(range: Range = "24h") {
+  return useQuery({
+    queryKey: ["pov", "value-flow", range],
+    queryFn: () => fetchJson<ValueFlow>(`/api/public/valueflow?range=${range}`),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+export interface PnlWalletSummary {
+  range: string;
+  sellers: number | null;
+  profitable_wallets: number | null;
+  profitable_wallet_rate: number | null;
+  winners_net_eth: number | null;
+  winners_net_usd: number | null;
+  gross_gains_eth: number | null;
+  net_realized_eth: number | null;
+  net_realized_usd: number | null;
+  median_wallet_return: number | null;
+  median_winning_return: number | null;
+  positions: number | null;
+  profitable_positions: number | null;
+  profitable_position_rate: number | null;
+  median_position_return: number | null;
+}
+
+export function useApiPnlWallets(range: Range = "24h") {
+  return useQuery({
+    queryKey: ["pov", "pnl-wallets", range],
+    queryFn: () => fetchJson<PnlWalletSummary>(`/api/public/pnl/wallets?range=${range}`),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }
 

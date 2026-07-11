@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createPublicClient, http, type Log } from "viem";
 import { base } from "viem/chains";
-import {
-  POV_CONTRACTS,
-  POV_CORE_SIGS,
-} from "@/lib/pov/constants";
+import { POV_CONTRACTS, POV_CORE_SIGS } from "@/lib/pov/constants";
 
 const CHAIN_ID = 8453;
 const LOCK_KEY = 987001; // stable advisory-lock id for this indexer
@@ -89,9 +86,12 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // 1. Advisory lock — skip this tick if a prior tick is still running.
-        const { data: gotLock } = await supabaseAdmin.rpc("pg_try_advisory_lock" as never, {
-          key: LOCK_KEY,
-        } as never);
+        const { data: gotLock } = await supabaseAdmin.rpc(
+          "pg_try_advisory_lock" as never,
+          {
+            key: LOCK_KEY,
+          } as never,
+        );
         if (gotLock === false) {
           return Response.json({ skipped: "locked" });
         }
@@ -128,8 +128,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           });
           const safeHead = head - BigInt(CONFIRMATIONS);
 
-          const fromBlock =
-            cursor === 0n ? safeHead - BigInt(START_LOOKBACK) : cursor + 1n;
+          const fromBlock = cursor === 0n ? safeHead - BigInt(START_LOOKBACK) : cursor + 1n;
           if (fromBlock > safeHead) {
             await supabaseAdmin
               .from("indexer_state")
@@ -173,14 +172,11 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             transport: http(rpcList[0], { timeout: 8000 }),
           });
 
-
           // 4. Enrich: unique tx.value + block timestamps for the touched blocks.
           const uniqueTxs = Array.from(
             new Set(povLogs.map((l) => l.transactionHash!.toLowerCase())),
           );
-          const uniqueBlocks = Array.from(
-            new Set(povLogs.map((l) => l.blockNumber!.toString())),
-          );
+          const uniqueBlocks = Array.from(new Set(povLogs.map((l) => l.blockNumber!.toString())));
           const [txValues, blockTs] = await Promise.all([
             Promise.all(
               uniqueTxs.map(async (h) => {
@@ -255,7 +251,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
 
             const side = ws[1] && toBigInt(ws[1]) === 1n ? "yes" : "no";
             const grossWei = isBuy
-              ? txValueMap.get(l.transactionHash!.toLowerCase()) ?? 0n
+              ? (txValueMap.get(l.transactionHash!.toLowerCase()) ?? 0n)
               : ws[3]
                 ? toBigInt(ws[3])
                 : 0n;
@@ -293,9 +289,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
           // `created` event was emitted before our scan window. Insert a
           // stub row for any such id so the FK holds; the hydrator can
           // fill title/creator later.
-          const knownIds = new Set<number>(
-            beliefsToInsert.map((b) => b.belief_id as number),
-          );
+          const knownIds = new Set<number>(beliefsToInsert.map((b) => b.belief_id as number));
           const orphanBeliefIds = new Set<number>();
           for (const t of tradesToInsert) {
             const id = t.belief_id as number;
@@ -306,9 +300,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
               .from("beliefs")
               .select("belief_id")
               .in("belief_id", Array.from(orphanBeliefIds));
-            const existingIds = new Set<number>(
-              (existing ?? []).map((r) => r.belief_id as number),
-            );
+            const existingIds = new Set<number>((existing ?? []).map((r) => r.belief_id as number));
             for (const id of orphanBeliefIds) {
               if (existingIds.has(id)) continue;
               const firstTrade = tradesToInsert.find((t) => t.belief_id === id)!;
@@ -335,9 +327,7 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             const realCreated = beliefsToInsert.filter(
               (b) => b.raw_title_source !== "backfill_stub",
             );
-            const stubs = beliefsToInsert.filter(
-              (b) => b.raw_title_source === "backfill_stub",
-            );
+            const stubs = beliefsToInsert.filter((b) => b.raw_title_source === "backfill_stub");
             if (realCreated.length) {
               const { error } = await supabaseAdmin
                 .from("beliefs")
@@ -371,6 +361,21 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .upsert(tradesToInsert as any, { onConflict: "event_id", ignoreDuplicates: true });
             if (error) throw error;
+
+            // Keep wallet P&L fresh: rebuild the FIFO cache whenever new
+            // sells landed (buys only extend lots; sells create outcomes).
+            const insertedSells = tradesToInsert.some(
+              (t) => (t as { action?: string }).action === "sell",
+            );
+            if (insertedSells) {
+              const { error: refreshErr } = await supabaseAdmin.rpc(
+                "refresh_realized_pnl_cache" as never,
+              );
+              if (refreshErr) {
+                // Non-fatal: metrics lag one tick rather than failing the sync.
+                console.error("pnl cache refresh failed:", refreshErr.message);
+              }
+            }
           }
 
           // 7. Advance cursor.
@@ -415,9 +420,12 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             { status: 500 },
           );
         } finally {
-          await supabaseAdmin.rpc("pg_advisory_unlock" as never, {
-            key: LOCK_KEY,
-          } as never);
+          await supabaseAdmin.rpc(
+            "pg_advisory_unlock" as never,
+            {
+              key: LOCK_KEY,
+            } as never,
+          );
         }
       },
     },
