@@ -11,8 +11,10 @@ import {
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import {
   useApiActivityBuckets,
+  useApiPnlBuckets,
   type HistoryGranularity,
   type RhythmBucket,
+  type PnlBucket,
 } from "@/hooks/pov/useApiPulse";
 import { formatEthAmount, formatUsd } from "@/lib/pov/format";
 
@@ -22,7 +24,8 @@ export type MetricKey =
   | "active_traders"
   | "transactions"
   | "creator_revenue"
-  | "degen_allocation";
+  | "degen_allocation"
+  | "realized_pnl";
 
 export type Denom = "usd" | "eth";
 
@@ -39,7 +42,9 @@ const LABELS: Record<MetricKey, string> = {
   transactions: "Transactions",
   creator_revenue: "Creator revenue",
   degen_allocation: "DEGEN allocation",
+  realized_pnl: "Realized P&L",
 };
+
 
 const GRANULARITIES: Array<{
   key: HistoryGranularity;
