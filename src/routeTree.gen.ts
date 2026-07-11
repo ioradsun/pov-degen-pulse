@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicValueflowRouteImport } from './routes/api.public.valueflow'
 import { Route as ApiPublicRhythmRouteImport } from './routes/api.public.rhythm'
 import { Route as ApiPublicRetentionRouteImport } from './routes/api.public.retention'
 import { Route as ApiPublicMarketCapsRouteImport } from './routes/api.public.market-caps'
@@ -17,7 +18,6 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
-import { Route as ApiPublicValueflowRouteImport } from './routes/api.public.valueflow'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
 import { Route as ApiPublicPnlWalletsRouteImport } from './routes/api.public.pnl.wallets'
 import { Route as ApiPublicPnlOutcomesRouteImport } from './routes/api.public.pnl.outcomes'
@@ -32,6 +32,11 @@ import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belie
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicValueflowRoute = ApiPublicValueflowRouteImport.update({
+  id: '/api/public/valueflow',
+  path: '/api/public/valueflow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRhythmRoute = ApiPublicRhythmRouteImport.update({
@@ -67,11 +72,6 @@ const ApiPublicGridRoute = ApiPublicGridRouteImport.update({
 const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
   id: '/api/public/feed',
   path: '/api/public/feed',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicValueflowRoute = ApiPublicValueflowRouteImport.update({
-  id: '/api/public/valueflow',
-  path: '/api/public/valueflow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicActivityBucketsRoute =
@@ -289,18 +289,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/rhythm': {
-      id: '/api/public/rhythm'
-      path: '/api/public/rhythm'
-      fullPath: '/api/public/rhythm'
-      preLoaderRoute: typeof ApiPublicRhythmRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/valueflow': {
       id: '/api/public/valueflow'
       path: '/api/public/valueflow'
       fullPath: '/api/public/valueflow'
       preLoaderRoute: typeof ApiPublicValueflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rhythm': {
+      id: '/api/public/rhythm'
+      path: '/api/public/rhythm'
+      fullPath: '/api/public/rhythm'
+      preLoaderRoute: typeof ApiPublicRhythmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/retention': {
@@ -352,18 +352,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicActivityBucketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/pnl/outcomes': {
-      id: '/api/public/pnl/outcomes'
-      path: '/api/public/pnl/outcomes'
-      fullPath: '/api/public/pnl/outcomes'
-      preLoaderRoute: typeof ApiPublicPnlOutcomesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/pnl/wallets': {
       id: '/api/public/pnl/wallets'
       path: '/api/public/pnl/wallets'
       fullPath: '/api/public/pnl/wallets'
       preLoaderRoute: typeof ApiPublicPnlWalletsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pnl/outcomes': {
+      id: '/api/public/pnl/outcomes'
+      path: '/api/public/pnl/outcomes'
+      fullPath: '/api/public/pnl/outcomes'
+      preLoaderRoute: typeof ApiPublicPnlOutcomesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/pnl/headline': {
