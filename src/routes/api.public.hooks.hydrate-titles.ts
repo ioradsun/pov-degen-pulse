@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // Scrape pov.co's server-rendered homepage JSON blob and hydrate beliefs.title
-// for any rows still NULL. See src/lib/pov/povSite.functions.ts for the
-// full rationale of why this is the reliable join key.
+// for any rows still NULL. onChainMarketId is the reliable join key back to
+// beliefs.belief_id — event args and token name() calls don't carry it.
 
 const UA = { "User-Agent": "degen-pulse/1.0 (+analytics dashboard)" };
 
@@ -52,9 +52,7 @@ export const Route = createFileRoute("/api/public/hooks/hydrate-titles")({
         }
 
         try {
-          const { supabaseAdmin } = await import(
-            "@/integrations/supabase/client.server"
-          );
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const scraped = await scrapePovIndex();
           if (scraped.size === 0) {
             return Response.json({ ok: true, scraped: 0, updated: 0 });

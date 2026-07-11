@@ -1,23 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PulseBar } from "@/components/pulse/PulseBar";
-import { computeStats } from "@/components/pulse/StatGrid";
 import { StatGridApi } from "@/components/pulse/StatGridApi";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
 import { BeliefBoardApi } from "@/components/pulse/BeliefBoardApi";
 import { LiveFeedApi } from "@/components/pulse/LiveFeedApi";
 import { InsightPanel } from "@/components/pulse/InsightPanel";
-import { DecodeBanner } from "@/components/pulse/DecodeBanner";
-import { useActivity } from "@/hooks/pov/useActivity";
-import { useBeliefs } from "@/hooks/pov/useBeliefs";
-import { useBeliefTexts } from "@/hooks/pov/useBeliefTexts";
+import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
-import { useAbis } from "@/hooks/pov/useAbis";
-import { buildAbiIndex } from "@/lib/pov/events";
 import { buildPulse } from "@/lib/pov/pulse";
-import { formatEth, type Currency } from "@/lib/pov/format";
-import { usePulseRealtime } from "@/hooks/pov/useApiPulse";
+import { formatUsd, type Currency } from "@/lib/pov/format";
+import {
+  useApiGrid,
+  useApiHeadline,
+  useApiHealth,
+  useApiRhythm,
+  usePulseRealtime,
+} from "@/hooks/pov/useApiPulse";
 
 export const Route = createFileRoute("/")({
   component: Pulse,
@@ -25,41 +25,41 @@ export const Route = createFileRoute("/")({
 
 function Pulse() {
   usePulseRealtime();
-  const abis = useAbis();
-  const abiIndex = useMemo(() => buildAbiIndex(abis.results), [abis.results]);
-  const { events, latestBlock, backfill, live } = useActivity(abiIndex);
+  const health = useApiHealth();
+  const headline = useApiHeadline("24h");
+  const grid = useApiGrid("volume_24h", 15);
+  const rhythm = useApiRhythm(24);
   const { snapshot: degen } = useDegenPrice();
   const { bars: ohlc } = useDegenOhlc(24);
-  const beliefs = useBeliefs(events);
-  const beliefTexts = useBeliefTexts(beliefs);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [currency, setCurrency] = useState<Currency>("usd");
 
-  const buckets = useMemo(() => buildPulse(events, ohlc, 24), [events, ohlc]);
+  const buckets = useMemo(() => buildPulse(rhythm.data?.buckets ?? [], ohlc), [rhythm.data, ohlc]);
+
+  const writerStatus = health.data?.writer_status ?? null;
+  const ready = writerStatus === "ok" && !!headline.data;
 
   const insightSnapshot = useMemo(() => {
-    const s = computeStats(events);
+    const h = headline.data;
     return JSON.stringify({
       window: "24h",
       pov: {
-        ethTransacted: formatEth(s.volumeWei, 4),
-        beliefsCreated: s.created,
-        buys: s.buys,
-        sells: s.sells,
-        boosts: s.boosts,
-        uniqueTraders: s.traders,
+        buyVolumeUsd: Number(h?.buy_volume_usd ?? 0),
+        beliefsCreated: Number(h?.new_beliefs ?? 0),
+        activeTraders: Number(h?.active_traders ?? 0),
+        creatorRevenueUsd: Number(h?.creator_revenue_usd ?? 0),
+        degenAllocationUsd: Number(h?.degen_allocation_usd ?? 0),
       },
-      topBeliefs: beliefs.slice(0, 15).map((b) => ({
-        belief: b.text ?? beliefTexts.get(b.id) ?? `#${b.id}`,
-        buys: b.totalBuys,
-        sells: b.totalSells,
-        ethVolume: formatEth(b.volumeWei, 4),
-        wallets: b.participants,
-        boosts: b.boostCount,
+      topBeliefs: (grid.data?.rows ?? []).slice(0, 15).map((b) => ({
+        belief: b.title ?? `Belief #${b.belief_id}`,
+        buyVolume24hUsd: formatUsd(Number(b.buy_volume_24h_usd ?? 0), 0),
+        splitPct: b.split_pct,
+        wallets: b.unique_wallets_24h,
+        lifecycleStage: b.lifecycle_stage,
       })),
       hourly: buckets.map((b) => ({
         h: new Date(b.hour * 1000).toISOString().slice(11, 16),
-        eth: Number(b.volumeEth.toFixed(4)),
+        buyVolumeUsd: Number(b.buyVolumeUsd.toFixed(2)),
         trades: b.buys + b.sells,
         created: b.created,
         degenUsd: b.degenPriceUsd,
@@ -75,20 +75,22 @@ function Pulse() {
           }
         : null,
     });
-  }, [events, beliefs, beliefTexts, buckets, degen]);
+  }, [headline.data, grid.data, buckets, degen]);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
       <PulseBar
-        latestBlock={latestBlock}
-        live={live}
-        backfill={backfill}
+        writerStatus={writerStatus}
+        lastIndexedBlock={health.data?.indexer?.last_indexed_block ?? null}
         degen={degen}
         currency={currency}
         onCurrencyChange={setCurrency}
       />
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
-        <DecodeBanner events={events} abis={abis} live={live} />
+        <IndexerStatusBanner
+          writerStatus={writerStatus}
+          lastError={health.data?.indexer?.last_error}
+        />
         <StatGridApi />
         <RhythmChart buckets={buckets} currency={currency} ethUsd={ethUsd} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -96,7 +98,7 @@ function Pulse() {
             <LiveFeedApi />
           </div>
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <InsightPanel snapshot={insightSnapshot} ready={live} />
+            <InsightPanel snapshot={insightSnapshot} ready={ready} />
             <BeliefBoardApi />
           </div>
         </div>

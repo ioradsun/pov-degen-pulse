@@ -1,24 +1,38 @@
 import { clsx } from "clsx";
-import { formatCompact, formatDegenPrice, formatPct, formatUsd, type Currency } from "@/lib/pov/format";
+import {
+  formatCompact,
+  formatDegenPrice,
+  formatPct,
+  formatUsd,
+  type Currency,
+} from "@/lib/pov/format";
 import type { DegenSnapshot } from "@/lib/pov/types";
+import type { WriterStatus } from "@/hooks/pov/useApiPulse";
 
 interface PulseBarProps {
-  latestBlock: number | null;
-  live: boolean;
-  backfill: number;
+  writerStatus: WriterStatus | null;
+  lastIndexedBlock: number | null;
   degen: DegenSnapshot | null;
   currency: Currency;
   onCurrencyChange: (c: Currency) => void;
 }
 
+const STATUS_LABEL: Record<WriterStatus, string> = {
+  ok: "live",
+  starting: "indexer starting…",
+  stalled: "indexer stalled",
+  "no writer connected": "no writer connected",
+};
+
 export function PulseBar({
-  latestBlock,
-  live,
-  backfill,
+  writerStatus,
+  lastIndexedBlock,
   degen,
   currency,
   onCurrencyChange,
 }: PulseBarProps) {
+  const live = writerStatus === "ok";
+
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
@@ -35,9 +49,11 @@ export function PulseBar({
             <span className="text-[var(--ink-dim)]">PULSE</span>
           </h1>
           <span className="hidden text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] sm:inline">
-            {live
-              ? `live · block ${latestBlock?.toLocaleString() ?? "…"}`
-              : `loading 24h of Base… ${Math.round(backfill * 100)}%`}
+            {writerStatus == null
+              ? "connecting…"
+              : live && lastIndexedBlock != null
+                ? `live · block ${lastIndexedBlock.toLocaleString()}`
+                : STATUS_LABEL[writerStatus]}
           </span>
         </div>
 
@@ -89,14 +105,6 @@ export function PulseBar({
           </div>
         )}
       </div>
-      {!live && (
-        <div className="h-0.5 w-full bg-[var(--line-dim)]">
-          <div
-            className="h-full bg-[var(--pov)] transition-[width] duration-300"
-            style={{ width: `${Math.round(backfill * 100)}%` }}
-          />
-        </div>
-      )}
     </header>
   );
 }

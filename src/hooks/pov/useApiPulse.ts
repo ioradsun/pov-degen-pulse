@@ -48,6 +48,33 @@ export interface GridRow {
   creator_quality: number | null;
 }
 
+export interface RhythmBucket {
+  hour: string;
+  buy_volume_usd: number;
+  buys: number;
+  sells: number;
+  created: number;
+}
+
+export type WriterStatus = "ok" | "stalled" | "starting" | "no writer connected";
+
+export interface HealthResponse {
+  beliefs_total: number;
+  beliefs_hydrated: number;
+  beliefs_pending_hydration: number;
+  latest_trade_at: string | null;
+  seconds_since_last_trade: number | null;
+  last_stats_refresh: string | null;
+  indexer: {
+    chain_id?: number;
+    last_indexed_block?: number;
+    last_indexed_at: string | null;
+    seconds_since_last_index: number | null;
+    last_error: string | null;
+  } | null;
+  writer_status: WriterStatus;
+}
+
 async function fetchJson<T>(path: string): Promise<T> {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`${path} → ${res.status}`);
@@ -82,10 +109,29 @@ export function useApiHeadline(range: HeadlineMetrics["range"] = "24h") {
 export function useApiGrid(sort = "ignition", limit = 12) {
   return useQuery({
     queryKey: ["pov", "grid", sort, limit],
-    queryFn: () =>
-      fetchJson<{ rows: GridRow[] }>(`/api/public/grid?sort=${sort}&limit=${limit}`),
+    queryFn: () => fetchJson<{ rows: GridRow[] }>(`/api/public/grid?sort=${sort}&limit=${limit}`),
     refetchInterval: 30_000,
     staleTime: 15_000,
+  });
+}
+
+export function useApiRhythm(hours = 24) {
+  return useQuery({
+    queryKey: ["pov", "rhythm", hours],
+    queryFn: () =>
+      fetchJson<{ hours: number; buckets: RhythmBucket[] }>(`/api/public/rhythm?hours=${hours}`),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+/** Indexer/writer health — drives the header's live/stalled status. */
+export function useApiHealth() {
+  return useQuery({
+    queryKey: ["pov", "health"],
+    queryFn: () => fetchJson<HealthResponse>("/api/public/health"),
+    refetchInterval: 10_000,
+    staleTime: 5_000,
   });
 }
 
@@ -95,29 +141,17 @@ export function usePulseRealtime() {
   useEffect(() => {
     const channel = supabase
       .channel("pov-pulse")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "trades" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["pov", "feed"] });
-          qc.invalidateQueries({ queryKey: ["pov", "headline"] });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "beliefs" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["pov", "feed"] });
-          qc.invalidateQueries({ queryKey: ["pov", "headline"] });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "belief_stats" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["pov", "grid"] });
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "trades" }, () => {
+        qc.invalidateQueries({ queryKey: ["pov", "feed"] });
+        qc.invalidateQueries({ queryKey: ["pov", "headline"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "beliefs" }, () => {
+        qc.invalidateQueries({ queryKey: ["pov", "feed"] });
+        qc.invalidateQueries({ queryKey: ["pov", "headline"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "belief_stats" }, () => {
+        qc.invalidateQueries({ queryKey: ["pov", "grid"] });
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

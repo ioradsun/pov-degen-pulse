@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Bar, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Panel } from "@/components/pov/primitives/Panel";
 import type { PulseBucket } from "@/lib/pov/pulse";
-import { formatDegenPrice, usdToEthPrice, type Currency } from "@/lib/pov/format";
+import { formatDegenPrice, formatUsd, usdToEthPrice, type Currency } from "@/lib/pov/format";
 
 interface RhythmChartProps {
   buckets: PulseBucket[];
@@ -12,7 +12,7 @@ interface RhythmChartProps {
 
 interface Row {
   label: string;
-  volumeEth: number;
+  buyVolumeUsd: number;
   trades: number;
   created: number;
   degen: number | null;
@@ -30,7 +30,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
     () =>
       buckets.map((b) => ({
         label: hourLabel(b.hour),
-        volumeEth: Number(b.volumeEth.toFixed(5)),
+        buyVolumeUsd: Number(b.buyVolumeUsd.toFixed(2)),
         trades: b.buys + b.sells,
         created: b.created,
         degen: currency === "eth" ? usdToEthPrice(b.degenPriceUsd, ethUsd) : b.degenPriceUsd,
@@ -47,7 +47,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
       action={
         <span className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2 w-2 bg-[var(--pov)]" /> POV ETH volume
+            <span className="inline-block h-2 w-2 bg-[var(--pov)]" /> POV buy volume (USD)
           </span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-0.5 w-4 bg-[var(--degen)]" /> DEGEN price (
@@ -73,7 +73,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
               tickLine={false}
               axisLine={false}
               width={52}
-              tickFormatter={(v: number) => `${v}Ξ`}
+              tickFormatter={(v: number) => formatUsd(v, 0)}
             />
             <YAxis
               yAxisId="degen"
@@ -98,7 +98,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
               }}
               labelStyle={{ color: "var(--ink-dim)" }}
               formatter={(value: number, name: string) => {
-                if (name === "volumeEth") return [`${value} ETH`, "POV volume"];
+                if (name === "buyVolumeUsd") return [formatUsd(value, 0), "POV buy volume"];
                 if (name === "degen") return [formatDegenPrice(value, currency), "DEGEN"];
                 if (name === "created") return [value, "beliefs created"];
                 return [value, name];
@@ -106,7 +106,7 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
             />
             <Bar
               yAxisId="pov"
-              dataKey="volumeEth"
+              dataKey="buyVolumeUsd"
               fill="var(--pov)"
               opacity={0.85}
               maxBarSize={20}
@@ -126,9 +126,9 @@ export function RhythmChart({ buckets, currency, ethUsd }: RhythmChartProps) {
         </ResponsiveContainer>
       </div>
       <p className="px-2 pb-1 pt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
-        Purple bars are ETH moving through POV beliefs each hour; blue slivers are new beliefs. The
-        gold line is DEGEN's price — POV trading fees buy and burn DEGEN, so sustained purple should
-        eventually pull gold up.
+        Purple bars are USD buy volume moving through POV beliefs each hour; blue slivers are new
+        beliefs. The gold line is DEGEN's price — POV trading fees buy and burn DEGEN, so sustained
+        purple should eventually pull gold up.
       </p>
     </Panel>
   );
