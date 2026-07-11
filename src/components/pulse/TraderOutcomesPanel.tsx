@@ -2,72 +2,56 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd, type Currency } from "@/lib/pov/format";
+import { type Currency } from "@/lib/pov/format";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiPulse";
 
 /**
- * Trader outcomes, cumulative and wallet-first.
+ * "Are users making money?" — one wallet, one bucket.
  *
- * A wallet is one running ledger. We answer "is this person making money?" in
- * two honest halves:
- *   SOLD    — shares the wallet has already sold (realized, FIFO-matched).
- *   HOLDING — shares it still holds, valued at the last trade price (paper).
- * The headline is the cumulative state as of now; the small delta under each
- * number is the change over the selected timeframe (now vs one window ago).
- * Wins are decided in ETH (exact); USD is shown for readability.
+ * Primary: how many wallets are AHEAD vs BEHIND, scored by cash taken out +
+ * what they still hold (paper) minus what they put in. Colour is always the
+ * outcome: green = up, red = down. Solid = cashed out (real money), outline =
+ * still holding (paper, marked at the last trade price). Concentration shows
+ * whether a few wallets took most of the real profit.
  */
 
-function fmtEth(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  const a = Math.abs(n);
-  const digits = a >= 10 ? 1 : a >= 0.1 ? 3 : 4;
-  return `${a.toFixed(digits)} Ξ`;
+const GREEN = "var(--up)";
+const RED = "var(--down)";
+
+function pct(n: number, d: number): number | null {
+  return d > 0 ? Math.round((n / d) * 100) : null;
 }
 
-function signed(n: number, useUsd: boolean): { text: string; cls: string } {
-  if (!Number.isFinite(n)) return { text: "—", cls: "text-[var(--ink-dim)]" };
-  const cls = n > 0 ? "text-[var(--up)]" : n < 0 ? "text-[var(--down)]" : "text-[var(--ink)]";
-  const body = useUsd ? formatUsd(Math.abs(n), 0) : fmtEth(Math.abs(n));
-  return { text: (n < 0 ? "−" : n > 0 ? "+" : "") + body, cls };
-}
-
-function plain(n: number, useUsd: boolean): string {
-  if (!Number.isFinite(n)) return "—";
-  return useUsd ? formatUsd(Math.abs(n), 0) : fmtEth(Math.abs(n));
-}
-
-function rate(winners: number, total: number): number | null {
-  return total > 0 ? winners / total : null;
-}
-
-function rateCls(r: number | null): string {
-  if (r == null) return "text-[var(--ink-dim)]";
-  return r >= 0.5 ? "text-[var(--up)]" : r >= 0.3 ? "text-[var(--ink)]" : "text-[var(--down)]";
-}
-
-function Stat({
+function Bucket({
+  tone,
+  paper,
   label,
-  value,
-  valueCls,
-  sub,
+  count,
+  desc,
   loading,
 }: {
+  tone: "up" | "down";
+  paper: boolean;
   label: string;
-  value: string;
-  valueCls?: string;
-  sub?: string;
+  count: number;
+  desc: string;
   loading?: boolean;
 }) {
+  const color = tone === "up" ? GREEN : RED;
   return (
-    <div className="flex flex-col justify-between gap-2 p-4">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">{label}</div>
-      <div className={clsx("text-[22px] leading-none tabular-nums", valueCls ?? "text-[var(--ink)]")}>
-        {loading ? <Skeleton className="h-6 w-24" /> : value}
-      </div>
-      {sub != null && (
-        <div className="text-[11px] leading-snug tabular-nums text-[var(--ink-dim)]">{sub}</div>
-      )}
+    <div className="flex flex-col gap-1 p-4">
+      <span className="flex items-center gap-2 text-[12px] font-medium">
+        <span
+          className="inline-block h-[11px] w-[11px] rounded-full"
+          style={paper ? { border: `2px solid ${color}` } : { background: color }}
+        />
+        {label}
+      </span>
+      <span className="text-[30px] font-semibold leading-none tabular-nums" style={{ color }}>
+        {loading ? <Skeleton className="h-7 w-12" /> : count.toLocaleString()}
+      </span>
+      <span className="text-[12px] leading-snug text-[var(--ink-dim)]">{desc}</span>
     </div>
   );
 }
@@ -78,149 +62,137 @@ interface Props {
   ethUsd: number | undefined;
 }
 
-export function TraderOutcomesPanel({ range, currency }: Props) {
+export function TraderOutcomesPanel({ range }: Props) {
   const { data, isLoading } = useApiTraderOutcomes(range);
   const [showAbout, setShowAbout] = useState(false);
-  const useUsd = currency === "usd";
 
   const now: OutcomesSnapshot | null = data?.now ?? null;
   const prev: OutcomesSnapshot | null = data?.prev ?? null;
-  const rangeLabel = RANGE_META[range];
+  const n = (v: number | null | undefined) => Number(v ?? 0);
 
-  const num = (v: number | null | undefined) => Number(v ?? 0);
+  const total = n(now?.wallets_total);
+  const ahead = n(now?.ahead);
+  const behind = n(now?.behind);
+  const banked = n(now?.banked);
+  const paperUp = n(now?.paper_up);
+  const underwater = n(now?.underwater);
+  const lockedLoss = n(now?.locked_loss);
+  const aheadPct = pct(ahead, total);
 
-  // Delta over the window: cumulative now minus cumulative one window ago.
-  function delta(pick: (s: OutcomesSnapshot) => number): string | null {
-    if (!now || !prev) return null;
-    const d = pick(now) - pick(prev);
-    if (!Number.isFinite(d) || d === 0) return null;
-    return `${signed(d, useUsd).text} in ${rangeLabel}`;
-  }
+  const top3 = now?.top3_gain_share ?? null;
+  const winners = n(now?.realized_winners);
 
-  const sellers = num(now?.sellers);
-  const realizedWinners = num(now?.realized_winners);
-  const soldRate = rate(realizedWinners, sellers);
-  const realizedNet = useUsd ? num(now?.realized_net_usd) : num(now?.realized_net_eth);
+  // How many more wallets are ahead than one window ago.
+  const aheadDelta = now && prev ? ahead - n(prev.ahead) : null;
 
-  const holders = num(now?.holders);
-  const holderWinners = num(now?.holder_winners);
-  const holdRate = rate(holderWinners, holders);
-  const unrealized = useUsd ? num(now?.unrealized_usd) : num(now?.unrealized_eth);
-
-  const moneyIn = useUsd ? num(now?.money_in_usd) : num(now?.money_in_eth);
-  const moneyOut = useUsd ? num(now?.money_out_usd) : num(now?.money_out_eth);
-  const holdingValue = useUsd ? num(now?.holding_value_usd) : num(now?.holding_value_eth);
-  const netAll = useUsd ? num(now?.net_usd) : num(now?.net_eth);
-
-  const realizedFmt = signed(realizedNet, useUsd);
-  const unrealizedFmt = signed(unrealized, useUsd);
-  const netFmt = signed(netAll, useUsd);
-
-  const netDelta = delta((s) => (useUsd ? s.net_usd : s.net_eth));
+  const aheadCls =
+    aheadPct == null
+      ? "text-[var(--ink-dim)]"
+      : aheadPct >= 50
+        ? "text-[var(--up)]"
+        : "text-[var(--down)]";
 
   return (
-    <Panel
-      title="Are users making money?"
-      meta={`cumulative · per wallet · FIFO · wins in ${useUsd ? "USD" : "ETH"}`}
-      bodyClassName="p-0"
-    >
-      {/* SOLD — realized */}
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-[var(--line-dim)] px-4 py-4">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          Sold their shares
-        </span>
+    <Panel title="Are users making money?" meta="every wallet · cash + what they still hold" bodyClassName="p-0">
+      {/* HERO — ahead vs behind */}
+      <div className="border-b border-[var(--line-dim)] px-4 py-4">
         {isLoading ? (
-          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-8 w-56" />
+        ) : total === 0 ? (
+          <div className="text-[15px] text-[var(--ink-dim)]">No wallets have traded yet.</div>
         ) : (
           <>
-            <span className={clsx("text-[32px] leading-none tabular-nums", rateCls(soldRate))}>
-              {soldRate == null ? "—" : `${Math.round(soldRate * 100)}%`}
-            </span>
-            <span className="text-[13px] tabular-nums text-[var(--ink-dim)]">
-              {sellers === 0
-                ? "no wallet has sold yet"
-                : `made money — ${realizedWinners.toLocaleString()} of ${sellers.toLocaleString()} wallets that sold`}
-            </span>
+            <div className="flex flex-wrap items-baseline gap-x-3">
+              <span className={clsx("text-[32px] font-semibold leading-none tabular-nums", aheadCls)}>
+                {aheadPct}%
+              </span>
+              <span className="text-[15px] text-[var(--ink)]">of wallets are ahead</span>
+              {aheadDelta != null && aheadDelta !== 0 && (
+                <span
+                  className={clsx(
+                    "text-[12px] tabular-nums",
+                    aheadDelta > 0 ? "text-[var(--up)]" : "text-[var(--down)]",
+                  )}
+                >
+                  {aheadDelta > 0 ? "+" : "−"}
+                  {Math.abs(aheadDelta)} in {RANGE_META[range]}
+                </span>
+              )}
+            </div>
+            <div className="mt-1 text-[13px] text-[var(--ink-dim)]">
+              {ahead.toLocaleString()} of {total.toLocaleString()} wallets have more than they put in
+              — counting cash taken out plus shares they still hold.
+            </div>
+
+            {/* one bar, four segments: solid = real, soft = paper */}
+            <div className="mt-3 flex h-[14px] gap-[2px] overflow-hidden rounded-full">
+              <div style={{ flexGrow: banked, background: GREEN }} title={`Cashed out ahead: ${banked}`} />
+              <div style={{ flexGrow: paperUp, background: GREEN, opacity: 0.4 }} title={`Winning on paper: ${paperUp}`} />
+              <div style={{ flexGrow: underwater, background: RED, opacity: 0.4 }} title={`Underwater: ${underwater}`} />
+              <div style={{ flexGrow: lockedLoss, background: RED }} title={`Sold at a loss: ${lockedLoss}`} />
+            </div>
+            <div className="mt-1 flex justify-between text-[12px] tabular-nums text-[var(--ink-dim)]">
+              <span>▲ {ahead.toLocaleString()} ahead</span>
+              <span>{behind.toLocaleString()} behind ▼</span>
+            </div>
           </>
         )}
       </div>
 
-      <div className="grid grid-cols-1 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-2">
-        <Stat
-          label="Money sellers actually took home"
-          value={realizedFmt.text}
-          valueCls={realizedFmt.cls}
-          sub={
-            delta((s) => (useUsd ? s.realized_net_usd : s.realized_net_eth)) ??
-            "cash out minus cash in, all sellers"
-          }
+      {/* FOUR BUCKETS */}
+      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)]">
+        <Bucket
+          tone="up"
+          paper={false}
+          label="Cashed out ahead"
+          count={banked}
+          desc="sold and kept a profit"
           loading={isLoading}
         />
-        <Stat
-          label="Wallets that sold at a profit"
-          value={
-            sellers === 0 ? "—" : `${realizedWinners.toLocaleString()} of ${sellers.toLocaleString()}`
-          }
-          sub="a wallet counts once, no matter how many sells"
+        <Bucket
+          tone="down"
+          paper={false}
+          label="Sold at a loss"
+          count={lockedLoss}
+          desc="got out for less than they put in"
+          loading={isLoading}
+        />
+        <Bucket
+          tone="up"
+          paper
+          label="Winning on paper"
+          count={paperUp}
+          desc="still holding · up at today's price"
+          loading={isLoading}
+        />
+        <Bucket
+          tone="down"
+          paper
+          label="Underwater"
+          count={underwater}
+          desc="still holding · down at today's price"
           loading={isLoading}
         />
       </div>
 
-      {/* HOLDING — unrealized / paper */}
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-y border-[var(--line-dim)] px-4 py-4">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          Still holding
-        </span>
+      {/* CONCENTRATION — real money only */}
+      <div className="flex items-center gap-3 border-t border-[var(--line-dim)] bg-[var(--surface-2)] px-4 py-3">
         {isLoading ? (
-          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-5 w-64" />
+        ) : top3 == null || winners === 0 ? (
+          <span className="text-[12px] text-[var(--ink-dim)]">
+            No wallet has cashed out a profit yet.
+          </span>
         ) : (
           <>
-            <span className={clsx("text-[32px] leading-none tabular-nums", rateCls(holdRate))}>
-              {holdRate == null ? "—" : `${Math.round(holdRate * 100)}%`}
+            <span className="text-[22px] font-semibold tabular-nums text-[var(--ink)]">
+              {Math.round(top3 * 100)}%
             </span>
-            <span className="text-[13px] tabular-nums text-[var(--ink-dim)]">
-              {holders === 0
-                ? "nobody is holding shares"
-                : `up on paper — ${holderWinners.toLocaleString()} of ${holders.toLocaleString()} wallets still holding`}
+            <span className="text-[13px] text-[var(--ink-dim)]">
+              of the real money made went to the top 3 of {winners.toLocaleString()} winning
+              {winners === 1 ? " wallet" : " wallets"}.
             </span>
           </>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-2">
-        <Stat
-          label="Paper profit for holders"
-          value={unrealizedFmt.text}
-          valueCls={unrealizedFmt.cls}
-          sub="value at today's price minus what they paid"
-          loading={isLoading}
-        />
-        <Stat
-          label="Wallets holding at a gain"
-          value={holders === 0 ? "—" : `${holderWinners.toLocaleString()} of ${holders.toLocaleString()}`}
-          sub="estimated — paper, not cashed out"
-          loading={isLoading}
-        />
-      </div>
-
-      {/* ALL-IN net */}
-      <div className="border-t border-[var(--line-dim)] px-4 py-4">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-          Everyone, all-in
-        </div>
-        {isLoading ? (
-          <Skeleton className="mt-2 h-5 w-full max-w-md" />
-        ) : (
-          <p className="mt-2 text-[13px] leading-relaxed text-[var(--ink-dim)]">
-            Put in <span className="tabular-nums text-[var(--ink)]">{plain(moneyIn, useUsd)}</span>
-            {" · "}took out{" "}
-            <span className="tabular-nums text-[var(--ink)]">{plain(moneyOut, useUsd)}</span>
-            {" · "}holding{" "}
-            <span className="tabular-nums text-[var(--ink)]">{plain(holdingValue, useUsd)}</span>
-            {" → net "}
-            <span className={clsx("tabular-nums", netFmt.cls)}>{netFmt.text}</span>
-            {netDelta && <span className="text-[var(--ink-faint)]"> ({netDelta})</span>}
-          </p>
         )}
       </div>
 
@@ -233,14 +205,13 @@ export function TraderOutcomesPanel({ range, currency }: Props) {
         </button>
         {showAbout && (
           <p className="pb-2 pt-2 text-[11px] leading-relaxed text-[var(--ink-dim)]">
-            A wallet is one running ledger. <strong>Sold</strong> is realized cash: every sell is
-            FIFO-matched to that wallet's earlier buys — what it took out minus what it put in. Buys
-            are counted gross (including POV's buy fee) and sells net of fee, so the numbers are true
-            cash flow. <strong>Holding</strong> is paper: shares still held, valued at the most
-            recent trade price for that belief and side — an estimate, not a live quote. Wins are
-            decided in ETH; the dollar figures use the ETH price and are approximate. The big number
-            is the cumulative total to date; the smaller "in {rangeLabel}" figure is how much it
-            moved over the selected timeframe.
+            Each wallet gets one score: cash it took out (sells, FIFO-matched to its buys) plus the
+            value of shares it still holds, minus everything it put in. Ahead means that score is
+            above zero. <strong>Solid</strong> bars/dots are wallets that have cashed out (real
+            money); <strong>outline</strong> ones are still holding, valued at the most recent trade
+            price for that belief and side — an estimate, not a live quote, so paper gains can vanish
+            if everyone tries to sell. Everything is decided in ETH. Concentration counts only real,
+            realized profit.
           </p>
         )}
       </div>

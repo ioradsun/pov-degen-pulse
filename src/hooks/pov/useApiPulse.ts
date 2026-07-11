@@ -309,6 +309,17 @@ export interface OutcomesSnapshot {
   money_out_usd: number;
   net_eth: number;
   net_usd: number;
+  // wallet ledger — every trader in exactly one bucket by combined total P&L
+  wallets_total: number;
+  ahead: number;
+  behind: number;
+  banked: number; // cashed out, up (real)
+  paper_up: number; // still holding, up (paper)
+  underwater: number; // still holding, down (paper)
+  locked_loss: number; // cashed out, down (real)
+  // concentration of realized (real) gains
+  top3_gain_share: number | null;
+  top5_gain_share: number | null;
 }
 
 export interface TraderOutcomes {
