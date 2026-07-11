@@ -29,6 +29,7 @@ export type Database = {
           ignition_score: number | null
           lifecycle_since: string
           lifecycle_stage: string
+          market_cap_usd: number
           momentum: number | null
           split_pct: number | null
           unique_wallets_24h: number
@@ -48,6 +49,7 @@ export type Database = {
           ignition_score?: number | null
           lifecycle_since?: string
           lifecycle_stage?: string
+          market_cap_usd?: number
           momentum?: number | null
           split_pct?: number | null
           unique_wallets_24h?: number
@@ -67,6 +69,7 @@ export type Database = {
           ignition_score?: number | null
           lifecycle_since?: string
           lifecycle_stage?: string
+          market_cap_usd?: number
           momentum?: number | null
           split_pct?: number | null
           unique_wallets_24h?: number

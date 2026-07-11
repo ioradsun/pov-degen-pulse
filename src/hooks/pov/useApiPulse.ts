@@ -67,6 +67,8 @@ export interface GridRow {
   lifecycle_stage: string;
   unique_wallets_24h: number;
   creator_quality: number | null;
+  market_cap_usd: number;
+
 }
 
 export type GridSort = "ignition" | "volume" | "momentum" | "whale" | "split" | "delta_conviction";
@@ -150,6 +152,18 @@ export function useApiGrid(sort: GridSort = "ignition", range: Range = "24h", li
   });
 }
 
+export function useApiMarketCaps() {
+  return useQuery({
+    queryKey: ["pov", "market-caps"],
+    queryFn: () => fetchJson<{ caps: Record<string, number> }>("/api/public/market-caps"),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+
+
+
 export function useApiRhythm(range: Range = "24h") {
   return useQuery({
     queryKey: ["pov", "rhythm", range],
@@ -213,7 +227,9 @@ export function usePulseRealtime() {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "belief_stats" }, () => {
         qc.invalidateQueries({ queryKey: ["pov", "grid"] });
+        qc.invalidateQueries({ queryKey: ["pov", "market-caps"] });
       })
+
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

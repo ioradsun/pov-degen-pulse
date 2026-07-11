@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
-import { useApiFeed, useApiHealth, type FeedEvent } from "@/hooks/pov/useApiPulse";
+import { useApiFeed, useApiHealth, useApiMarketCaps, type FeedEvent } from "@/hooks/pov/useApiPulse";
 
 const LARGE_THRESHOLD_USD = 500;
 const POLL_INTERVAL_MS = 15_000;
@@ -32,7 +32,7 @@ const KIND_COLOR: Record<FeedEvent["event_type"], string> = {
   no_sell: "text-[var(--down)]/70",
 };
 
-function Row({ e }: { e: FeedEvent }) {
+function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
   const isSell = e.event_type === "yes_sell" || e.event_type === "no_sell";
   const large = (e.amount_usd ?? 0) >= LARGE_THRESHOLD_USD;
   const label = large && !isSell ? `LARGE ${KIND_LABEL[e.event_type]}` : KIND_LABEL[e.event_type];
@@ -86,6 +86,15 @@ function Row({ e }: { e: FeedEvent }) {
           </span>
           <span aria-hidden>·</span>
           <span className="tabular-nums">{ts ? `${timeAgo(ts)} ago` : "just now"}</span>
+          {marketCap != null && marketCap > 0 && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="tabular-nums" title="Current market cap">
+                MC {formatUsd(marketCap, 0)}
+              </span>
+            </>
+          )}
+
           <a
             href={BASESCAN_TX(e.tx_hash)}
             target="_blank"
@@ -108,7 +117,10 @@ export function LiveFeedApi() {
     limit: 150,
   });
   const { data: health } = useApiHealth();
+  const { data: mcData } = useApiMarketCaps();
+  const caps = mcData?.caps ?? {};
   const events = useMemo(() => data?.events ?? [], [data]);
+
 
   // Re-render every second so "Xs ago" ticks smoothly.
   const [tick, setTick] = useState(0);
@@ -232,7 +244,7 @@ export function LiveFeedApi() {
         ) : (
           <ul className="divide-y divide-[var(--line-dim)]">
             {events.map((e) => (
-              <Row key={e.event_id} e={e} />
+              <Row key={e.event_id} e={e} marketCap={caps[String(e.belief_id)] ?? null} />
             ))}
           </ul>
         )}

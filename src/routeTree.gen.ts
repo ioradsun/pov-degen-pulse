@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRhythmRouteImport } from './routes/api.public.rhythm'
 import { Route as ApiPublicRetentionRouteImport } from './routes/api.public.retention'
+import { Route as ApiPublicMarketCapsRouteImport } from './routes/api.public.market-caps'
 import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
@@ -34,6 +35,11 @@ const ApiPublicRhythmRoute = ApiPublicRhythmRouteImport.update({
 const ApiPublicRetentionRoute = ApiPublicRetentionRouteImport.update({
   id: '/api/public/retention',
   path: '/api/public/retention',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMarketCapsRoute = ApiPublicMarketCapsRouteImport.update({
+  id: '/api/public/market-caps',
+  path: '/api/public/market-caps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/market-caps': typeof ApiPublicMarketCapsRoute
   '/api/public/retention': typeof ApiPublicRetentionRoute
   '/api/public/rhythm': typeof ApiPublicRhythmRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/api/public/grid'
     | '/api/public/headline'
     | '/api/public/health'
+    | '/api/public/market-caps'
     | '/api/public/retention'
     | '/api/public/rhythm'
     | '/api/public/belief/$id'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   ApiPublicGridRoute: typeof ApiPublicGridRoute
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicMarketCapsRoute: typeof ApiPublicMarketCapsRoute
   ApiPublicRetentionRoute: typeof ApiPublicRetentionRoute
   ApiPublicRhythmRoute: typeof ApiPublicRhythmRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/retention'
       fullPath: '/api/public/retention'
       preLoaderRoute: typeof ApiPublicRetentionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/market-caps': {
+      id: '/api/public/market-caps'
+      path: '/api/public/market-caps'
+      fullPath: '/api/public/market-caps'
+      preLoaderRoute: typeof ApiPublicMarketCapsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/health': {
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGridRoute: ApiPublicGridRoute,
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicMarketCapsRoute: ApiPublicMarketCapsRoute,
   ApiPublicRetentionRoute: ApiPublicRetentionRoute,
   ApiPublicRhythmRoute: ApiPublicRhythmRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
