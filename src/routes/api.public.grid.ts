@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/grid")({
         const { data, error } = await supabase
           .from("belief_stats" as never)
           .select(
-            "belief_id, buy_volume_1h_usd, buy_volume_24h_usd, buy_volume_7d_usd, buy_volume_30d_usd, split_pct, ignition_score, momentum, whale_activity_pct, delta_conviction_1h, distribution_gini, lifecycle_stage, unique_wallets_24h, beliefs!inner(title, slug, creator_address, creator_display_name, created_at)",
+            "belief_id, buy_volume_1h_usd, buy_volume_24h_usd, buy_volume_7d_usd, buy_volume_30d_usd, split_pct, ignition_score, momentum, whale_activity_pct, delta_conviction_1h, distribution_gini, lifecycle_stage, unique_wallets_24h, beliefs!inner(title, creator_address, created_at)",
           )
           .order(orderColumn, { ascending: false, nullsFirst: false })
           .limit(limit);
@@ -55,9 +55,7 @@ export const Route = createFileRoute("/api/public/grid")({
             Record<string, unknown> & {
               beliefs?: {
                 title: string | null;
-                slug: string | null;
                 creator_address: string;
-                creator_display_name: string | null;
                 created_at: string;
               } | null;
             }
@@ -67,10 +65,11 @@ export const Route = createFileRoute("/api/public/grid")({
           return {
             belief_id: row.belief_id,
             title: b?.title ?? null,
-            slug: b?.slug ?? null,
+            slug: null as string | null,
             creator_address: b?.creator_address ?? "",
-            creator_display_name: b?.creator_display_name ?? null,
+            creator_display_name: null as string | null,
             created_at: b?.created_at ?? "",
+
             buy_volume_usd: Number(row[volumeColumn] ?? 0),
             buy_volume_1h_usd: Number(row.buy_volume_1h_usd ?? 0),
             buy_volume_24h_usd: Number(row.buy_volume_24h_usd ?? 0),
