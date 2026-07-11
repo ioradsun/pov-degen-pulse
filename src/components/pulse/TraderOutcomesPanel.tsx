@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { type Currency } from "@/lib/pov/format";
@@ -18,10 +17,6 @@ import { useApiTraderOutcomes, type OutcomesSnapshot } from "@/hooks/pov/useApiP
 
 const GREEN = "var(--up)";
 const RED = "var(--down)";
-
-function pct(n: number, d: number): number | null {
-  return d > 0 ? Math.round((n / d) * 100) : null;
-}
 
 function Bucket({
   tone,
@@ -77,20 +72,20 @@ export function TraderOutcomesPanel({ range }: Props) {
   const paperUp = n(now?.paper_up);
   const underwater = n(now?.underwater);
   const lockedLoss = n(now?.locked_loss);
-  const aheadPct = pct(ahead, total);
+  const fullyExited = banked + lockedLoss;
+  const realSub =
+    banked > 0
+      ? `${banked.toLocaleString()} of ${fullyExited.toLocaleString()} wallets that fully cashed out came out ahead`
+      : fullyExited > 0
+        ? `nobody has sold out ahead yet — all ${fullyExited.toLocaleString()} who fully exited did so at a loss`
+        : "no wallet has fully cashed out yet";
 
   const top3 = now?.top3_gain_share ?? null;
   const winners = n(now?.realized_winners);
 
-  // How many more wallets are ahead than one window ago.
+  // How many more wallets are ahead than one window ago (approximate — paper
+  // is marked at today's price).
   const aheadDelta = now && prev ? ahead - n(prev.ahead) : null;
-
-  const aheadCls =
-    aheadPct == null
-      ? "text-[var(--ink-dim)]"
-      : aheadPct >= 50
-        ? "text-[var(--up)]"
-        : "text-[var(--down)]";
 
   return (
     <Panel title="Are users making money?" meta="every wallet · cash + what they still hold" bodyClassName="p-0">
@@ -102,26 +97,29 @@ export function TraderOutcomesPanel({ range }: Props) {
           <div className="text-[15px] text-[var(--ink-dim)]">No wallets have traded yet.</div>
         ) : (
           <>
-            <div className="flex flex-wrap items-baseline gap-x-3">
-              <span className={clsx("text-[32px] font-semibold leading-none tabular-nums", aheadCls)}>
-                {aheadPct}%
-              </span>
-              <span className="text-[15px] text-[var(--ink)]">of wallets are ahead</span>
-              {aheadDelta != null && aheadDelta !== 0 && (
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+              <div>
+                <div className="flex items-baseline gap-x-2">
+                  <span
+                    className="text-[34px] font-semibold leading-none tabular-nums"
+                    style={{ color: banked > 0 ? GREEN : "var(--ink)" }}
+                  >
+                    {banked.toLocaleString()}
+                  </span>
+                  <span className="text-[15px] text-[var(--ink)]">cashed out a profit</span>
+                </div>
+                <div className="mt-1 text-[13px] text-[var(--ink-dim)]">{realSub}</div>
+              </div>
+              <div className="text-[13px] leading-tight text-[var(--ink-dim)]">
                 <span
-                  className={clsx(
-                    "text-[12px] tabular-nums",
-                    aheadDelta > 0 ? "text-[var(--up)]" : "text-[var(--down)]",
-                  )}
+                  className="text-[20px] font-semibold tabular-nums"
+                  style={{ color: paperUp > 0 ? GREEN : "var(--ink)" }}
                 >
-                  {aheadDelta > 0 ? "+" : "−"}
-                  {Math.abs(aheadDelta)} in {RANGE_META[range]}
-                </span>
-              )}
-            </div>
-            <div className="mt-1 text-[13px] text-[var(--ink-dim)]">
-              {ahead.toLocaleString()} of {total.toLocaleString()} wallets have more than they put in
-              — counting cash taken out plus shares they still hold.
+                  {paperUp.toLocaleString()}
+                </span>{" "}
+                up on paper
+                <div className="text-[11px] text-[var(--ink-faint)]">unrealized · could still drop</div>
+              </div>
             </div>
 
             {/* one bar, four segments: solid = real, soft = paper */}
@@ -132,7 +130,16 @@ export function TraderOutcomesPanel({ range }: Props) {
               <div style={{ flexGrow: lockedLoss, background: RED }} title={`Sold at a loss: ${lockedLoss}`} />
             </div>
             <div className="mt-1 flex justify-between text-[12px] tabular-nums text-[var(--ink-dim)]">
-              <span>▲ {ahead.toLocaleString()} ahead</span>
+              <span>
+                ▲ {ahead.toLocaleString()} ahead
+                {aheadDelta != null && aheadDelta !== 0 && (
+                  <span className={aheadDelta > 0 ? "text-[var(--up)]" : "text-[var(--down)]"}>
+                    {" "}
+                    ({aheadDelta > 0 ? "+" : "−"}
+                    {Math.abs(aheadDelta)} in {RANGE_META[range]})
+                  </span>
+                )}
+              </span>
               <span>{behind.toLocaleString()} behind ▼</span>
             </div>
           </>
@@ -189,8 +196,11 @@ export function TraderOutcomesPanel({ range }: Props) {
               {Math.round(top3 * 100)}%
             </span>
             <span className="text-[13px] text-[var(--ink-dim)]">
-              of the real money made went to the top 3 of {winners.toLocaleString()} winning
-              {winners === 1 ? " wallet" : " wallets"}.
+              of the real money made went to the top 3 of {winners.toLocaleString()}
+              {winners === 1
+                ? " wallet that has sold at a profit"
+                : " wallets that have sold at a profit"}
+              .
             </span>
           </>
         )}
