@@ -241,8 +241,8 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
             isLoadingRetention
               ? "loading wallet history…"
               : newWallets > 0
-                ? `${repeatWallets} of ${newWallets} new wallets returned`
-                : "Not enough wallet history yet"
+                ? `${repeatWallets} of ${newWallets} returned within 7 days`
+                : "No wallets older than 24h yet"
           }
         />
       </div>
