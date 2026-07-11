@@ -608,6 +608,28 @@ export type Database = {
           repeat_wallets: number
         }[]
       }
+      trader_outcomes: {
+        Args: { range_key: string }
+        Returns: {
+          holder_winners: number
+          holders: number
+          holding_value_eth: number
+          holding_value_usd: number
+          label: string
+          money_in_eth: number
+          money_in_usd: number
+          money_out_eth: number
+          money_out_usd: number
+          net_eth: number
+          net_usd: number
+          realized_net_eth: number
+          realized_net_usd: number
+          realized_winners: number
+          sellers: number
+          unrealized_eth: number
+          unrealized_usd: number
+        }[]
+      }
       trigger_hydrate_titles: { Args: never; Returns: undefined }
       update_lifecycle_stages: { Args: never; Returns: undefined }
       value_flow: {
