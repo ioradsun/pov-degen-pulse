@@ -32,7 +32,7 @@ const KIND_COLOR: Record<FeedEvent["event_type"], string> = {
   no_sell: "text-[var(--down)]/70",
 };
 
-function Row({ e }: { e: FeedEvent }) {
+function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
   const isSell = e.event_type === "yes_sell" || e.event_type === "no_sell";
   const large = (e.amount_usd ?? 0) >= LARGE_THRESHOLD_USD;
   const label = large && !isSell ? `LARGE ${KIND_LABEL[e.event_type]}` : KIND_LABEL[e.event_type];
