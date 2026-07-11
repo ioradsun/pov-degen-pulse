@@ -21,6 +21,7 @@ import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.publi
 import { Route as ApiPublicPnlOutcomesRouteImport } from './routes/api.public.pnl.outcomes'
 import { Route as ApiPublicPnlHeadlineRouteImport } from './routes/api.public.pnl.headline'
 import { Route as ApiPublicPnlByBeliefRouteImport } from './routes/api.public.pnl.by-belief'
+import { Route as ApiPublicPnlBucketsRouteImport } from './routes/api.public.pnl.buckets'
 import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
 import { Route as ApiPublicHooksHydrateTitlesRouteImport } from './routes/api.public.hooks.hydrate-titles'
 import { Route as ApiPublicHooksBackfillTokensRouteImport } from './routes/api.public.hooks.backfill-tokens'
@@ -87,6 +88,11 @@ const ApiPublicPnlByBeliefRoute = ApiPublicPnlByBeliefRouteImport.update({
   path: '/api/public/pnl/by-belief',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPnlBucketsRoute = ApiPublicPnlBucketsRouteImport.update({
+  id: '/api/public/pnl/buckets',
+  path: '/api/public/pnl/buckets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksIndexTickRoute = ApiPublicHooksIndexTickRouteImport.update({
   id: '/api/public/hooks/index-tick',
   path: '/api/public/hooks/index-tick',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/buckets': typeof ApiPublicPnlBucketsRoute
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/buckets': typeof ApiPublicPnlBucketsRoute
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
+  '/api/public/pnl/buckets': typeof ApiPublicPnlBucketsRoute
   '/api/public/pnl/by-belief': typeof ApiPublicPnlByBeliefRoute
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/buckets'
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/buckets'
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
+    | '/api/public/pnl/buckets'
     | '/api/public/pnl/by-belief'
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
@@ -236,6 +248,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackfillTokensRoute: typeof ApiPublicHooksBackfillTokensRoute
   ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
   ApiPublicHooksIndexTickRoute: typeof ApiPublicHooksIndexTickRoute
+  ApiPublicPnlBucketsRoute: typeof ApiPublicPnlBucketsRoute
   ApiPublicPnlByBeliefRoute: typeof ApiPublicPnlByBeliefRoute
   ApiPublicPnlHeadlineRoute: typeof ApiPublicPnlHeadlineRoute
   ApiPublicPnlOutcomesRoute: typeof ApiPublicPnlOutcomesRoute
@@ -327,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPnlByBeliefRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pnl/buckets': {
+      id: '/api/public/pnl/buckets'
+      path: '/api/public/pnl/buckets'
+      fullPath: '/api/public/pnl/buckets'
+      preLoaderRoute: typeof ApiPublicPnlBucketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/index-tick': {
       id: '/api/public/hooks/index-tick'
       path: '/api/public/hooks/index-tick'
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackfillTokensRoute: ApiPublicHooksBackfillTokensRoute,
   ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
   ApiPublicHooksIndexTickRoute: ApiPublicHooksIndexTickRoute,
+  ApiPublicPnlBucketsRoute: ApiPublicPnlBucketsRoute,
   ApiPublicPnlByBeliefRoute: ApiPublicPnlByBeliefRoute,
   ApiPublicPnlHeadlineRoute: ApiPublicPnlHeadlineRoute,
   ApiPublicPnlOutcomesRoute: ApiPublicPnlOutcomesRoute,

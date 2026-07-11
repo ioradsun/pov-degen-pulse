@@ -201,6 +201,90 @@ export function useApiRetention() {
   });
 }
 
+// ---------- Realized P&L (Trader Outcomes) ----------
+
+export interface PnlHeadline {
+  range: Range;
+  realized_usd: number;
+  realized_eth: number;
+  exits: number;
+  tokens_sold: number;
+  realized_usd_prev: number | null;
+  realized_eth_prev: number | null;
+  exits_prev: number | null;
+  computedAt: string;
+}
+
+export interface PnlOutcomes {
+  range: Range;
+  realized_usd: number;
+  total_sells: number;
+  profitable_sells: number;
+  profitable_exit_rate: number | null;
+  avg_return: number | null;
+  full_exits: number;
+  median_hold_seconds: number | null;
+  computedAt: string;
+}
+
+export interface PnlBucket {
+  bucket: string;
+  realized_usd: number;
+  realized_eth: number;
+  exits: number;
+}
+
+export interface PnlByBeliefRow {
+  belief_id: number;
+  realized_usd: number;
+  realized_eth: number;
+  exits: number;
+  profitable_exits: number;
+}
+
+export function useApiPnlHeadline(range: Range = "24h") {
+  return useQuery({
+    queryKey: ["pov", "pnl-headline", range],
+    queryFn: () => fetchJson<PnlHeadline>(`/api/public/pnl/headline?range=${range}`),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
+export function useApiPnlOutcomes(range: Range = "24h") {
+  return useQuery({
+    queryKey: ["pov", "pnl-outcomes", range],
+    queryFn: () => fetchJson<PnlOutcomes>(`/api/public/pnl/outcomes?range=${range}`),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+export function useApiPnlBuckets(granularity: HistoryGranularity, buckets: number) {
+  return useQuery({
+    queryKey: ["pov", "pnl-buckets", granularity, buckets],
+    queryFn: () =>
+      fetchJson<{ granularity: HistoryGranularity; buckets: PnlBucket[] }>(
+        `/api/public/pnl/buckets?granularity=${granularity}&buckets=${buckets}`,
+      ),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+export function useApiPnlByBelief(range: Range = "24h", limit = 200) {
+  return useQuery({
+    queryKey: ["pov", "pnl-by-belief", range, limit],
+    queryFn: () =>
+      fetchJson<{ range: Range; rows: PnlByBeliefRow[] }>(
+        `/api/public/pnl/by-belief?range=${range}&limit=${limit}`,
+      ),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
+
 /** Indexer/writer health — drives the header's live/stalled status. */
 export function useApiHealth() {
   return useQuery({
