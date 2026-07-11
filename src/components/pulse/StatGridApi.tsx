@@ -78,6 +78,8 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
 
   const traders = Number(data?.active_traders ?? 0);
   const created = Number(data?.new_beliefs ?? 0);
+  const transactions = Number(data?.transactions ?? 0);
+  const txPerWallet = traders > 0 ? transactions / traders : null;
   const repeatRate = retention?.repeat_rate;
   const repeatWallets = retention?.repeat_wallets ?? 0;
   const newWallets = retention?.new_wallets ?? 0;
@@ -86,6 +88,7 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const volDelta = pctDelta(vol, volPrev);
   const tradersDelta = pctDelta(traders, data?.active_traders_prev);
   const createdDelta = pctDelta(created, data?.new_beliefs_prev);
+  const transactionsDelta = pctDelta(transactions, data?.transactions_prev);
   const creatorRevDelta = pctDelta(creatorRev, creatorRevPrev);
   const degenAllocDelta = pctDelta(degenAlloc, degenAllocPrev);
 
