@@ -29,6 +29,12 @@ export interface HeadlineMetrics {
   new_beliefs?: number;
   creator_revenue_usd?: number;
   degen_allocation_usd?: number;
+  /** Equal-length window immediately before the selected range; null for "all". */
+  buy_volume_usd_prev?: number | null;
+  active_traders_prev?: number | null;
+  new_beliefs_prev?: number | null;
+  creator_revenue_usd_prev?: number | null;
+  degen_allocation_usd_prev?: number | null;
   computedAt: string;
 }
 

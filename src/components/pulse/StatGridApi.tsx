@@ -2,9 +2,26 @@ import { clsx } from "clsx";
 import { Metric } from "@/components/pov/primitives/Metric";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatUsd } from "@/lib/pov/format";
-import { RANGES, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
+import { formatPct, formatUsd } from "@/lib/pov/format";
+import { RANGES, RANGE_META, RANGE_TITLE, type Range } from "@/lib/pov/ranges";
 import { useApiHeadline, useApiRetention } from "@/hooks/pov/useApiPulse";
+
+/** % change vs. prev; null when there's nothing to compare against. */
+function pctDelta(cur: number, prev: number | null | undefined): number | null {
+  if (prev == null || prev === 0) return null;
+  return ((cur - prev) / prev) * 100;
+}
+
+function Delta({ pct, rangeLabel }: { pct: number | null; rangeLabel: string }) {
+  if (pct == null) return null;
+  const cls =
+    pct > 0 ? "text-[var(--up)]" : pct < 0 ? "text-[var(--down)]" : "text-[var(--ink-dim)]";
+  return (
+    <span className={clsx("tabular-nums", cls)} title={`vs previous ${rangeLabel}`}>
+      {formatPct(pct, 0)}
+    </span>
+  );
+}
 
 interface StatGridApiProps {
   range: Range;
@@ -22,6 +39,13 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
   const repeatRate = retention?.repeat_rate;
   const repeatWallets = retention?.repeat_wallets ?? 0;
   const newWallets = retention?.new_wallets ?? 0;
+  const rangeLabel = RANGE_META[range];
+
+  const volDelta = pctDelta(vol, data?.buy_volume_usd_prev);
+  const tradersDelta = pctDelta(traders, data?.active_traders_prev);
+  const createdDelta = pctDelta(created, data?.new_beliefs_prev);
+  const creatorRevDelta = pctDelta(creatorRev, data?.creator_revenue_usd_prev);
+  const degenAllocDelta = pctDelta(degenAlloc, data?.degen_allocation_usd_prev);
 
   const action = (
     <div role="tablist" aria-label="Timeframe" className="flex items-center gap-1">
@@ -61,12 +85,22 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--pov)]">{formatUsd(vol, 0)}</span>
             )
           }
-          sub="all buys · USD"
+          sub={
+            <span className="flex items-center gap-1.5">
+              <span>all buys · USD</span>
+              <Delta pct={volDelta} rangeLabel={rangeLabel} />
+            </span>
+          }
         />
         <Metric
           label="New beliefs"
           value={isLoading ? <Skeleton className="h-6 w-12" /> : created}
-          sub="markets created"
+          sub={
+            <span className="flex items-center gap-1.5">
+              <span>markets created</span>
+              <Delta pct={createdDelta} rangeLabel={rangeLabel} />
+            </span>
+          }
         />
         <Metric
           label="Active traders"
@@ -77,12 +111,22 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--up)]">{traders}</span>
             )
           }
-          sub="unique wallets"
+          sub={
+            <span className="flex items-center gap-1.5">
+              <span>unique wallets</span>
+              <Delta pct={tradersDelta} rangeLabel={rangeLabel} />
+            </span>
+          }
         />
         <Metric
           label="Creator revenue"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : formatUsd(creatorRev, 0)}
-          sub="3.33% of buy volume"
+          sub={
+            <span className="flex items-center gap-1.5">
+              <span>3.33% of buy volume</span>
+              <Delta pct={creatorRevDelta} rangeLabel={rangeLabel} />
+            </span>
+          }
         />
         <Metric
           label="DEGEN allocation"
@@ -93,7 +137,12 @@ export function StatGridApi({ range, onRangeChange }: StatGridApiProps) {
               <span className="text-[var(--boost)]">{formatUsd(degenAlloc, 0)}</span>
             )
           }
-          sub="5% of buy volume"
+          sub={
+            <span className="flex items-center gap-1.5">
+              <span>5% of buy volume</span>
+              <Delta pct={degenAllocDelta} rangeLabel={rangeLabel} />
+            </span>
+          }
         />
         <Metric
           label="Repeat traders"
