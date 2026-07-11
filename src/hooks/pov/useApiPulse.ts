@@ -159,6 +159,9 @@ export function useApiMarketCaps() {
     refetchInterval: 30_000,
     staleTime: 15_000,
   });
+}
+
+
 
 
 export function useApiRhythm(range: Range = "24h") {
