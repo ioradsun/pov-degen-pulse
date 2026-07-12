@@ -251,19 +251,19 @@ function WalletPage() {
                   <table className="w-full text-[13px]">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
-                        <th className="px-3 py-2 text-left font-medium">Market</th>
-                        <th className="px-3 py-2 text-left font-medium">Side</th>
-                        <th className="px-3 py-2 text-right font-medium">In</th>
-                        <th className="px-3 py-2 text-right font-medium">Out</th>
-                        <th className="px-3 py-2 text-right font-medium">Realized</th>
-                        <th className="px-3 py-2 text-right font-medium">Held</th>
-                        <th className="px-3 py-2 text-right font-medium">On paper</th>
-                        <th className="px-3 py-2 text-right font-medium">ROI</th>
-                        <th className="px-3 py-2 text-left font-medium">State</th>
+                        <SortHeader label="Market" col="market" align="left" sort={sort} onSort={setSort} />
+                        <SortHeader label="Side" col="side" align="left" sort={sort} onSort={setSort} />
+                        <SortHeader label="In" col="in_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Out" col="out_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Realized" col="realized_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Held" col="hold_value_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="On paper" col="unrealized_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="ROI" col="roi" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="State" col="state" align="left" sort={sort} onSort={setSort} />
                       </tr>
                     </thead>
                     <tbody>
-                      {data!.positions.map((p) => (
+                      {sortPositions(data!.positions, sort).map((p) => (
                         <PositionRow key={`${p.belief_id}-${p.side}`} p={p} denom={effectiveDenom} ethUsd={ethUsd} />
                       ))}
                     </tbody>
@@ -271,6 +271,7 @@ function WalletPage() {
                 </div>
               </Panel>
             )}
+
           </>
         )}
       </main>
