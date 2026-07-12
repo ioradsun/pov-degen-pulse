@@ -4,9 +4,10 @@ import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
-import { useApiWallet } from "@/hooks/pov/useApiPulse";
+import { useApiWallet, useApiWalletTimeline } from "@/hooks/pov/useApiPulse";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { EthUsdConverter } from "@/components/pov/EthUsdConverter";
+import { WalletTimelineChart } from "@/components/pulse/WalletTimelineChart";
 import { WALLET_RE, type PositionState, type WalletPosition } from "@/lib/pov/wallet";
 
 
@@ -179,7 +180,7 @@ function PositionRow({ p, denom, ethUsd }: { p: WalletPosition; denom: Denom; et
   );
   return (
     <tr className="border-t border-[var(--line-dim)]">
-      <td className="max-w-[220px] truncate px-3 py-2" title={p.title ?? `Belief ${p.belief_id}`}>
+      <td className="max-w-[320px] whitespace-normal break-words px-3 py-2 leading-snug" title={p.title ?? `Belief ${p.belief_id}`}>
         {p.title ?? `Belief #${p.belief_id}`}
       </td>
       <td className="px-3 py-2 uppercase text-[var(--ink-dim)]">{p.side}</td>
@@ -205,6 +206,7 @@ function WalletPage() {
   const { address } = Route.useParams();
   const valid = WALLET_RE.test(address);
   const { data, isLoading, error } = useApiWallet(valid ? address : undefined);
+  const timeline = useApiWalletTimeline(valid ? address : undefined);
   const { snapshot: degen } = useDegenPrice();
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [denom, setDenom] = useState<Denom>("eth");
@@ -308,6 +310,16 @@ function WalletPage() {
                 </>
               )}
             </Panel>
+
+            {/* TIMELINE */}
+            {s && s.positions > 0 && (
+              <WalletTimelineChart
+                points={timeline.data?.points}
+                denom={effectiveDenom}
+                ethUsd={ethUsd}
+                loading={timeline.isLoading}
+              />
+            )}
 
             {/* POSITIONS */}
             {s && s.positions > 0 && (

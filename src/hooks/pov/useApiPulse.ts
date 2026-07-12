@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Range } from "@/lib/pov/ranges";
-import { WALLET_RE, type WalletReport } from "@/lib/pov/wallet";
+import { WALLET_RE, type WalletReport, type WalletTimeline } from "@/lib/pov/wallet";
 
 export interface FeedEvent {
   event_id: string;
@@ -440,5 +440,16 @@ export function useApiWallet(address: string | undefined) {
     queryFn: () => fetchJson<WalletReport>(`/api/public/wallet/${addr}`),
     enabled: WALLET_RE.test(addr),
     staleTime: 30_000,
+  });
+}
+
+/** Daily P&L timeline for a wallet (registers + backfills it on first view). */
+export function useApiWalletTimeline(address: string | undefined) {
+  const addr = (address ?? "").toLowerCase();
+  return useQuery({
+    queryKey: ["pov", "wallet-timeline", addr],
+    queryFn: () => fetchJson<WalletTimeline>(`/api/public/wallet/${addr}/timeline`),
+    enabled: WALLET_RE.test(addr),
+    staleTime: 60_000,
   });
 }

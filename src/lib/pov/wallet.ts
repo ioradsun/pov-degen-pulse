@@ -45,6 +45,22 @@ export interface WalletReport {
   positions: WalletPosition[];
 }
 
+export interface WalletTimelinePoint {
+  snapshot_date: string; // YYYY-MM-DD
+  deposited_eth: number;
+  withdrawn_eth: number;
+  realized_eth: number;
+  holding_value_eth: number;
+  unrealized_eth: number;
+  net_eth: number;
+  positions: number;
+}
+
+export interface WalletTimeline {
+  address: string;
+  points: WalletTimelinePoint[];
+}
+
 export const WALLET_RE = /^0x[0-9a-fA-F]{40}$/;
 
 const num = (v: unknown): number => {
@@ -69,6 +85,19 @@ export function toWalletPosition(r: Record<string, unknown>): WalletPosition {
     unrealized_eth: num(r.unrealized_eth),
     roi: roi != null && Number.isFinite(roi) ? roi : null,
     state: (r.state as PositionState) ?? "open_down",
+  };
+}
+
+export function toTimelinePoint(r: Record<string, unknown>): WalletTimelinePoint {
+  return {
+    snapshot_date: String(r.snapshot_date ?? ""),
+    deposited_eth: num(r.deposited_eth),
+    withdrawn_eth: num(r.withdrawn_eth),
+    realized_eth: num(r.realized_eth),
+    holding_value_eth: num(r.holding_value_eth),
+    unrealized_eth: num(r.unrealized_eth),
+    net_eth: num(r.net_eth),
+    positions: num(r.positions),
   };
 }
 
