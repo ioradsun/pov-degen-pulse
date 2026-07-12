@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WalletAddressRouteImport } from './routes/wallet.$address'
 import { Route as ApiPublicValueflowRouteImport } from './routes/api.public.valueflow'
 import { Route as ApiPublicTraderOutcomesRouteImport } from './routes/api.public.trader-outcomes'
 import { Route as ApiPublicRhythmRouteImport } from './routes/api.public.rhythm'
@@ -20,6 +21,7 @@ import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headl
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
+import { Route as ApiPublicWalletAddressRouteImport } from './routes/api.public.wallet.$address'
 import { Route as ApiPublicPnlWalletsRouteImport } from './routes/api.public.pnl.wallets'
 import { Route as ApiPublicPnlOutcomesRouteImport } from './routes/api.public.pnl.outcomes'
 import { Route as ApiPublicPnlHeadlineRouteImport } from './routes/api.public.pnl.headline'
@@ -33,6 +35,11 @@ import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belie
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WalletAddressRoute = WalletAddressRouteImport.update({
+  id: '/wallet/$address',
+  path: '/wallet/$address',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicValueflowRoute = ApiPublicValueflowRouteImport.update({
@@ -86,6 +93,11 @@ const ApiPublicActivityBucketsRoute =
     path: '/api/public/activity-buckets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWalletAddressRoute = ApiPublicWalletAddressRouteImport.update({
+  id: '/api/public/wallet/$address',
+  path: '/api/public/wallet/$address',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPnlWalletsRoute = ApiPublicPnlWalletsRouteImport.update({
   id: '/api/public/pnl/wallets',
   path: '/api/public/pnl/wallets',
@@ -136,6 +148,7 @@ const ApiPublicBeliefIdRoute = ApiPublicBeliefIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -155,9 +168,11 @@ export interface FileRoutesByFullPath {
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
+  '/api/public/wallet/$address': typeof ApiPublicWalletAddressRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -177,10 +192,12 @@ export interface FileRoutesByTo {
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
+  '/api/public/wallet/$address': typeof ApiPublicWalletAddressRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -200,11 +217,13 @@ export interface FileRoutesById {
   '/api/public/pnl/headline': typeof ApiPublicPnlHeadlineRoute
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
+  '/api/public/wallet/$address': typeof ApiPublicWalletAddressRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/wallet/$address'
     | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -224,9 +243,11 @@ export interface FileRouteTypes {
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
+    | '/api/public/wallet/$address'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/wallet/$address'
     | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -246,9 +267,11 @@ export interface FileRouteTypes {
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
+    | '/api/public/wallet/$address'
   id:
     | '__root__'
     | '/'
+    | '/wallet/$address'
     | '/api/public/activity-buckets'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -268,10 +291,12 @@ export interface FileRouteTypes {
     | '/api/public/pnl/headline'
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
+    | '/api/public/wallet/$address'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  WalletAddressRoute: typeof WalletAddressRoute
   ApiPublicActivityBucketsRoute: typeof ApiPublicActivityBucketsRoute
   ApiPublicFeedRoute: typeof ApiPublicFeedRoute
   ApiPublicGridRoute: typeof ApiPublicGridRoute
@@ -291,6 +316,7 @@ export interface RootRouteChildren {
   ApiPublicPnlHeadlineRoute: typeof ApiPublicPnlHeadlineRoute
   ApiPublicPnlOutcomesRoute: typeof ApiPublicPnlOutcomesRoute
   ApiPublicPnlWalletsRoute: typeof ApiPublicPnlWalletsRoute
+  ApiPublicWalletAddressRoute: typeof ApiPublicWalletAddressRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -300,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet/$address': {
+      id: '/wallet/$address'
+      path: '/wallet/$address'
+      fullPath: '/wallet/$address'
+      preLoaderRoute: typeof WalletAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/valueflow': {
@@ -372,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicActivityBucketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/wallet/$address': {
+      id: '/api/public/wallet/$address'
+      path: '/api/public/wallet/$address'
+      fullPath: '/api/public/wallet/$address'
+      preLoaderRoute: typeof ApiPublicWalletAddressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pnl/wallets': {
       id: '/api/public/pnl/wallets'
       path: '/api/public/pnl/wallets'
@@ -440,6 +480,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  WalletAddressRoute: WalletAddressRoute,
   ApiPublicActivityBucketsRoute: ApiPublicActivityBucketsRoute,
   ApiPublicFeedRoute: ApiPublicFeedRoute,
   ApiPublicGridRoute: ApiPublicGridRoute,
@@ -459,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPnlHeadlineRoute: ApiPublicPnlHeadlineRoute,
   ApiPublicPnlOutcomesRoute: ApiPublicPnlOutcomesRoute,
   ApiPublicPnlWalletsRoute: ApiPublicPnlWalletsRoute,
+  ApiPublicWalletAddressRoute: ApiPublicWalletAddressRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
