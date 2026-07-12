@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Range } from "@/lib/pov/ranges";
+import { WALLET_RE, type WalletReport } from "@/lib/pov/wallet";
 
 export interface FeedEvent {
   event_id: string;
@@ -429,4 +430,15 @@ export function usePulseRealtime() {
       supabase.removeChannel(channel);
     };
   }, [qc]);
+}
+
+/** Lifetime position breakdown + summary for a single wallet address. */
+export function useApiWallet(address: string | undefined) {
+  const addr = (address ?? "").toLowerCase();
+  return useQuery({
+    queryKey: ["pov", "wallet", addr],
+    queryFn: () => fetchJson<WalletReport>(`/api/public/wallet/${addr}`),
+    enabled: WALLET_RE.test(addr),
+    staleTime: 30_000,
+  });
 }

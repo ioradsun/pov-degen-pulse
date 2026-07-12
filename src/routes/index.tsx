@@ -10,6 +10,7 @@ import { IndexerStatusBanner } from "@/components/pulse/IndexerStatusBanner";
 import { TimeframeControl } from "@/components/pulse/TimeframeControl";
 import { TraderOutcomesPanel } from "@/components/pulse/TraderOutcomesPanel";
 import { GrowthPanel } from "@/components/pulse/GrowthPanel";
+import { WalletSearch } from "@/components/pulse/WalletSearch";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { useDegenOhlc } from "@/hooks/pov/useDegenOhlc";
 import { buildPulse } from "@/lib/pov/pulse";
@@ -120,6 +121,7 @@ function Pulse() {
           lastError={health.data?.indexer?.last_error}
         />
         <TimeframeControl range={range} onRangeChange={setRange} />
+        <WalletSearch />
         <StatGridApi range={range} currency={currency} />
         <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
         <GrowthPanel range={range} />
