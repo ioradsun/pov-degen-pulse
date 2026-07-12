@@ -41,6 +41,69 @@ function fmtAmount(eth: number, denom: Denom, ethUsd?: number): string {
   return formatEthAmount(eth);
 }
 
+type SortCol =
+  | "market"
+  | "side"
+  | "in_eth"
+  | "out_eth"
+  | "realized_eth"
+  | "hold_value_eth"
+  | "unrealized_eth"
+  | "roi"
+  | "state";
+type SortDir = "asc" | "desc";
+interface SortState { col: SortCol; dir: SortDir }
+
+const STATE_ORDER: Record<PositionState, number> = { won: 0, open_up: 1, open_down: 2, lost: 3 };
+
+function sortPositions(rows: WalletPosition[], sort: SortState): WalletPosition[] {
+  const mul = sort.dir === "asc" ? 1 : -1;
+  const getKey = (p: WalletPosition): number | string => {
+    switch (sort.col) {
+      case "market": return (p.title ?? `Belief ${p.belief_id}`).toLowerCase();
+      case "side": return p.side;
+      case "state": return STATE_ORDER[p.state];
+      case "roi": return p.roi == null || !Number.isFinite(p.roi) ? -Infinity : p.roi;
+      default: return p[sort.col];
+    }
+  };
+  return [...rows].sort((a, b) => {
+    const av = getKey(a); const bv = getKey(b);
+    if (av < bv) return -1 * mul;
+    if (av > bv) return 1 * mul;
+    return 0;
+  });
+}
+
+function SortHeader({
+  label, col, align, sort, onSort,
+}: {
+  label: string;
+  col: SortCol;
+  align: "left" | "right";
+  sort: SortState;
+  onSort: (s: SortState) => void;
+}) {
+  const active = sort.col === col;
+  const arrow = !active ? "↕" : sort.dir === "asc" ? "↑" : "↓";
+  return (
+    <th className={clsx("px-3 py-2 font-medium", align === "right" ? "text-right" : "text-left")}>
+      <button
+        type="button"
+        onClick={() => onSort({ col, dir: active && sort.dir === "desc" ? "asc" : "desc" })}
+        className={clsx(
+          "inline-flex items-center gap-1 uppercase tracking-[0.14em] transition-colors hover:text-[var(--ink)]",
+          active ? "text-[var(--ink)]" : "text-[var(--ink-faint)]",
+        )}
+      >
+        <span>{label}</span>
+        <span className="text-[9px] opacity-70">{arrow}</span>
+      </button>
+    </th>
+  );
+}
+
+
 function DenomToggle({ denom, onChange, disabled }: { denom: Denom; onChange: (d: Denom) => void; disabled?: boolean }) {
   return (
     <div
@@ -145,6 +208,8 @@ function WalletPage() {
   const { snapshot: degen } = useDegenPrice();
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [denom, setDenom] = useState<Denom>("eth");
+  const [sort, setSort] = useState<SortState>({ col: "in_eth", dir: "desc" });
+
   const effectiveDenom: Denom = denom === "usd" && !ethUsd ? "eth" : denom;
 
   const s = data?.summary;
@@ -251,19 +316,19 @@ function WalletPage() {
                   <table className="w-full text-[13px]">
                     <thead>
                       <tr className="text-[10px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
-                        <th className="px-3 py-2 text-left font-medium">Market</th>
-                        <th className="px-3 py-2 text-left font-medium">Side</th>
-                        <th className="px-3 py-2 text-right font-medium">In</th>
-                        <th className="px-3 py-2 text-right font-medium">Out</th>
-                        <th className="px-3 py-2 text-right font-medium">Realized</th>
-                        <th className="px-3 py-2 text-right font-medium">Held</th>
-                        <th className="px-3 py-2 text-right font-medium">On paper</th>
-                        <th className="px-3 py-2 text-right font-medium">ROI</th>
-                        <th className="px-3 py-2 text-left font-medium">State</th>
+                        <SortHeader label="Market" col="market" align="left" sort={sort} onSort={setSort} />
+                        <SortHeader label="Side" col="side" align="left" sort={sort} onSort={setSort} />
+                        <SortHeader label="In" col="in_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Out" col="out_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Realized" col="realized_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="Held" col="hold_value_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="On paper" col="unrealized_eth" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="ROI" col="roi" align="right" sort={sort} onSort={setSort} />
+                        <SortHeader label="State" col="state" align="left" sort={sort} onSort={setSort} />
                       </tr>
                     </thead>
                     <tbody>
-                      {data!.positions.map((p) => (
+                      {sortPositions(data!.positions, sort).map((p) => (
                         <PositionRow key={`${p.belief_id}-${p.side}`} p={p} denom={effectiveDenom} ethUsd={ethUsd} />
                       ))}
                     </tbody>
@@ -271,6 +336,7 @@ function WalletPage() {
                 </div>
               </Panel>
             )}
+
           </>
         )}
       </main>
