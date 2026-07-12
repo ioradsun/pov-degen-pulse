@@ -208,6 +208,8 @@ function WalletPage() {
   const { snapshot: degen } = useDegenPrice();
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [denom, setDenom] = useState<Denom>("eth");
+  const [sort, setSort] = useState<SortState>({ col: "in_eth", dir: "desc" });
+
   const effectiveDenom: Denom = denom === "usd" && !ethUsd ? "eth" : denom;
 
   const s = data?.summary;
