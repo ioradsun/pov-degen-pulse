@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { formatEthAmount, formatPct } from "@/lib/pov/format";
+import { formatEthAmount, formatPct, formatUsd } from "@/lib/pov/format";
 import { useApiWallet } from "@/hooks/pov/useApiPulse";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { EthUsdConverter } from "@/components/pov/EthUsdConverter";
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/wallet/$address")({
 const GREEN = "var(--up)";
 const RED = "var(--down)";
 
+type Denom = "eth" | "usd";
+
 const STATE_META: Record<PositionState, { label: string; tone: "up" | "down"; paper: boolean }> = {
   won: { label: "In profit", tone: "up", paper: false },
   lost: { label: "In loss", tone: "down", paper: false },
@@ -26,6 +30,44 @@ const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const roiText = (roi: number | null) =>
   roi == null || !Number.isFinite(roi) ? "—" : formatPct(roi * 100, 0);
 const signColor = (n: number) => (n > 0 ? GREEN : n < 0 ? RED : "var(--ink-dim)");
+
+/** Format an ETH amount as either ETH or USD depending on the toggle. */
+function fmtAmount(eth: number, denom: Denom, ethUsd?: number): string {
+  if (denom === "usd") {
+    if (!ethUsd) return "—";
+    const usd = eth * ethUsd;
+    return formatUsd(usd, Math.abs(usd) >= 1 ? 2 : 4);
+  }
+  return formatEthAmount(eth);
+}
+
+function DenomToggle({ denom, onChange, disabled }: { denom: Denom; onChange: (d: Denom) => void; disabled?: boolean }) {
+  return (
+    <div
+      className={clsx(
+        "flex items-center border border-[var(--line)] text-[10px] uppercase tracking-[0.14em] text-[var(--ink-dim)]",
+        disabled && "opacity-50",
+      )}
+      title={disabled ? "waiting for ETH/USD rate…" : "Switch amounts between ETH and USD"}
+    >
+      <button
+        type="button"
+        onClick={() => onChange("eth")}
+        className={clsx("px-2 py-[2px] transition-colors", denom === "eth" && "bg-[var(--pov)] text-[var(--bg)]")}
+      >
+        ETH
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("usd")}
+        disabled={disabled}
+        className={clsx("px-2 py-[2px] transition-colors", denom === "usd" && "bg-[var(--pov)] text-[var(--bg)]")}
+      >
+        USD
+      </button>
+    </div>
+  );
+}
 
 function Tile({
   label,
@@ -63,13 +105,13 @@ function StateBadge({ state }: { state: PositionState }) {
   );
 }
 
-function PositionRow({ p }: { p: WalletPosition }) {
+function PositionRow({ p, denom, ethUsd }: { p: WalletPosition; denom: Denom; ethUsd?: number }) {
   const num = (n: number, color?: boolean) => (
     <td
       className="whitespace-nowrap px-3 py-2 text-right tabular-nums"
       style={color ? { color: signColor(n) } : undefined}
     >
-      {formatEthAmount(n)}
+      {fmtAmount(n, denom, ethUsd)}
     </td>
   );
   return (
@@ -102,14 +144,17 @@ function WalletPage() {
   const { data, isLoading, error } = useApiWallet(valid ? address : undefined);
   const { snapshot: degen } = useDegenPrice();
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
+  const [denom, setDenom] = useState<Denom>("eth");
+  const effectiveDenom: Denom = denom === "usd" && !ethUsd ? "eth" : denom;
 
   const s = data?.summary;
+  const denomLabel = effectiveDenom === "usd" ? "USD" : "ETH";
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
       <main className="mx-auto flex max-w-[1200px] flex-col gap-4 px-3 py-4 md:px-4 md:py-6">
         {/* header */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <Link to="/" className="text-[12px] text-[var(--ink-dim)] hover:text-[var(--ink)]">
               ← back to pulse
@@ -119,7 +164,10 @@ function WalletPage() {
             </h1>
             {valid && <div className="break-all font-mono text-[11px] text-[var(--ink-faint)]">{address}</div>}
           </div>
-          <EthUsdConverter ethUsd={ethUsd} />
+          <div className="flex items-center gap-3">
+            <DenomToggle denom={denom} onChange={setDenom} disabled={!ethUsd} />
+            <EthUsdConverter ethUsd={ethUsd} />
+          </div>
         </div>
 
 
@@ -136,7 +184,7 @@ function WalletPage() {
         ) : (
           <>
             {/* ROLLUP */}
-            <Panel title="Lifetime P&L" meta="all positions · priced in ETH" bodyClassName="p-0">
+            <Panel title="Lifetime P&L" meta={`all positions · priced in ${denomLabel}`} bodyClassName="p-0">
               {isLoading || !s ? (
                 <div className="p-4">
                   <Skeleton className="h-8 w-64" />
@@ -155,15 +203,15 @@ function WalletPage() {
                             className="text-[34px] font-semibold leading-none tabular-nums"
                             style={{ color: signColor(s.net_eth) }}
                           >
-                            {formatEthAmount(s.net_eth)}
+                            {fmtAmount(s.net_eth, effectiveDenom, ethUsd)}
                           </span>
                           <span className="text-[15px] text-[var(--ink)]">net P&L</span>
                         </div>
                         <div className="mt-1 text-[13px] text-[var(--ink-dim)]">
                           {s.realized_eth >= 0 ? "+" : ""}
-                          {formatEthAmount(s.realized_eth)} realized ·{" "}
+                          {fmtAmount(s.realized_eth, effectiveDenom, ethUsd)} realized ·{" "}
                           {s.unrealized_eth >= 0 ? "+" : ""}
-                          {formatEthAmount(s.unrealized_eth)} on paper
+                          {fmtAmount(s.unrealized_eth, effectiveDenom, ethUsd)} on paper
                         </div>
                       </div>
                       <div className="text-[13px] leading-tight text-[var(--ink-dim)]">
@@ -179,11 +227,11 @@ function WalletPage() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
-                    <Tile label="Deposited" value={formatEthAmount(s.deposited_eth)} sub="total bought" />
-                    <Tile label="Withdrawn" value={formatEthAmount(s.withdrawn_eth)} sub="total sold" />
+                    <Tile label="Deposited" value={fmtAmount(s.deposited_eth, effectiveDenom, ethUsd)} sub="total bought" />
+                    <Tile label="Withdrawn" value={fmtAmount(s.withdrawn_eth, effectiveDenom, ethUsd)} sub="total sold" />
                     <Tile
                       label="Still holding"
-                      value={formatEthAmount(s.holding_value_eth)}
+                      value={fmtAmount(s.holding_value_eth, effectiveDenom, ethUsd)}
                       sub="at last price"
                     />
                     <Tile
@@ -198,7 +246,7 @@ function WalletPage() {
 
             {/* POSITIONS */}
             {s && s.positions > 0 && (
-              <Panel title="Positions" meta={`${s.positions} · one row per market side`} bodyClassName="p-0">
+              <Panel title="Positions" meta={`${s.positions} · one row per market side · ${denomLabel}`} bodyClassName="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-[13px]">
                     <thead>
@@ -216,7 +264,7 @@ function WalletPage() {
                     </thead>
                     <tbody>
                       {data!.positions.map((p) => (
-                        <PositionRow key={`${p.belief_id}-${p.side}`} p={p} />
+                        <PositionRow key={`${p.belief_id}-${p.side}`} p={p} denom={effectiveDenom} ethUsd={ethUsd} />
                       ))}
                     </tbody>
                   </table>
