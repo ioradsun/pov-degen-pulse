@@ -3,7 +3,10 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct } from "@/lib/pov/format";
 import { useApiWallet } from "@/hooks/pov/useApiPulse";
+import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
+import { EthUsdConverter } from "@/components/pov/EthUsdConverter";
 import { WALLET_RE, type PositionState, type WalletPosition } from "@/lib/pov/wallet";
+
 
 export const Route = createFileRoute("/wallet/$address")({
   component: WalletPage,
