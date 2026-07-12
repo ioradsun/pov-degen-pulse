@@ -41,6 +41,69 @@ function fmtAmount(eth: number, denom: Denom, ethUsd?: number): string {
   return formatEthAmount(eth);
 }
 
+type SortCol =
+  | "market"
+  | "side"
+  | "in_eth"
+  | "out_eth"
+  | "realized_eth"
+  | "hold_value_eth"
+  | "unrealized_eth"
+  | "roi"
+  | "state";
+type SortDir = "asc" | "desc";
+interface SortState { col: SortCol; dir: SortDir }
+
+const STATE_ORDER: Record<PositionState, number> = { won: 0, open_up: 1, open_down: 2, lost: 3 };
+
+function sortPositions(rows: WalletPosition[], sort: SortState): WalletPosition[] {
+  const mul = sort.dir === "asc" ? 1 : -1;
+  const getKey = (p: WalletPosition): number | string => {
+    switch (sort.col) {
+      case "market": return (p.title ?? `Belief ${p.belief_id}`).toLowerCase();
+      case "side": return p.side;
+      case "state": return STATE_ORDER[p.state];
+      case "roi": return p.roi == null || !Number.isFinite(p.roi) ? -Infinity : p.roi;
+      default: return p[sort.col];
+    }
+  };
+  return [...rows].sort((a, b) => {
+    const av = getKey(a); const bv = getKey(b);
+    if (av < bv) return -1 * mul;
+    if (av > bv) return 1 * mul;
+    return 0;
+  });
+}
+
+function SortHeader({
+  label, col, align, sort, onSort,
+}: {
+  label: string;
+  col: SortCol;
+  align: "left" | "right";
+  sort: SortState;
+  onSort: (s: SortState) => void;
+}) {
+  const active = sort.col === col;
+  const arrow = !active ? "↕" : sort.dir === "asc" ? "↑" : "↓";
+  return (
+    <th className={clsx("px-3 py-2 font-medium", align === "right" ? "text-right" : "text-left")}>
+      <button
+        type="button"
+        onClick={() => onSort({ col, dir: active && sort.dir === "desc" ? "asc" : "desc" })}
+        className={clsx(
+          "inline-flex items-center gap-1 uppercase tracking-[0.14em] transition-colors hover:text-[var(--ink)]",
+          active ? "text-[var(--ink)]" : "text-[var(--ink-faint)]",
+        )}
+      >
+        <span>{label}</span>
+        <span className="text-[9px] opacity-70">{arrow}</span>
+      </button>
+    </th>
+  );
+}
+
+
 function DenomToggle({ denom, onChange, disabled }: { denom: Denom; onChange: (d: Denom) => void; disabled?: boolean }) {
   return (
     <div
