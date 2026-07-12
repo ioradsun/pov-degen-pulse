@@ -3,7 +3,10 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { formatEthAmount, formatPct } from "@/lib/pov/format";
 import { useApiWallet } from "@/hooks/pov/useApiPulse";
+import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
+import { EthUsdConverter } from "@/components/pov/EthUsdConverter";
 import { WALLET_RE, type PositionState, type WalletPosition } from "@/lib/pov/wallet";
+
 
 export const Route = createFileRoute("/wallet/$address")({
   component: WalletPage,
@@ -97,6 +100,8 @@ function WalletPage() {
   const { address } = Route.useParams();
   const valid = WALLET_RE.test(address);
   const { data, isLoading, error } = useApiWallet(valid ? address : undefined);
+  const { snapshot: degen } = useDegenPrice();
+  const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
 
   const s = data?.summary;
 
@@ -114,7 +119,9 @@ function WalletPage() {
             </h1>
             {valid && <div className="break-all font-mono text-[11px] text-[var(--ink-faint)]">{address}</div>}
           </div>
+          <EthUsdConverter ethUsd={ethUsd} />
         </div>
+
 
         {!valid ? (
           <Panel title="Wallet lookup" meta="invalid address" bodyClassName="p-4">
