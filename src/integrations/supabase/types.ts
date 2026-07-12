@@ -669,6 +669,24 @@ export type Database = {
           sell_proceeds_usd: number
         }[]
       }
+      wallet_positions: {
+        Args: { addr: string }
+        Returns: {
+          belief_id: number
+          hold_value_eth: number
+          in_eth: number
+          out_eth: number
+          realized_eth: number
+          remaining_cost_eth: number
+          remaining_tokens: number
+          roi: number
+          side: string
+          slug: string
+          state: string
+          title: string
+          unrealized_eth: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
