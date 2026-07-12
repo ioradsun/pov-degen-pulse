@@ -100,6 +100,8 @@ function WalletPage() {
   const { address } = Route.useParams();
   const valid = WALLET_RE.test(address);
   const { data, isLoading, error } = useApiWallet(valid ? address : undefined);
+  const { snapshot: degen } = useDegenPrice();
+  const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
 
   const s = data?.summary;
 
@@ -117,7 +119,9 @@ function WalletPage() {
             </h1>
             {valid && <div className="break-all font-mono text-[11px] text-[var(--ink-faint)]">{address}</div>}
           </div>
+          <EthUsdConverter ethUsd={ethUsd} />
         </div>
+
 
         {!valid ? (
           <Panel title="Wallet lookup" meta="invalid address" bodyClassName="p-4">
