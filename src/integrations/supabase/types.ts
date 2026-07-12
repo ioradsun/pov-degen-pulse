@@ -350,6 +350,66 @@ export type Database = {
           },
         ]
       }
+      wallet_pnl_snapshot: {
+        Row: {
+          deposited_eth: number
+          holding_value_eth: number
+          net_eth: number
+          positions: number
+          realized_eth: number
+          snapshot_date: string
+          unrealized_eth: number
+          wallet_address: string
+          withdrawn_eth: number
+        }
+        Insert: {
+          deposited_eth?: number
+          holding_value_eth?: number
+          net_eth?: number
+          positions?: number
+          realized_eth?: number
+          snapshot_date: string
+          unrealized_eth?: number
+          wallet_address: string
+          withdrawn_eth?: number
+        }
+        Update: {
+          deposited_eth?: number
+          holding_value_eth?: number
+          net_eth?: number
+          positions?: number
+          realized_eth?: number
+          snapshot_date?: string
+          unrealized_eth?: number
+          wallet_address?: string
+          withdrawn_eth?: number
+        }
+        Relationships: []
+      }
+      wallet_watch: {
+        Row: {
+          backfilled_at: string | null
+          first_searched_at: string
+          last_searched_at: string
+          search_count: number
+          wallet_address: string
+        }
+        Insert: {
+          backfilled_at?: string | null
+          first_searched_at?: string
+          last_searched_at?: string
+          search_count?: number
+          wallet_address: string
+        }
+        Update: {
+          backfilled_at?: string | null
+          first_searched_at?: string
+          last_searched_at?: string
+          search_count?: number
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           first_seen_at: string
@@ -608,6 +668,7 @@ export type Database = {
           repeat_wallets: number
         }[]
       }
+      snapshot_watched_wallets: { Args: never; Returns: undefined }
       trader_outcomes: {
         Args: { range_key: string }
         Returns: {
@@ -669,6 +730,7 @@ export type Database = {
           sell_proceeds_usd: number
         }[]
       }
+      wallet_backfill_snapshots: { Args: { addr: string }; Returns: undefined }
       wallet_positions: {
         Args: { addr: string }
         Returns: {
@@ -685,6 +747,33 @@ export type Database = {
           state: string
           title: string
           unrealized_eth: number
+        }[]
+      }
+      wallet_register: { Args: { addr: string }; Returns: undefined }
+      wallet_snapshot_now: {
+        Args: { addr: string }
+        Returns: {
+          deposited_eth: number
+          holding_value_eth: number
+          net_eth: number
+          positions: number
+          realized_eth: number
+          unrealized_eth: number
+          withdrawn_eth: number
+        }[]
+      }
+      wallet_snapshot_today: { Args: { addr: string }; Returns: undefined }
+      wallet_timeline: {
+        Args: { addr: string }
+        Returns: {
+          deposited_eth: number
+          holding_value_eth: number
+          net_eth: number
+          positions: number
+          realized_eth: number
+          snapshot_date: string
+          unrealized_eth: number
+          withdrawn_eth: number
         }[]
       }
     }
