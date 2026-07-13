@@ -104,11 +104,17 @@ export function PulseBar({
             >
               {formatPct(degen.change24h)}
             </span>
-            <span className="hidden text-xs text-[var(--ink-dim)] md:inline">
+            <span
+              className="hidden text-xs text-[var(--ink-dim)] md:inline"
+              title="24h volume & market cap across all venues (CoinGecko global)"
+            >
               vol {formatUsd(degen.volume24h, 0)} · mcap {formatUsd(degen.marketCap, 0)}
             </span>
-            <span className="hidden text-xs text-[var(--ink-dim)] lg:inline">
-              {formatCompact(degen.buys24h)} buys / {formatCompact(degen.sells24h)} sells
+            <span
+              className="hidden text-xs text-[var(--ink-faint)] lg:inline"
+              title="Buy/sell counts from the deepest DEGEN pool on Base (DexScreener)"
+            >
+              {formatCompact(degen.buys24h)} buys / {formatCompact(degen.sells24h)} sells · Base pool
             </span>
           </div>
         )}
