@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/sunpatel/Desktop/pov-degen-pulse rev-parse --is-inside-work-tree)",
+      "Bash(git -C /Users/sunpatel/Desktop/pov-degen-pulse config user.name)",
+      "Bash(git -C /Users/sunpatel/Desktop/pov-degen-pulse config user.email)",
+      "Bash(git -C /Users/sunpatel/Desktop/pov-degen-pulse remote -v)"
+    ]
+  }
+}
