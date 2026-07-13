@@ -137,7 +137,7 @@ function Pulse() {
         <TimeframeControl range={range} onRangeChange={setRange} />
         <WalletSearch />
         <StatGridApi range={range} currency={currency} />
-        <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />
+        {showOutcomes && <TraderOutcomesPanel range={range} currency={currency} ethUsd={ethUsd} />}
         <GrowthPanel range={range} />
 
         {rhythm.isLoading && buckets.length === 0 ? (
