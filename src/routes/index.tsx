@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PulseBar } from "@/components/pulse/PulseBar";
 import { StatGridApi } from "@/components/pulse/StatGridApi";
 import { RhythmChart } from "@/components/pulse/RhythmChart";
