@@ -46,6 +46,20 @@ function Pulse() {
   const { bars: ohlc } = useDegenOhlc(OHLC_HOURS_FOR_RANGE[range]);
   const ethUsd = degen && degen.priceEth > 0 ? degen.priceUsd / degen.priceEth : undefined;
   const [currency, setCurrency] = useState<Currency>("usd");
+  const [showOutcomes, setShowOutcomes] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "$") {
+        e.preventDefault();
+        setShowOutcomes((s) => !s);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const granularity = granularityForRange(range);
   const buckets = useMemo(
