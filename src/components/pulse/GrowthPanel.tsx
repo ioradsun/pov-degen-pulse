@@ -79,6 +79,15 @@ export function GrowthPanel({ range }: { range: Range }) {
       title="Are people coming back?"
       meta={`retention & escape velocity · ${window}`}
       bodyClassName="p-0"
+      action={
+        <a
+          href="/api/public/export/beliefs"
+          download
+          className="text-[10px] uppercase tracking-[0.14em] text-[var(--ink-dim)] hover:text-[var(--pov)]"
+        >
+          Export CSV ↓
+        </a>
+      }
     >
       <div className="grid grid-cols-1 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-3">
         <Health

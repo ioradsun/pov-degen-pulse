@@ -529,6 +529,16 @@ export type Database = {
           sells: number
         }[]
       }
+      belief_lifetime_totals: {
+        Args: never
+        Returns: {
+          belief_id: number
+          buy_volume_all_usd: number
+          sell_volume_all_usd: number
+          trades_all: number
+          unique_buyers_all: number
+        }[]
+      }
       escape_velocity_beliefs: {
         Args: { min_buyers?: number; range_key?: string }
         Returns: {
