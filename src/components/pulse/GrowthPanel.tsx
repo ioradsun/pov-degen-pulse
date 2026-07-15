@@ -148,13 +148,33 @@ export function GrowthPanel({ range }: { range: Range }) {
             </div>
           }
           sub={
-            beliefsCreated === 0
-              ? `no beliefs created in the ${window}`
-              : `${beliefsFilled} of ${beliefsCreated} beliefs reached ${threshold}+ buyers`
+            beliefsCreated === 0 ? (
+              `no beliefs created in the ${window}`
+            ) : (
+              <button
+                type="button"
+                onClick={() => beliefsFilled > 0 && setDrawerOpen(true)}
+                disabled={beliefsFilled === 0}
+                className={
+                  beliefsFilled > 0
+                    ? "cursor-pointer text-left underline decoration-dotted decoration-[var(--ink-faint)] underline-offset-2 hover:text-[var(--pov)] hover:decoration-[var(--pov)]"
+                    : "cursor-default text-left"
+                }
+              >
+                {beliefsFilled} of {beliefsCreated} beliefs reached {threshold}+ buyers
+                {beliefsFilled > 0 && " →"}
+              </button>
+            )
           }
           loading={isLoading}
         />
       </div>
+      <EscapeVelocityDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        range={range}
+        threshold={threshold}
+      />
     </Panel>
   );
 }
