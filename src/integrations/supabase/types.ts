@@ -529,6 +529,20 @@ export type Database = {
           sells: number
         }[]
       }
+      escape_velocity_beliefs: {
+        Args: { min_buyers?: number; range_key?: string }
+        Returns: {
+          belief_id: number
+          buy_volume_eth: number
+          buy_volume_usd: number
+          created_at: string
+          creator_address: string
+          creator_display_name: string
+          slug: string
+          title: string
+          unique_buyers: number
+        }[]
+      }
       growth_health:
         | {
             Args: { range_key?: string }
