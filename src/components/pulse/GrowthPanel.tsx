@@ -3,6 +3,7 @@ import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { useApiRetention } from "@/hooks/pov/useApiPulse";
+import { EscapeVelocityDrawer } from "./EscapeVelocityDrawer";
 import {
   Select,
   SelectContent,
