@@ -529,15 +529,25 @@ export type Database = {
           sells: number
         }[]
       }
-      growth_health: {
-        Args: { range_key?: string }
-        Returns: {
-          belief_fill_rate: number
-          beliefs_created: number
-          beliefs_filled: number
-          degen_burn_usd: number
-        }[]
-      }
+      growth_health:
+        | {
+            Args: { range_key?: string }
+            Returns: {
+              belief_fill_rate: number
+              beliefs_created: number
+              beliefs_filled: number
+              degen_burn_usd: number
+            }[]
+          }
+        | {
+            Args: { min_buyers?: number; range_key?: string }
+            Returns: {
+              belief_fill_rate: number
+              beliefs_created: number
+              beliefs_filled: number
+              degen_burn_usd: number
+            }[]
+          }
       headline_metrics: {
         Args: { range_key: string }
         Returns: {

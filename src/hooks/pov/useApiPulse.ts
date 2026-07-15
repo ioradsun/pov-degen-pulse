@@ -89,6 +89,7 @@ export interface RhythmBucket {
 
 export interface RetentionMetrics {
   range: Range;
+  threshold?: number;
   new_wallets: number;
   repeat_wallets: number;
   repeat_rate: number | null;
@@ -98,6 +99,7 @@ export interface RetentionMetrics {
   degen_burn_usd: number;
   computedAt: string;
 }
+
 
 export type WriterStatus = "ok" | "stalled" | "starting" | "no writer connected";
 
@@ -198,14 +200,18 @@ export function useApiActivityBuckets(granularity: HistoryGranularity, buckets: 
 }
 
 /** Repeat-wallet & growth health, scoped to the global timeframe. */
-export function useApiRetention(range: Range = "24h") {
+export function useApiRetention(range: Range = "24h", threshold: number = 3) {
   return useQuery({
-    queryKey: ["pov", "retention", range],
-    queryFn: () => fetchJson<RetentionMetrics>(`/api/public/retention?range=${range}`),
+    queryKey: ["pov", "retention", range, threshold],
+    queryFn: () =>
+      fetchJson<RetentionMetrics>(
+        `/api/public/retention?range=${range}&threshold=${threshold}`,
+      ),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
 }
+
 
 // ---------- Realized P&L (Trader Outcomes) ----------
 
