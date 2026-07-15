@@ -3,6 +3,7 @@ import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
 import { z } from "zod";
 
 const RangeSchema = z.enum(["1h", "24h", "7d", "30d", "all"]);
+const ThresholdSchema = z.coerce.number().int().min(1).max(10000).default(3);
 
 export const Route = createFileRoute("/api/public/retention")({
   server: {
@@ -10,14 +11,19 @@ export const Route = createFileRoute("/api/public/retention")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const parsed = RangeSchema.safeParse(url.searchParams.get("range") ?? "24h");
-        if (!parsed.success) {
-          return Response.json({ error: "invalid range" }, { status: 400 });
+        const thresholdP = ThresholdSchema.safeParse(url.searchParams.get("threshold") ?? "3");
+        if (!parsed.success || !thresholdP.success) {
+          return Response.json({ error: "invalid params" }, { status: 400 });
         }
         const rangeKey = parsed.data;
+        const threshold = thresholdP.data;
         const supabase = getPublicSupabase();
         const [{ data, error }, { data: growthData, error: growthError }] = await Promise.all([
           supabase.rpc("repeat_wallet_rate" as never, { range_key: rangeKey } as never),
-          supabase.rpc("growth_health" as never, { range_key: rangeKey } as never),
+          supabase.rpc(
+            "growth_health" as never,
+            { range_key: rangeKey, min_buyers: threshold } as never,
+          ),
         ]);
         if (error) return Response.json({ error: error.message }, { status: 500 });
         if (growthError) return Response.json({ error: growthError.message }, { status: 500 });
@@ -30,6 +36,7 @@ export const Route = createFileRoute("/api/public/retention")({
         return Response.json(
           {
             range: rangeKey,
+            threshold,
             new_wallets: Number(row?.new_wallets ?? 0),
             repeat_wallets: Number(row?.repeat_wallets ?? 0),
             repeat_rate: row?.repeat_rate == null ? null : Number(row.repeat_rate),
@@ -46,3 +53,4 @@ export const Route = createFileRoute("/api/public/retention")({
     },
   },
 });
+
