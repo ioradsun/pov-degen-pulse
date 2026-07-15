@@ -212,6 +212,35 @@ export function useApiRetention(range: Range = "24h", threshold: number = 3) {
   });
 }
 
+export interface EscapeVelocityBelief {
+  belief_id: number;
+  title: string | null;
+  slug: string | null;
+  creator_address: string;
+  creator_display_name: string | null;
+  created_at: string;
+  unique_buyers: number;
+  buy_volume_usd: number;
+  buy_volume_eth: number;
+}
+
+/** Beliefs that reached the Escape Velocity buyer threshold in the window. */
+export function useApiEscapeVelocityBeliefs(
+  range: Range,
+  threshold: number,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["pov", "escape-velocity-beliefs", range, threshold],
+    queryFn: () =>
+      fetchJson<{ range: Range; threshold: number; rows: EscapeVelocityBelief[] }>(
+        `/api/public/escape-velocity?range=${range}&threshold=${threshold}`,
+      ),
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
 
 // ---------- Realized P&L (Trader Outcomes) ----------
 
