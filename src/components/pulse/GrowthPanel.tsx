@@ -79,7 +79,7 @@ export function GrowthPanel({ range }: { range: Range }) {
       title="Are people coming back?"
       meta={`retention & escape velocity · ${window}`}
       bodyClassName="p-0"
-      headerRight={
+      action={
         <a
           href="/api/public/export/beliefs"
           download
