@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.growth_health(text, int) TO anon, authenticated;
