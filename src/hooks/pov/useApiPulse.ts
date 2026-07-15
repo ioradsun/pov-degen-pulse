@@ -89,6 +89,7 @@ export interface RhythmBucket {
 
 export interface RetentionMetrics {
   range: Range;
+  threshold?: number;
   new_wallets: number;
   repeat_wallets: number;
   repeat_rate: number | null;
@@ -98,6 +99,7 @@ export interface RetentionMetrics {
   degen_burn_usd: number;
   computedAt: string;
 }
+
 
 export type WriterStatus = "ok" | "stalled" | "starting" | "no writer connected";
 
