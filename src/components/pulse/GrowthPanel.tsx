@@ -61,6 +61,7 @@ function Health({
 
 export function GrowthPanel({ range }: { range: Range }) {
   const [threshold, setThreshold] = useState<number>(3);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { data, isLoading } = useApiRetention(range, threshold);
   const window = RANGE_META[range];
 
