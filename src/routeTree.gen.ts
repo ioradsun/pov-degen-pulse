@@ -20,6 +20,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api.public.health'
 import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headline'
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
+import { Route as ApiPublicEscapeVelocityRouteImport } from './routes/api.public.escape-velocity'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
 import { Route as ApiPublicWalletAddressRouteImport } from './routes/api.public.wallet.$address'
 import { Route as ApiPublicPnlWalletsRouteImport } from './routes/api.public.pnl.wallets'
@@ -86,6 +87,11 @@ const ApiPublicGridRoute = ApiPublicGridRouteImport.update({
 const ApiPublicFeedRoute = ApiPublicFeedRouteImport.update({
   id: '/api/public/feed',
   path: '/api/public/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicEscapeVelocityRoute = ApiPublicEscapeVelocityRouteImport.update({
+  id: '/api/public/escape-velocity',
+  path: '/api/public/escape-velocity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicActivityBucketsRoute =
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
   '/api/public/headline': typeof ApiPublicHeadlineRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
     | '/api/public/headline'
@@ -311,6 +323,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   WalletAddressRoute: typeof WalletAddressRoute
   ApiPublicActivityBucketsRoute: typeof ApiPublicActivityBucketsRoute
+  ApiPublicEscapeVelocityRoute: typeof ApiPublicEscapeVelocityRoute
   ApiPublicFeedRoute: typeof ApiPublicFeedRoute
   ApiPublicGridRoute: typeof ApiPublicGridRoute
   ApiPublicHeadlineRoute: typeof ApiPublicHeadlineRoute
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/feed'
       fullPath: '/api/public/feed'
       preLoaderRoute: typeof ApiPublicFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/escape-velocity': {
+      id: '/api/public/escape-velocity'
+      path: '/api/public/escape-velocity'
+      fullPath: '/api/public/escape-velocity'
+      preLoaderRoute: typeof ApiPublicEscapeVelocityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/activity-buckets': {
@@ -516,6 +536,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   WalletAddressRoute: WalletAddressRoute,
   ApiPublicActivityBucketsRoute: ApiPublicActivityBucketsRoute,
+  ApiPublicEscapeVelocityRoute: ApiPublicEscapeVelocityRoute,
   ApiPublicFeedRoute: ApiPublicFeedRoute,
   ApiPublicGridRoute: ApiPublicGridRoute,
   ApiPublicHeadlineRoute: ApiPublicHeadlineRoute,
