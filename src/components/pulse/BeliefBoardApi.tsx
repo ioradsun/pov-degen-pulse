@@ -61,6 +61,11 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
   const { data: pnlData } = useApiPnlByBelief(range, 500);
   const rows = data?.rows ?? [];
   const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? range;
+  const windowLabel = RANGE_META[range] ?? range;
+
+  const beliefIds = useMemo(() => rows.map((r) => r.belief_id), [rows]);
+  const { data: deltaData } = useApiBeliefPriceDeltas(range, beliefIds);
+  const deltas = deltaData?.deltas ?? {};
 
   const pnlByBelief = useMemo(() => {
     const m = new Map<number, { realized: number; exits: number }>();
@@ -72,6 +77,7 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
     }
     return m;
   }, [pnlData]);
+
 
   return (
     <Panel
