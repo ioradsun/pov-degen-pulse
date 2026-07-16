@@ -539,6 +539,20 @@ export type Database = {
           unique_buyers_all: number
         }[]
       }
+      belief_price_deltas: {
+        Args: { belief_ids: number[]; range_key: string }
+        Returns: {
+          belief_id: number
+          no_end: number
+          no_pct: number
+          no_start: number
+          no_trades: number
+          yes_end: number
+          yes_pct: number
+          yes_start: number
+          yes_trades: number
+        }[]
+      }
       escape_velocity_beliefs: {
         Args: { min_buyers?: number; range_key?: string }
         Returns: {
