@@ -287,7 +287,13 @@ export function LiveFeedApi() {
         ) : (
           <ul className="divide-y divide-[var(--line-dim)]">
             {events.map((e) => (
-              <Row key={e.event_id} e={e} marketCap={caps[String(e.belief_id)] ?? null} />
+              <Row
+                key={e.event_id}
+                e={e}
+                marketCap={caps[String(e.belief_id)] ?? null}
+                delta={deltas[String(e.belief_id)]}
+              />
+
             ))}
           </ul>
         )}
