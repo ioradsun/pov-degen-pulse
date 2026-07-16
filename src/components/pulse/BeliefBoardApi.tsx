@@ -120,12 +120,18 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                     {b.lifecycle_stage}
                   </span>
                 </div>
-                <div className="mt-1 flex items-center gap-3 pl-6">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6">
                   <ConvictionBar splitPct={b.split_pct} />
+                  <PriceDelta
+                    data={deltas[String(b.belief_id)]}
+                    layout="inline"
+                    windowLabel={windowLabel}
+                  />
                   <span className="text-[10px] text-[var(--ink-faint)]">
                     {b.unique_wallets_24h} wallet{b.unique_wallets_24h === 1 ? "" : "s"} (24h)
                   </span>
                 </div>
+
                 <div className="mt-1 pl-6 text-[10px] text-[var(--ink-faint)]">
                   by{" "}
                   {b.creator_address ? (
