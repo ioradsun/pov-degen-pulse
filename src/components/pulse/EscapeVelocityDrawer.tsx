@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -6,9 +7,14 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { useApiEscapeVelocityBeliefs } from "@/hooks/pov/useApiPulse";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
+import {
+  useApiEscapeVelocityBeliefs,
+  useApiBeliefPriceDeltas,
+} from "@/hooks/pov/useApiPulse";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { ExternalLink, Users } from "lucide-react";
+
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
