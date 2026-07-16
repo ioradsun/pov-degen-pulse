@@ -57,6 +57,10 @@ export function EscapeVelocityDrawer({
   const { data, isLoading } = useApiEscapeVelocityBeliefs(range, threshold, open);
   const rows = data?.rows ?? [];
   const window = RANGE_META[range];
+  const beliefIds = useMemo(() => rows.map((r) => r.belief_id), [rows]);
+  const { data: deltaData } = useApiBeliefPriceDeltas(range, beliefIds);
+  const deltas = deltaData?.deltas ?? {};
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
