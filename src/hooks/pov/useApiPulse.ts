@@ -488,3 +488,36 @@ export function useApiWalletTimeline(address: string | undefined) {
     staleTime: 60_000,
   });
 }
+
+export interface PriceDeltaRow {
+  yes_pct: number | null;
+  yes_start: number | null;
+  yes_end: number | null;
+  yes_trades: number;
+  no_pct: number | null;
+  no_start: number | null;
+  no_end: number | null;
+  no_trades: number;
+}
+
+/**
+ * YES/NO share-price % change for a batch of belief ids over the selected range.
+ * Returns a map keyed by belief_id as a string.
+ */
+export function useApiBeliefPriceDeltas(range: Range, beliefIds: number[]) {
+  const ids = Array.from(new Set(beliefIds.filter((n) => Number.isFinite(n) && n > 0))).sort(
+    (a, b) => a - b,
+  );
+  const key = ids.join(",");
+  return useQuery({
+    queryKey: ["pov", "belief-price-deltas", range, key],
+    queryFn: () =>
+      fetchJson<{ range: Range; deltas: Record<string, PriceDeltaRow> }>(
+        `/api/public/belief-price-deltas?range=${range}&ids=${encodeURIComponent(key)}`,
+      ),
+    enabled: ids.length > 0,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
