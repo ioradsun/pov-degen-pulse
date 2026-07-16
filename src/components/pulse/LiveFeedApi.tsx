@@ -123,6 +123,12 @@ function Row({
               </span>
             </>
           )}
+          {e.event_type !== "new_belief" && delta && (delta.yes_trades > 0 || delta.no_trades > 0) && (
+            <>
+              <span aria-hidden>·</span>
+              <PriceDelta data={delta} layout="inline" windowLabel="24h" />
+            </>
+          )}
 
           <a
             href={BASESCAN_TX(e.tx_hash)}
@@ -133,6 +139,7 @@ function Row({
           >
             ↗
           </a>
+
         </div>
       </div>
     </li>
