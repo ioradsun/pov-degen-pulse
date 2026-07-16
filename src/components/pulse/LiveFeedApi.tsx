@@ -156,6 +156,13 @@ export function LiveFeedApi() {
   const { data: mcData } = useApiMarketCaps();
   const caps = mcData?.caps ?? {};
   const events = useMemo(() => data?.events ?? [], [data]);
+  const feedBeliefIds = useMemo(
+    () => Array.from(new Set(events.map((e) => e.belief_id))),
+    [events],
+  );
+  const { data: deltaData } = useApiBeliefPriceDeltas("24h", feedBeliefIds);
+  const deltas = deltaData?.deltas ?? {};
+
 
 
   // Re-render every second so "Xs ago" ticks smoothly.
