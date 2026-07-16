@@ -1,9 +1,16 @@
 import { useMemo } from "react";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
-import { RANGES, type Range } from "@/lib/pov/ranges";
-import { useApiGrid, useApiPnlByBelief, type GridRow } from "@/hooks/pov/useApiPulse";
+import { RANGES, RANGE_META, type Range } from "@/lib/pov/ranges";
+import {
+  useApiGrid,
+  useApiPnlByBelief,
+  useApiBeliefPriceDeltas,
+  type GridRow,
+} from "@/hooks/pov/useApiPulse";
+
 
 const POV_MARKET_URL = (slug: string) => `https://pov.co/markets/${slug}`;
 const POV_PROFILE_URL = (walletAddress: string) => `https://pov.co/${walletAddress}`;
