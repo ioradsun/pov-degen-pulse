@@ -1,9 +1,16 @@
 import { useMemo } from "react";
 import { Panel } from "@/components/pov/primitives/Panel";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
-import { RANGES, type Range } from "@/lib/pov/ranges";
-import { useApiGrid, useApiPnlByBelief, type GridRow } from "@/hooks/pov/useApiPulse";
+import { RANGES, RANGE_META, type Range } from "@/lib/pov/ranges";
+import {
+  useApiGrid,
+  useApiPnlByBelief,
+  useApiBeliefPriceDeltas,
+  type GridRow,
+} from "@/hooks/pov/useApiPulse";
+
 
 const POV_MARKET_URL = (slug: string) => `https://pov.co/markets/${slug}`;
 const POV_PROFILE_URL = (walletAddress: string) => `https://pov.co/${walletAddress}`;
@@ -54,6 +61,11 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
   const { data: pnlData } = useApiPnlByBelief(range, 500);
   const rows = data?.rows ?? [];
   const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? range;
+  const windowLabel = RANGE_META[range] ?? range;
+
+  const beliefIds = useMemo(() => rows.map((r) => r.belief_id), [rows]);
+  const { data: deltaData } = useApiBeliefPriceDeltas(range, beliefIds);
+  const deltas = deltaData?.deltas ?? {};
 
   const pnlByBelief = useMemo(() => {
     const m = new Map<number, { realized: number; exits: number }>();
@@ -65,6 +77,7 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
     }
     return m;
   }, [pnlData]);
+
 
   return (
     <Panel
@@ -107,12 +120,18 @@ export function BeliefBoardApi({ range }: BeliefBoardApiProps) {
                     {b.lifecycle_stage}
                   </span>
                 </div>
-                <div className="mt-1 flex items-center gap-3 pl-6">
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6">
                   <ConvictionBar splitPct={b.split_pct} />
+                  <PriceDelta
+                    data={deltas[String(b.belief_id)]}
+                    layout="inline"
+                    windowLabel={windowLabel}
+                  />
                   <span className="text-[10px] text-[var(--ink-faint)]">
                     {b.unique_wallets_24h} wallet{b.unique_wallets_24h === 1 ? "" : "s"} (24h)
                   </span>
                 </div>
+
                 <div className="mt-1 pl-6 text-[10px] text-[var(--ink-faint)]">
                   by{" "}
                   {b.creator_address ? (

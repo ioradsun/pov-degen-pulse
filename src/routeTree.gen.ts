@@ -21,6 +21,7 @@ import { Route as ApiPublicHeadlineRouteImport } from './routes/api.public.headl
 import { Route as ApiPublicGridRouteImport } from './routes/api.public.grid'
 import { Route as ApiPublicFeedRouteImport } from './routes/api.public.feed'
 import { Route as ApiPublicEscapeVelocityRouteImport } from './routes/api.public.escape-velocity'
+import { Route as ApiPublicBeliefPriceDeltasRouteImport } from './routes/api.public.belief-price-deltas'
 import { Route as ApiPublicActivityBucketsRouteImport } from './routes/api.public.activity-buckets'
 import { Route as ApiPublicWalletAddressRouteImport } from './routes/api.public.wallet.$address'
 import { Route as ApiPublicPnlWalletsRouteImport } from './routes/api.public.pnl.wallets'
@@ -95,6 +96,12 @@ const ApiPublicEscapeVelocityRoute = ApiPublicEscapeVelocityRouteImport.update({
   path: '/api/public/escape-velocity',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBeliefPriceDeltasRoute =
+  ApiPublicBeliefPriceDeltasRouteImport.update({
+    id: '/api/public/belief-price-deltas',
+    path: '/api/public/belief-price-deltas',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicActivityBucketsRoute =
   ApiPublicActivityBucketsRouteImport.update({
     id: '/api/public/activity-buckets',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/belief-price-deltas': typeof ApiPublicBeliefPriceDeltasRoute
   '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/belief-price-deltas': typeof ApiPublicBeliefPriceDeltasRoute
   '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/wallet/$address': typeof WalletAddressRoute
   '/api/public/activity-buckets': typeof ApiPublicActivityBucketsRoute
+  '/api/public/belief-price-deltas': typeof ApiPublicBeliefPriceDeltasRoute
   '/api/public/escape-velocity': typeof ApiPublicEscapeVelocityRoute
   '/api/public/feed': typeof ApiPublicFeedRoute
   '/api/public/grid': typeof ApiPublicGridRoute
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/belief-price-deltas'
     | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/belief-price-deltas'
     | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/'
     | '/wallet/$address'
     | '/api/public/activity-buckets'
+    | '/api/public/belief-price-deltas'
     | '/api/public/escape-velocity'
     | '/api/public/feed'
     | '/api/public/grid'
@@ -335,6 +348,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   WalletAddressRoute: typeof WalletAddressRoute
   ApiPublicActivityBucketsRoute: typeof ApiPublicActivityBucketsRoute
+  ApiPublicBeliefPriceDeltasRoute: typeof ApiPublicBeliefPriceDeltasRoute
   ApiPublicEscapeVelocityRoute: typeof ApiPublicEscapeVelocityRoute
   ApiPublicFeedRoute: typeof ApiPublicFeedRoute
   ApiPublicGridRoute: typeof ApiPublicGridRoute
@@ -442,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/escape-velocity'
       fullPath: '/api/public/escape-velocity'
       preLoaderRoute: typeof ApiPublicEscapeVelocityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/belief-price-deltas': {
+      id: '/api/public/belief-price-deltas'
+      path: '/api/public/belief-price-deltas'
+      fullPath: '/api/public/belief-price-deltas'
+      preLoaderRoute: typeof ApiPublicBeliefPriceDeltasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/activity-buckets': {
@@ -556,6 +577,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   WalletAddressRoute: WalletAddressRoute,
   ApiPublicActivityBucketsRoute: ApiPublicActivityBucketsRoute,
+  ApiPublicBeliefPriceDeltasRoute: ApiPublicBeliefPriceDeltasRoute,
   ApiPublicEscapeVelocityRoute: ApiPublicEscapeVelocityRoute,
   ApiPublicFeedRoute: ApiPublicFeedRoute,
   ApiPublicGridRoute: ApiPublicGridRoute,
@@ -581,13 +603,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

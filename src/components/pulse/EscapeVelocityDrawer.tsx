@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -6,9 +7,14 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/pov/primitives/Skeleton";
-import { useApiEscapeVelocityBeliefs } from "@/hooks/pov/useApiPulse";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
+import {
+  useApiEscapeVelocityBeliefs,
+  useApiBeliefPriceDeltas,
+} from "@/hooks/pov/useApiPulse";
 import { RANGE_META, type Range } from "@/lib/pov/ranges";
 import { ExternalLink, Users } from "lucide-react";
+
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -51,6 +57,10 @@ export function EscapeVelocityDrawer({
   const { data, isLoading } = useApiEscapeVelocityBeliefs(range, threshold, open);
   const rows = data?.rows ?? [];
   const window = RANGE_META[range];
+  const beliefIds = useMemo(() => rows.map((r) => r.belief_id), [rows]);
+  const { data: deltaData } = useApiBeliefPriceDeltas(range, beliefIds);
+  const deltas = deltaData?.deltas ?? {};
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,7 +126,7 @@ export function EscapeVelocityDrawer({
                     <ExternalLink className="h-3 w-3 shrink-0 text-[var(--ink-faint)] group-hover:text-[var(--pov)]" />
                   </div>
 
-                  <div className="flex items-center gap-3 pl-8 text-[10px] tabular-nums text-[var(--ink-dim)]">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-8 text-[10px] tabular-nums text-[var(--ink-dim)]">
                     <span className="inline-flex items-center gap-1 text-[var(--up)]">
                       <Users className="h-3 w-3" />
                       {b.unique_buyers} buyers
@@ -126,10 +136,17 @@ export function EscapeVelocityDrawer({
                     <span className="text-[var(--ink-faint)]">
                       ({fmtEth(b.buy_volume_eth)})
                     </span>
+                    <span aria-hidden>·</span>
+                    <PriceDelta
+                      data={deltas[String(b.belief_id)]}
+                      layout="inline"
+                      windowLabel={window}
+                    />
                   </div>
                 </a>
               );
             })}
+
         </div>
       </SheetContent>
     </Sheet>

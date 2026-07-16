@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
-import { useApiFeed, useApiHealth, useApiMarketCaps, type FeedEvent } from "@/hooks/pov/useApiPulse";
+import {
+  useApiFeed,
+  useApiHealth,
+  useApiMarketCaps,
+  useApiBeliefPriceDeltas,
+  type FeedEvent,
+  type PriceDeltaRow,
+} from "@/hooks/pov/useApiPulse";
+
 
 const LARGE_THRESHOLD_USD = 500;
 const POLL_INTERVAL_MS = 15_000;
@@ -32,7 +41,16 @@ const KIND_COLOR: Record<FeedEvent["event_type"], string> = {
   no_sell: "text-[var(--down)]/70",
 };
 
-function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
+function Row({
+  e,
+  marketCap,
+  delta,
+}: {
+  e: FeedEvent;
+  marketCap: number | null;
+  delta: PriceDeltaRow | undefined;
+}) {
+
   const isSell = e.event_type === "yes_sell" || e.event_type === "no_sell";
   const large = (e.amount_usd ?? 0) >= LARGE_THRESHOLD_USD;
   const label = large && !isSell ? `LARGE ${KIND_LABEL[e.event_type]}` : KIND_LABEL[e.event_type];
@@ -105,6 +123,12 @@ function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
               </span>
             </>
           )}
+          {e.event_type !== "new_belief" && delta && (delta.yes_trades > 0 || delta.no_trades > 0) && (
+            <>
+              <span aria-hidden>·</span>
+              <PriceDelta data={delta} layout="inline" windowLabel="24h" />
+            </>
+          )}
 
           <a
             href={BASESCAN_TX(e.tx_hash)}
@@ -115,6 +139,7 @@ function Row({ e, marketCap }: { e: FeedEvent; marketCap: number | null }) {
           >
             ↗
           </a>
+
         </div>
       </div>
     </li>
@@ -131,6 +156,13 @@ export function LiveFeedApi() {
   const { data: mcData } = useApiMarketCaps();
   const caps = mcData?.caps ?? {};
   const events = useMemo(() => data?.events ?? [], [data]);
+  const feedBeliefIds = useMemo(
+    () => Array.from(new Set(events.map((e) => e.belief_id))),
+    [events],
+  );
+  const { data: deltaData } = useApiBeliefPriceDeltas("24h", feedBeliefIds);
+  const deltas = deltaData?.deltas ?? {};
+
 
 
   // Re-render every second so "Xs ago" ticks smoothly.
@@ -255,7 +287,13 @@ export function LiveFeedApi() {
         ) : (
           <ul className="divide-y divide-[var(--line-dim)]">
             {events.map((e) => (
-              <Row key={e.event_id} e={e} marketCap={caps[String(e.belief_id)] ?? null} />
+              <Row
+                key={e.event_id}
+                e={e}
+                marketCap={caps[String(e.belief_id)] ?? null}
+                delta={deltas[String(e.belief_id)]}
+              />
+
             ))}
           </ul>
         )}
