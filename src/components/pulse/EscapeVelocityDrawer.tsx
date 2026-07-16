@@ -126,7 +126,7 @@ export function EscapeVelocityDrawer({
                     <ExternalLink className="h-3 w-3 shrink-0 text-[var(--ink-faint)] group-hover:text-[var(--pov)]" />
                   </div>
 
-                  <div className="flex items-center gap-3 pl-8 text-[10px] tabular-nums text-[var(--ink-dim)]">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-8 text-[10px] tabular-nums text-[var(--ink-dim)]">
                     <span className="inline-flex items-center gap-1 text-[var(--up)]">
                       <Users className="h-3 w-3" />
                       {b.unique_buyers} buyers
@@ -136,10 +136,17 @@ export function EscapeVelocityDrawer({
                     <span className="text-[var(--ink-faint)]">
                       ({fmtEth(b.buy_volume_eth)})
                     </span>
+                    <span aria-hidden>·</span>
+                    <PriceDelta
+                      data={deltas[String(b.belief_id)]}
+                      layout="inline"
+                      windowLabel={window}
+                    />
                   </div>
                 </a>
               );
             })}
+
         </div>
       </SheetContent>
     </Sheet>
