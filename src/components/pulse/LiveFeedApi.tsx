@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { Panel } from "@/components/pov/primitives/Panel";
+import { PriceDelta } from "@/components/pov/primitives/PriceDelta";
 import { formatUsd, shortAddr, timeAgo } from "@/lib/pov/format";
 import { BASESCAN_TX } from "@/lib/pov/constants";
-import { useApiFeed, useApiHealth, useApiMarketCaps, type FeedEvent } from "@/hooks/pov/useApiPulse";
+import {
+  useApiFeed,
+  useApiHealth,
+  useApiMarketCaps,
+  useApiBeliefPriceDeltas,
+  type FeedEvent,
+  type PriceDeltaRow,
+} from "@/hooks/pov/useApiPulse";
+
 
 const LARGE_THRESHOLD_USD = 500;
 const POLL_INTERVAL_MS = 15_000;
