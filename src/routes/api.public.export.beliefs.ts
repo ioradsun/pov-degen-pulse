@@ -8,23 +8,41 @@ export const Route = createFileRoute("/api/public/export/beliefs")({
       GET: async () => {
         const supabase = getPublicSupabase();
 
-        const [beliefsRes, statsRes, tradesAggRes] = await Promise.all([
-          supabase
-            .from("beliefs" as never)
-            .select(
+        const PAGE = 1000;
+        async function fetchAll<T = Record<string, unknown>>(
+          table: string,
+          select: string,
+        ): Promise<T[]> {
+          const rows: T[] = [];
+          for (let from = 0; ; from += PAGE) {
+            const { data, error } = await supabase
+              .from(table as never)
+              .select(select)
+              .range(from, from + PAGE - 1);
+            if (error) throw new Error(error.message);
+            const chunk = (data ?? []) as T[];
+            rows.push(...chunk);
+            if (chunk.length < PAGE) break;
+          }
+          return rows;
+        }
+
+        let beliefs: Array<Record<string, unknown>>;
+        let stats: Array<Record<string, unknown>>;
+        let tradesAggRes: { error: unknown; data: unknown };
+        try {
+          [beliefs, stats, tradesAggRes] = await Promise.all([
+            fetchAll<Record<string, unknown>>(
+              "beliefs",
               "belief_id, chain_id, market_address, creator_address, creator_display_name, title, slug, is_ai_generated, created_at, created_block, hydrated_at",
             ),
-          supabase.from("belief_stats" as never).select("*"),
-          supabase.rpc("belief_lifetime_totals" as never),
-        ]);
+            fetchAll<Record<string, unknown>>("belief_stats", "*"),
+            supabase.rpc("belief_lifetime_totals" as never),
+          ]);
+        } catch (e) {
+          return Response.json({ error: (e as Error).message }, { status: 500 });
+        }
 
-        if (beliefsRes.error)
-          return Response.json({ error: beliefsRes.error.message }, { status: 500 });
-        if (statsRes.error)
-          return Response.json({ error: statsRes.error.message }, { status: 500 });
-
-        const beliefs = (beliefsRes.data ?? []) as Array<Record<string, unknown>>;
-        const stats = (statsRes.data ?? []) as Array<Record<string, unknown>>;
         const statsById = new Map<number, Record<string, unknown>>();
         for (const s of stats) statsById.set(Number(s.belief_id), s);
 
@@ -100,7 +118,7 @@ export const Route = createFileRoute("/api/public/export/beliefs")({
           headers: {
             "content-type": "text/csv; charset=utf-8",
             "content-disposition": `attachment; filename="pov-beliefs-${stamp}.csv"`,
-            "cache-control": "public, max-age=60",
+            "cache-control": "no-store",
           },
         });
       },
