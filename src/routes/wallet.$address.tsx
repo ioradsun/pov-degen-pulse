@@ -8,6 +8,7 @@ import { useApiWallet, useApiWalletTimeline } from "@/hooks/pov/useApiPulse";
 import { useDegenPrice } from "@/hooks/pov/useDegenPrice";
 import { EthUsdConverter } from "@/components/pov/EthUsdConverter";
 import { WalletTimelineChart } from "@/components/pulse/WalletTimelineChart";
+import { WalletCashFlowPanel } from "@/components/pulse/WalletCashFlowPanel";
 import { WALLET_RE, type PositionState, type WalletPosition } from "@/lib/pov/wallet";
 
 
@@ -310,6 +311,9 @@ function WalletPage() {
                 </>
               )}
             </Panel>
+
+            {/* CASH FLOW */}
+            {valid && <WalletCashFlowPanel address={address.toLowerCase()} />}
 
             {/* TIMELINE */}
             {s && s.positions > 0 && (

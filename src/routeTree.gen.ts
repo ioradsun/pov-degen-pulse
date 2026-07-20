@@ -35,6 +35,7 @@ import { Route as ApiPublicHooksBackfillTokensRouteImport } from './routes/api.p
 import { Route as ApiPublicExportBeliefsRouteImport } from './routes/api.public.export.beliefs'
 import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
 import { Route as ApiPublicWalletAddressTimelineRouteImport } from './routes/api.public.wallet.$address.timeline'
+import { Route as ApiPublicWalletAddressCashflowRouteImport } from './routes/api.public.wallet.$address.cashflow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -171,6 +172,12 @@ const ApiPublicWalletAddressTimelineRoute =
     path: '/timeline',
     getParentRoute: () => ApiPublicWalletAddressRoute,
   } as any)
+const ApiPublicWalletAddressCashflowRoute =
+  ApiPublicWalletAddressCashflowRouteImport.update({
+    id: '/cashflow',
+    path: '/cashflow',
+    getParentRoute: () => ApiPublicWalletAddressRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
   '/api/public/wallet/$address': typeof ApiPublicWalletAddressRouteWithChildren
+  '/api/public/wallet/$address/cashflow': typeof ApiPublicWalletAddressCashflowRoute
   '/api/public/wallet/$address/timeline': typeof ApiPublicWalletAddressTimelineRoute
 }
 export interface FileRoutesByTo {
@@ -226,6 +234,7 @@ export interface FileRoutesByTo {
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
   '/api/public/wallet/$address': typeof ApiPublicWalletAddressRouteWithChildren
+  '/api/public/wallet/$address/cashflow': typeof ApiPublicWalletAddressCashflowRoute
   '/api/public/wallet/$address/timeline': typeof ApiPublicWalletAddressTimelineRoute
 }
 export interface FileRoutesById {
@@ -255,6 +264,7 @@ export interface FileRoutesById {
   '/api/public/pnl/outcomes': typeof ApiPublicPnlOutcomesRoute
   '/api/public/pnl/wallets': typeof ApiPublicPnlWalletsRoute
   '/api/public/wallet/$address': typeof ApiPublicWalletAddressRouteWithChildren
+  '/api/public/wallet/$address/cashflow': typeof ApiPublicWalletAddressCashflowRoute
   '/api/public/wallet/$address/timeline': typeof ApiPublicWalletAddressTimelineRoute
 }
 export interface FileRouteTypes {
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
     | '/api/public/wallet/$address'
+    | '/api/public/wallet/$address/cashflow'
     | '/api/public/wallet/$address/timeline'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
     | '/api/public/wallet/$address'
+    | '/api/public/wallet/$address/cashflow'
     | '/api/public/wallet/$address/timeline'
   id:
     | '__root__'
@@ -341,6 +353,7 @@ export interface FileRouteTypes {
     | '/api/public/pnl/outcomes'
     | '/api/public/pnl/wallets'
     | '/api/public/wallet/$address'
+    | '/api/public/wallet/$address/cashflow'
     | '/api/public/wallet/$address/timeline'
   fileRoutesById: FileRoutesById
 }
@@ -556,15 +569,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWalletAddressTimelineRouteImport
       parentRoute: typeof ApiPublicWalletAddressRoute
     }
+    '/api/public/wallet/$address/cashflow': {
+      id: '/api/public/wallet/$address/cashflow'
+      path: '/cashflow'
+      fullPath: '/api/public/wallet/$address/cashflow'
+      preLoaderRoute: typeof ApiPublicWalletAddressCashflowRouteImport
+      parentRoute: typeof ApiPublicWalletAddressRoute
+    }
   }
 }
 
 interface ApiPublicWalletAddressRouteChildren {
+  ApiPublicWalletAddressCashflowRoute: typeof ApiPublicWalletAddressCashflowRoute
   ApiPublicWalletAddressTimelineRoute: typeof ApiPublicWalletAddressTimelineRoute
 }
 
 const ApiPublicWalletAddressRouteChildren: ApiPublicWalletAddressRouteChildren =
   {
+    ApiPublicWalletAddressCashflowRoute: ApiPublicWalletAddressCashflowRoute,
     ApiPublicWalletAddressTimelineRoute: ApiPublicWalletAddressTimelineRoute,
   }
 
@@ -603,13 +625,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
