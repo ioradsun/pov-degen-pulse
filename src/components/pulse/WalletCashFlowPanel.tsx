@@ -70,10 +70,42 @@ const classBadge = (c: CashFlowTransfer["classification"]) => {
   return { label: "Internal", color: "var(--ink-dim)" };
 };
 
+function ProfitBar({
+  moneyIn, worthNow, denom, degenUsd,
+}: { moneyIn: number; worthNow: number; denom: Denom; degenUsd: number | null }) {
+  const winning = worthNow >= moneyIn;
+  const max = Math.max(moneyIn, worthNow, 1);
+  const basePct = (Math.min(moneyIn, worthNow) / max) * 100;
+  const deltaPct = ((Math.max(moneyIn, worthNow) - Math.min(moneyIn, worthNow)) / max) * 100;
+  const deltaColor = winning ? GREEN : RED;
+  return (
+    <div className="mt-4">
+      <div className="flex h-3 w-full overflow-hidden border border-[var(--line)]">
+        <div
+          style={{ width: `${basePct}%`, background: "var(--ink-dim)" }}
+          title={`money in: ${fmt(moneyIn, denom, degenUsd)}`}
+        />
+        <div
+          style={{ width: `${deltaPct}%`, background: deltaColor }}
+          title={`${winning ? "profit" : "loss"}: ${fmt(Math.abs(worthNow - moneyIn), denom, degenUsd)}`}
+        />
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+        <span>money in {fmt(moneyIn, denom, degenUsd)}</span>
+        <span style={{ color: deltaColor }}>
+          {winning ? "+" : "−"}{fmt(Math.abs(worthNow - moneyIn), denom, degenUsd)} {winning ? "profit" : "loss"}
+        </span>
+        <span>worth now {fmt(worthNow, denom, degenUsd)}</span>
+      </div>
+    </div>
+  );
+}
+
 export function WalletCashFlowPanel({ address }: { address: string }) {
   const { data, isLoading, error } = useApiWalletCashflow(address);
   const [denom, setDenom] = useState<Denom>("usd");
   const [filter, setFilter] = useState<"all" | "external">("external");
+  const [showMath, setShowMath] = useState(false);
 
   const s = data?.summary;
   const degenUsd = s?.degen_usd ?? null;
@@ -82,9 +114,9 @@ export function WalletCashFlowPanel({ address }: { address: string }) {
 
   if (error) {
     return (
-      <Panel title="Cash flow" meta="error" bodyClassName="p-4">
+      <Panel title="Performance" meta="error" bodyClassName="p-4">
         <p className="text-[14px] text-[var(--down)]">
-          Couldn't load cash flow. Blockscout may be rate-limiting — try again in a moment.
+          Couldn't load performance. Blockscout may be rate-limiting — try again in a moment.
         </p>
       </Panel>
     );
@@ -93,8 +125,8 @@ export function WalletCashFlowPanel({ address }: { address: string }) {
   if (isLoading || !s || !data) {
     return (
       <Panel
-        title="Cash flow"
-        meta="what actually went in vs. what it's worth now"
+        title="Performance"
+        meta="what you put in vs. what it's worth"
         bodyClassName="p-4"
         action={<DenomToggle denom={denom} onChange={setDenom} disabled />}
       >
@@ -107,85 +139,122 @@ export function WalletCashFlowPanel({ address }: { address: string }) {
     ? data.transfers.filter((t) => t.classification !== "internal")
     : data.transfers;
 
+  const moneyIn = s.net_deposits_usd ?? 0;
+  const worthNow = s.total_value_usd ?? 0;
+  const profit = worthNow - moneyIn;
+  const winning = profit >= 0;
+  const returnPct = s.roi == null ? null : s.roi * 100;
+
+  // Plain-English "why"
+  const positions = s.positions_value_usd ?? 0;
+  const cash = s.cash_available_usd ?? 0;
+  const openShare = worthNow > 0 ? positions / worthNow : 0;
+  let whySentence = "";
+  if (openShare > 0.6) {
+    whySentence = `Most of your value (${fmt(positions, effectiveDenom, degenUsd)}) is still in open POV positions — this number can move as prices change.`;
+  } else if (positions > 0) {
+    whySentence = `You still hold ${fmt(positions, effectiveDenom, degenUsd)} in open positions, plus ${fmt(cash, effectiveDenom, degenUsd)} in cash.`;
+  } else {
+    whySentence = `All of your value is now in cash — no open POV positions.`;
+  }
+
   return (
     <Panel
-      title="Cash flow"
-      meta={`external transfers only · priced in ${label} · updated ${timeAgo(new Date(data.computedAt).getTime())} ago`}
+      title="Performance"
+      meta={`updated ${timeAgo(new Date(data.computedAt).getTime())} ago · priced in ${label}`}
       bodyClassName="p-0"
       action={<DenomToggle denom={denom} onChange={setDenom} disabled={!degenUsd} />}
     >
-      {/* Headline */}
-      <div className="border-b border-[var(--line-dim)] px-4 py-4">
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-2">
-          <div>
-            <div className="flex items-baseline gap-2">
-              <span
-                className="text-[34px] font-semibold leading-none tabular-nums"
-                style={{ color: signColor(s.net_pnl_usd) }}
-              >
-                {fmt(s.net_pnl_usd, effectiveDenom, degenUsd)}
-              </span>
-              <span className="text-[15px] text-[var(--ink)]">net cash-flow P&amp;L</span>
-            </div>
-            <div className="mt-1 text-[13px] text-[var(--ink-dim)]">
-              (cash + positions) − net deposits · fees {fmt(s.fees_usd, effectiveDenom, degenUsd)}
-            </div>
-          </div>
-          <div className="text-[13px] leading-tight text-[var(--ink-dim)]">
+      {/* Hero */}
+      <div className="border-b border-[var(--line-dim)] px-4 py-5">
+        <div className="text-[14px] leading-relaxed text-[var(--ink)]">
+          You put in{" "}
+          <span className="font-semibold tabular-nums">{fmt(moneyIn, effectiveDenom, degenUsd)}</span>.
+          It's worth{" "}
+          <span className="font-semibold tabular-nums">{fmt(worthNow, effectiveDenom, degenUsd)}</span>{" "}
+          today.
+        </div>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span
+            className="text-[40px] font-semibold leading-none tabular-nums"
+            style={{ color: signColor(profit) }}
+          >
+            {winning ? "+" : "−"}{fmt(Math.abs(profit), effectiveDenom, degenUsd)}
+          </span>
+          {returnPct != null && (
             <span
-              className="text-[22px] font-semibold tabular-nums"
-              style={{ color: s.roi == null ? "var(--ink)" : signColor(s.roi) }}
+              className="text-[20px] font-semibold tabular-nums"
+              style={{ color: signColor(profit) }}
             >
-              {s.roi == null ? "—" : formatPct(s.roi * 100, 1)}
-            </span>{" "}
-            ROI
-            <div className="text-[11px] text-[var(--ink-faint)]">net P&amp;L ÷ net deposits</div>
-          </div>
+              ({winning ? "+" : ""}{formatPct(returnPct, 1)})
+            </span>
+          )}
+          <span className="text-[13px] text-[var(--ink-dim)]">
+            {winning ? "profit" : "loss"} so far
+          </span>
         </div>
+
+        <ProfitBar moneyIn={moneyIn} worthNow={worthNow} denom={effectiveDenom} degenUsd={degenUsd} />
+
+        <div className="mt-3 text-[13px] leading-snug text-[var(--ink-dim)]">
+          {whySentence}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowMath((v) => !v)}
+          className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)] hover:text-[var(--ink-dim)]"
+        >
+          {showMath ? "− Hide the math" : "+ Show the math"}
+        </button>
       </div>
 
-      {/* Tiles */}
-      <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
-        <Tile
-          label="Net deposits"
-          value={fmt(s.net_deposits_usd, effectiveDenom, degenUsd)}
-          sub={`in ${fmt(s.deposits_usd, effectiveDenom, degenUsd)} · out ${fmt(s.withdrawals_usd, effectiveDenom, degenUsd)}`}
-        />
-        <Tile
-          label="Cash available"
-          value={fmt(s.cash_available_usd, effectiveDenom, degenUsd)}
-          sub="wallet balances"
-        />
-        <Tile
-          label="Positions value"
-          value={fmt(s.positions_value_usd, effectiveDenom, degenUsd)}
-          sub="POV markets, marked"
-        />
-        <Tile
-          label="Total value"
-          value={fmt(s.total_value_usd, effectiveDenom, degenUsd)}
-          sub="cash + positions − fees"
-        />
-      </div>
-
-      {/* Balances */}
-      {data.balances.length > 0 && (
-        <div className="border-t border-[var(--line-dim)] px-4 py-3">
-          <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
-            Current wallet balances
+      {showMath && (
+        <>
+          {/* Tiles */}
+          <div className="grid grid-cols-2 divide-x divide-y divide-[var(--line-dim)] sm:grid-cols-4">
+            <Tile
+              label="Net deposits"
+              value={fmt(s.net_deposits_usd, effectiveDenom, degenUsd)}
+              sub={`in ${fmt(s.deposits_usd, effectiveDenom, degenUsd)} · out ${fmt(s.withdrawals_usd, effectiveDenom, degenUsd)}`}
+            />
+            <Tile
+              label="Cash available"
+              value={fmt(s.cash_available_usd, effectiveDenom, degenUsd)}
+              sub="wallet balances"
+            />
+            <Tile
+              label="Positions value"
+              value={fmt(s.positions_value_usd, effectiveDenom, degenUsd)}
+              sub="POV markets, marked"
+            />
+            <Tile
+              label="Total value"
+              value={fmt(s.total_value_usd, effectiveDenom, degenUsd)}
+              sub="cash + positions − fees"
+            />
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px]">
-            {data.balances.slice(0, 8).map((b) => (
-              <div key={b.asset} className="flex items-baseline gap-2 tabular-nums">
-                <span className="text-[var(--ink-dim)]">{b.symbol}</span>
-                <span>{formatCompact(b.amount)}</span>
-                <span className="text-[11px] text-[var(--ink-faint)]">
-                  {b.valueUsd != null ? fmt(b.valueUsd, effectiveDenom, degenUsd) : "unpriced"}
-                </span>
+
+          {/* Balances */}
+          {data.balances.length > 0 && (
+            <div className="border-t border-[var(--line-dim)] px-4 py-3">
+              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+                Current wallet balances
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px]">
+                {data.balances.slice(0, 8).map((b) => (
+                  <div key={b.asset} className="flex items-baseline gap-2 tabular-nums">
+                    <span className="text-[var(--ink-dim)]">{b.symbol}</span>
+                    <span>{formatCompact(b.amount)}</span>
+                    <span className="text-[11px] text-[var(--ink-faint)]">
+                      {b.valueUsd != null ? fmt(b.valueUsd, effectiveDenom, degenUsd) : "unpriced"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Transfers table */}
