@@ -118,7 +118,7 @@ export const Route = createFileRoute("/api/public/export/beliefs")({
           headers: {
             "content-type": "text/csv; charset=utf-8",
             "content-disposition": `attachment; filename="pov-beliefs-${stamp}.csv"`,
-            "cache-control": "public, max-age=60",
+            "cache-control": "no-store",
           },
         });
       },
