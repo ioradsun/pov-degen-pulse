@@ -489,6 +489,65 @@ export function useApiWalletTimeline(address: string | undefined) {
   });
 }
 
+// ---------- Wallet Cash Flow ----------
+
+export interface CashFlowSummary {
+  deposits_usd: number;
+  withdrawals_usd: number;
+  net_deposits_usd: number;
+  cash_available_usd: number;
+  positions_value_usd: number | null;
+  fees_usd: number | null;
+  fees_eth: number;
+  total_value_usd: number;
+  net_pnl_usd: number;
+  roi: number | null;
+  eth_usd: number | null;
+  degen_usd: number | null;
+  net_deposits_degen: number | null;
+  cash_available_degen: number | null;
+  positions_value_degen: number | null;
+  total_value_degen: number | null;
+  net_pnl_degen: number | null;
+}
+export interface CashFlowBalance {
+  asset: string;
+  symbol: string;
+  amount: number;
+  priceUsd: number | null;
+  valueUsd: number | null;
+}
+export interface CashFlowTransfer {
+  hash: string;
+  ts: number;
+  direction: "in" | "out";
+  classification: "deposit" | "withdrawal" | "internal";
+  asset: string;
+  symbol: string;
+  amount: number;
+  counterparty: string;
+  priceUsd: number | null;
+  valueUsd: number | null;
+}
+export interface CashFlowReport {
+  address: string;
+  summary: CashFlowSummary;
+  balances: CashFlowBalance[];
+  transfers: CashFlowTransfer[];
+  computedAt: string;
+}
+
+export function useApiWalletCashflow(address: string | undefined) {
+  const addr = (address ?? "").toLowerCase();
+  return useQuery({
+    queryKey: ["pov", "wallet-cashflow", addr],
+    queryFn: () => fetchJson<CashFlowReport>(`/api/public/wallet/${addr}/cashflow`),
+    enabled: WALLET_RE.test(addr),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export interface PriceDeltaRow {
   yes_pct: number | null;
   yes_start: number | null;
