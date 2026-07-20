@@ -43,8 +43,6 @@ export const Route = createFileRoute("/api/public/export/beliefs")({
           return Response.json({ error: (e as Error).message }, { status: 500 });
         }
 
-        const beliefs = (beliefsRes.data ?? []) as Array<Record<string, unknown>>;
-        const stats = (statsRes.data ?? []) as Array<Record<string, unknown>>;
         const statsById = new Map<number, Record<string, unknown>>();
         for (const s of stats) statsById.set(Number(s.belief_id), s);
 
