@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 import { summarizePositions, toWalletPosition, WALLET_RE } from "@/lib/pov/wallet";
 
 const AddressSchema = z.string().regex(WALLET_RE);
@@ -18,8 +18,8 @@ export const Route = createFileRoute("/api/public/wallet/$address")({
           return Response.json({ error: "invalid address" }, { status: 400 });
         }
         const address = parsed.data.toLowerCase();
-        const supabase = getPublicSupabase();
-        const { data, error } = await supabase.rpc(
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data, error } = await supabaseAdmin.rpc(
           "wallet_positions" as never,
           { addr: address } as never,
         );
