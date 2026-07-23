@@ -331,7 +331,8 @@ export const Route = createFileRoute("/api/public/wallet/$address/cashflow")({
         const cashAvailableUsd = balances.reduce((s, b) => s + (b.valueUsd ?? 0), 0);
 
         // Positions value → sum of holding_value from wallet_positions RPC.
-        const { data: posData } = await supabase.rpc("wallet_positions" as never, { addr } as never);
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: posData } = await supabaseAdmin.rpc("wallet_positions" as never, { addr } as never);
         const positionsUsdEth = (Array.isArray(posData) ? posData : []).reduce(
           (s: number, r: Record<string, unknown>) => s + Number(r.hold_value_eth ?? 0),
           0,
