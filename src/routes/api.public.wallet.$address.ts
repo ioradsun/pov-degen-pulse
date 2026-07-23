@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { getPublicSupabase } from "@/lib/pov/supabase-public.server";
+
 import { summarizePositions, toWalletPosition, WALLET_RE } from "@/lib/pov/wallet";
 
 const AddressSchema = z.string().regex(WALLET_RE);
