@@ -32,6 +32,7 @@ import { Route as ApiPublicPnlBucketsRouteImport } from './routes/api.public.pnl
 import { Route as ApiPublicHooksIndexTickRouteImport } from './routes/api.public.hooks.index-tick'
 import { Route as ApiPublicHooksHydrateTitlesRouteImport } from './routes/api.public.hooks.hydrate-titles'
 import { Route as ApiPublicHooksBackfillTokensRouteImport } from './routes/api.public.hooks.backfill-tokens'
+import { Route as ApiPublicHooksBackfillSellsRouteImport } from './routes/api.public.hooks.backfill-sells'
 import { Route as ApiPublicExportBeliefsRouteImport } from './routes/api.public.export.beliefs'
 import { Route as ApiPublicBeliefIdRouteImport } from './routes/api.public.belief.$id'
 import { Route as ApiPublicWalletAddressTimelineRouteImport } from './routes/api.public.wallet.$address.timeline'
@@ -156,6 +157,12 @@ const ApiPublicHooksBackfillTokensRoute =
     path: '/api/public/hooks/backfill-tokens',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBackfillSellsRoute =
+  ApiPublicHooksBackfillSellsRouteImport.update({
+    id: '/api/public/hooks/backfill-sells',
+    path: '/api/public/hooks/backfill-sells',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicExportBeliefsRoute = ApiPublicExportBeliefsRouteImport.update({
   id: '/api/public/export/beliefs',
   path: '/api/public/export/beliefs',
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/export/beliefs': typeof ApiPublicExportBeliefsRoute
+  '/api/public/hooks/backfill-sells': typeof ApiPublicHooksBackfillSellsRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
@@ -225,6 +233,7 @@ export interface FileRoutesByTo {
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/export/beliefs': typeof ApiPublicExportBeliefsRoute
+  '/api/public/hooks/backfill-sells': typeof ApiPublicHooksBackfillSellsRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
@@ -255,6 +264,7 @@ export interface FileRoutesById {
   '/api/public/valueflow': typeof ApiPublicValueflowRoute
   '/api/public/belief/$id': typeof ApiPublicBeliefIdRoute
   '/api/public/export/beliefs': typeof ApiPublicExportBeliefsRoute
+  '/api/public/hooks/backfill-sells': typeof ApiPublicHooksBackfillSellsRoute
   '/api/public/hooks/backfill-tokens': typeof ApiPublicHooksBackfillTokensRoute
   '/api/public/hooks/hydrate-titles': typeof ApiPublicHooksHydrateTitlesRoute
   '/api/public/hooks/index-tick': typeof ApiPublicHooksIndexTickRoute
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/export/beliefs'
+    | '/api/public/hooks/backfill-sells'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/export/beliefs'
+    | '/api/public/hooks/backfill-sells'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
@@ -344,6 +356,7 @@ export interface FileRouteTypes {
     | '/api/public/valueflow'
     | '/api/public/belief/$id'
     | '/api/public/export/beliefs'
+    | '/api/public/hooks/backfill-sells'
     | '/api/public/hooks/backfill-tokens'
     | '/api/public/hooks/hydrate-titles'
     | '/api/public/hooks/index-tick'
@@ -374,6 +387,7 @@ export interface RootRouteChildren {
   ApiPublicValueflowRoute: typeof ApiPublicValueflowRoute
   ApiPublicBeliefIdRoute: typeof ApiPublicBeliefIdRoute
   ApiPublicExportBeliefsRoute: typeof ApiPublicExportBeliefsRoute
+  ApiPublicHooksBackfillSellsRoute: typeof ApiPublicHooksBackfillSellsRoute
   ApiPublicHooksBackfillTokensRoute: typeof ApiPublicHooksBackfillTokensRoute
   ApiPublicHooksHydrateTitlesRoute: typeof ApiPublicHooksHydrateTitlesRoute
   ApiPublicHooksIndexTickRoute: typeof ApiPublicHooksIndexTickRoute
@@ -548,6 +562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBackfillTokensRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/backfill-sells': {
+      id: '/api/public/hooks/backfill-sells'
+      path: '/api/public/hooks/backfill-sells'
+      fullPath: '/api/public/hooks/backfill-sells'
+      preLoaderRoute: typeof ApiPublicHooksBackfillSellsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/export/beliefs': {
       id: '/api/public/export/beliefs'
       path: '/api/public/export/beliefs'
@@ -612,6 +633,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicValueflowRoute: ApiPublicValueflowRoute,
   ApiPublicBeliefIdRoute: ApiPublicBeliefIdRoute,
   ApiPublicExportBeliefsRoute: ApiPublicExportBeliefsRoute,
+  ApiPublicHooksBackfillSellsRoute: ApiPublicHooksBackfillSellsRoute,
   ApiPublicHooksBackfillTokensRoute: ApiPublicHooksBackfillTokensRoute,
   ApiPublicHooksHydrateTitlesRoute: ApiPublicHooksHydrateTitlesRoute,
   ApiPublicHooksIndexTickRoute: ApiPublicHooksIndexTickRoute,
