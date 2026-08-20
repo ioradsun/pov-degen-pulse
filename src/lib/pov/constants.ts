@@ -29,6 +29,11 @@ export const POV_CORE_SIGS = {
   created: "0x3763381a96c90abffc097e48cddec39f4c2d156fbdf0505509ba2b71f8e2061e",
   buy: "0xcae03a4e04b999ff7f42e7303a8573cdd0a983dfeb874f33cf93610321f66a18",
   sell: "0xa7796618d9cf132535c50e8284b93c935eef8ca99f5db7412d708026a1f05931",
+  // Contract upgrade ~2026-08-10 changed the TokensSold signature. Same data
+  // layout (topic1 = beliefId, topic2 = seller, w1 = side, w2 = tokens burned,
+  // w3 = gross ETH proceeds); confirmed against sell txs with value = 0 and
+  // selector 0x0abf1899.
+  sellV2: "0x9ba50b18b33edbad2a5afc301fae0eb187a3be2b2449c5a60f98d566221ee0a9",
 } as const;
 
 export const BASESCAN_TX = (h: string) => `https://basescan.org/tx/${h}`;
