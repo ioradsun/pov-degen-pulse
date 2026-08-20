@@ -30,6 +30,7 @@ const CORE_TOPICS = [
   POV_CORE_SIGS.created as `0x${string}`,
   POV_CORE_SIGS.buy as `0x${string}`,
   POV_CORE_SIGS.sell as `0x${string}`,
+  POV_CORE_SIGS.sellV2 as `0x${string}`,
 ];
 
 /** 32-byte word slicer for raw log data blobs. */
@@ -261,7 +262,9 @@ export const Route = createFileRoute("/api/public/hooks/index-tick")({
             }
 
             const isBuy = topic0 === POV_CORE_SIGS.buy.toLowerCase();
-            const isSell = topic0 === POV_CORE_SIGS.sell.toLowerCase();
+            const isSell =
+              topic0 === POV_CORE_SIGS.sell.toLowerCase() ||
+              topic0 === POV_CORE_SIGS.sellV2.toLowerCase();
             if (!isBuy && !isSell) continue;
 
             const side = ws[1] && toBigInt(ws[1]) === 1n ? "yes" : "no";
